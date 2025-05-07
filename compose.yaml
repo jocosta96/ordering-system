@@ -3,10 +3,23 @@ services:
     image: postgres:14.17
     env_file:
       - .env
-
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ordering"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
   python:
     env_file:
       - .env
     build: .
+    ports:
+      - 80:80
+    restart: always
     depends_on:
       - postgres
+  
+volumes:
+  postgres-db-volume:
