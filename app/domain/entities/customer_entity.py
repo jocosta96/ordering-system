@@ -1,7 +1,12 @@
 class Customer:
-
-    def __init__(self):
+    #dataclass
+    def __init__(
+            self,
+            document,
+            email,
+            name
+        ):
         
-        self.document
-        self.email
-        self.name
+        self.document = document
+        self.email = email
+        self.name = name
