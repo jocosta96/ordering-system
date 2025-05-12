@@ -1,15 +1,7 @@
-from app.domain.ports import customer_read_port
+from app.domain.use_cases import customer_base_uc
 from app.domain.entities import customer_entity
 
-class CustomerCreate:
+class CustomerRead(customer_base_uc.BaseCustomerUseCase):
 
-    def __init__(
-        self,
-        repository: customer_read_port.ReadUserRepository
-    ):
-        
-        self.user_logon_repository = repository
-
-    def read_user_user(self) -> customer_entity.Customer:
-        
-        pass
+    def create(self, customer: customer_entity.Customer) -> int:
+        return self.customer_base_uc.repository.read_customer(customer)

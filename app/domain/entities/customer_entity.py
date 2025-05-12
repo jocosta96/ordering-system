@@ -4,9 +4,12 @@ class Customer:
             self,
             document,
             email,
-            name
+            name,
+            id
         ):
         
         self.document = document
         self.email = email
         self.name = name
+        self.id = id
+

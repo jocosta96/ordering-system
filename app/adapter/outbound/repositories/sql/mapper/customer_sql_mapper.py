@@ -1,7 +1,7 @@
 from app.domain.entities import customer_entity
 from app.adapter.outbound.repositories.sql.entities import customer_sql
 
-def to_domain_model(customer: customer_sql.Customer) -> customer_entity.Customer:
+def to_domain_entity(customer: customer_sql.Customer) -> customer_entity.Customer:
 
     domain_customer = customer_entity.Customer(
         document = customer.document,
@@ -13,7 +13,7 @@ def to_domain_model(customer: customer_sql.Customer) -> customer_entity.Customer
     return domain_customer
 
 
-def to_sql_model(customer: customer_entity.Customer) -> customer_sql.Customer:
+def to_sql_entity(customer: customer_entity.Customer) -> customer_sql.Customer:
 
     sql_customer = customer_sql.Customer(
         document = customer.document,
