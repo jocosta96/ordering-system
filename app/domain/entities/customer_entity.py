@@ -1,15 +1,10 @@
-class Customer:
-    #dataclass
-    def __init__(
-            self,
-            document,
-            email,
-            name,
-            id
-        ):
-        
-        self.document = document
-        self.email = email
-        self.name = name
-        self.id = id
+from dataclasses import dataclass
 
+@dataclass
+class Customer:
+       
+    document: str
+    email: str
+    first_name: str
+    last_name: str
+    id:int=None

@@ -4,6 +4,6 @@ class BaseCustomerUseCase():
 
     def __init__(
         self,
-        repository: customer_port.CustomerRepository
+        port: customer_port.CustomerPort
     ) -> None:
-        self.repository = repository
+        self.port = port

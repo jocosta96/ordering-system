@@ -3,7 +3,7 @@ import abc
 from app.domain.entities import customer_entity
 
 
-class CustomerRepository(metaclass=abc.ABCMeta):
+class CustomerPort(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_customer(self) -> customer_entity.Customer:
