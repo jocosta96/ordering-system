@@ -2,3 +2,4 @@ fastapi[standard]>=0.113.0,<0.114.0
 pydantic>=2.7.0,<3.0.0
 SQLAlchemy==2.0.40
 psycopg2-binary==2.9.10
+validate_email==1.3
