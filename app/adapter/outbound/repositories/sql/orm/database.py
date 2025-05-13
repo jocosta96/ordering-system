@@ -4,10 +4,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-host = os.environ["db_host"]
-database = os.environ["db_database"]
-user = os.environ["db_user"]
-password = os.environ["db_password"]
+host = os.environ["POSTGRES_HOST"]
+database = os.environ["POSTGRES_DB"]
+user = os.environ["POSTGRES_USER"]
+password = os.environ["POSTGRES_PASSWORD"]
 
 connection_string = f"postgresql://{user}:{password}@{host}/{database}"
 
