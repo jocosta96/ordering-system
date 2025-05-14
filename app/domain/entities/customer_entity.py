@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 
+from app.domain.value_objects import document, email, name
+
 @dataclass
 class Customer:
        
-    document: str
-    email: str
-    first_name: str
-    last_name: str
+    document: document.Document
+    email: email.Email
+    first_name: name.Name
+    last_name: name.Name
     id:int=None

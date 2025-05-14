@@ -1,5 +1,5 @@
 from app.domain.entities import customer_entity
-from app.adapter.inbound.rest.v1.entity import customer_rest
+from app.adapter.inbound.rest.entity import customer_rest
 
 def to_domain_entity(
     customer:customer_rest.Customer
@@ -9,7 +9,7 @@ def to_domain_entity(
         document = customer.document,
         email = customer.email,
         name = customer.name,
-        id = customer.id
+        #id = customer.id
     )
 
     return domain_customer
@@ -22,7 +22,7 @@ def to_rest_entity(
         document = customer.document,
         email = customer.email,
         name = customer.name,
-        id = customer.id
+        #id = customer.id
     )
 
     return rest_customer

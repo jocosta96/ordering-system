@@ -5,7 +5,7 @@ from app.domain.value_objects import document, email, name
 
 class CustomerUpdate(customer_base_uc.BaseCustomerUseCase):
 
-    def create(self, customer: customer_entity.Customer) -> None:
+    def update_customer(self, customer: customer_entity.Customer) -> None:
 
         name.Name(customer.first_name, customer.last_name).validate()
         document.Document(customer.document).validate()
