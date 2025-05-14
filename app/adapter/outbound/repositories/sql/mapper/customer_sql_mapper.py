@@ -6,7 +6,8 @@ def to_domain_entity(customer: customer_sql.Customer) -> customer_entity.Custome
     domain_customer = customer_entity.Customer(
         document = customer.document,
         email = customer.email,
-        name = customer.name,
+        first_name = customer.first_name,
+        last_name = customer.last_name,
         id = customer.id
     )
 
@@ -18,8 +19,9 @@ def to_sql_entity(customer: customer_entity.Customer) -> customer_sql.Customer:
     sql_customer = customer_sql.Customer(
         document = customer.document,
         email = customer.email,
-        name = customer.name,
-        id = customer.id
+        first_name = customer.first_name,
+        last_name = customer.last_name,
+        #id = customer.id
     )
 
     return sql_customer
