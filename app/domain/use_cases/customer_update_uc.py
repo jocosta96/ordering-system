@@ -1,6 +1,6 @@
 from app.domain.use_cases import customer_base_uc
 from app.domain.entities import customer_entity
-from app.domain.types import email_type, document_type, name_type
+from app.domain.value_objects import email_type, document_type, name_type
 
 
 class CustomerUpdate(customer_base_uc.BaseCustomerUseCase):

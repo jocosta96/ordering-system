@@ -12,8 +12,7 @@ password = os.environ["POSTGRES_PASSWORD"]
 connection_string = f"postgresql://{user}:{password}@{host}/{database}"
 
 engine = create_engine(
-    connection_string,  # os.environ['SQLALCHEMY_DATABASE_URL'],
-    # connect_args={'check_same_thread': False},
+    connection_string,
     echo=True,
     pool_pre_ping=True,
     pool_recycle=600

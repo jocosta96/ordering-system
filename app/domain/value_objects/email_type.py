@@ -1,6 +1,6 @@
 from validate_email import validate_email
 
-from app.domain.types.type_validation import ValidateType
+from app.domain.value_objects.type_validation import ValidateType
 
 class Email(ValidateType):
 
