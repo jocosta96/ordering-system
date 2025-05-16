@@ -1,0 +1,10 @@
+from app.domain.use_cases import customer_base_uc
+from app.domain.entities import customer_entity
+
+class CustomerDelete(customer_base_uc.BaseCustomerUseCase):
+
+    def check_customer():
+        pass
+
+    def delete_customer(self, customer: customer_entity.Customer) -> int:
+        return self.port.delete_customer(customer)
