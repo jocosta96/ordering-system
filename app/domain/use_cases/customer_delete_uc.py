@@ -7,4 +7,4 @@ class CustomerDelete(customer_base_uc.BaseCustomerUseCase):
         pass
 
     def delete_customer(self, customer: customer_entity.Customer) -> int:
-        return self.customer_base_uc.port.delete_customer(customer)
+        return self.port.delete_customer(customer)

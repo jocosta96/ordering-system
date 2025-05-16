@@ -3,12 +3,18 @@ from app.domain.entities import customer_entity
 from app.domain.value_objects import document, email, name
 
 
-class CustomerUpdate(customer_base_uc.BaseCustomerUseCase):
+class CustomerUpdate( customer_base_uc.BaseCustomerUseCase):
 
-    def update_customer(self, customer: customer_entity.Customer) -> None:
+    def update_customer(self, search_key, search_value, customer: customer_entity.Customer) -> None:
 
-        name.Name(customer.first_name, customer.last_name).validate()
-        document.Document(customer.document).validate()
-        email.Email(customer.email).validate()
+        customer.first_name.fix()
+        customer.last_name.fix()
+        customer.document.fix()
+        customer.email.fix()
 
-        return self.customer_base_uc.port.update_customer(customer)
+        customer.first_name.validate()
+        customer.last_name.validate()
+        customer.document.validate()
+        customer.email.validate()
+
+        return self.port.update_customer(search_key, search_value, customer)

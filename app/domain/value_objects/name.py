@@ -1,12 +1,23 @@
-from app.domain.value_objects.base_validation import ValidateType
+from app.domain.value_objects.base_value_object import ValidateType
 
 class Name(ValidateType):
 
-    def __init__(self, first_name:str, last_name:str) -> None:
+    def __init__(self, name:str) -> None:
 
-        self.first_name =  first_name
-        self.last_name = last_name
+        self.name = name
+    
+    def __str__(self):
+
+        return self.name
     
     def validate(self):
         
-        assert bool(self.first_name) and bool(self.last_name), 'Need first name and last name'
+        assert self.name, 'Name can not be empty'
+
+    def fix(self):
+
+        self.name =  self.name.strip().upper()
+
+    def get(self) -> str:
+
+        return self.name

@@ -8,7 +8,8 @@ def to_domain_entity(
     domain_customer = customer_entity.Customer(
         document = customer.document,
         email = customer.email,
-        name = customer.name,
+        first_name = customer.first_name,
+        last_name = customer.last_name
         #id = customer.id
     )
 
@@ -21,7 +22,8 @@ def to_rest_entity(
     rest_customer = customer_rest.Customer(
         document = customer.document,
         email = customer.email,
-        name = customer.name,
+        first_name = customer.first_name,
+        last_name = customer.last_name
         #id = customer.id
     )
 

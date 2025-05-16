@@ -21,7 +21,9 @@ class CustomerRepoImpl(customer_port.CustomerPort):
         self._database.commit()
         self._database.refresh(db_customer)
 
-    def update_customer(self, customer: customer_entity.Customer) -> None:
+    def update_customer(self, search_key, search_value, customer: customer_entity.Customer) -> None:
+
+        self.read_customer(search_key, search_value)
 
         customer_dict = customer.__dict__.copy()
         customer_dict.pop('id', None)
@@ -53,5 +55,5 @@ class CustomerRepoImpl(customer_port.CustomerPort):
             result = customer_sql_mapper.to_domain_entity(data)
             self._user_id = result.id
         except NoResultFound:
-            result = None
+            result = 'User not found'
         return result

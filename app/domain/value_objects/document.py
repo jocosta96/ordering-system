@@ -1,12 +1,16 @@
 import re
 
-from app.domain.value_objects.base_validation import ValidateType
+from app.domain.value_objects.base_value_object import ValidateType
 
 class Document(ValidateType):
 
-    def __init__(self, document):
+    def __init__(self, document: str) -> None:
          
-         self.document = document
+        self.document = document
+
+    def __str__(self):
+
+        return self.document
 
     def check_document(self) -> bool:
 
@@ -32,3 +36,11 @@ class Document(ValidateType):
     
     def validate(self) -> None:
         assert self.check_document(), 'Please review your document number'
+
+    def fix(self) -> None:
+
+        self.document = re.sub(r"\W", "", self.document).strip()
+
+    def get(self) -> str:
+
+        return self.document
