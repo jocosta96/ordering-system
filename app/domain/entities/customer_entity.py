@@ -6,15 +6,15 @@ class Customer:
 
     def __init__(
         self,
-        document:str,
-        email:str,
-        first_name:str,
-        last_name:str,
-        id:int=None
+        document: Document,
+        email: Email,
+        first_name: Name,
+        last_name: Name,
+        id: int = None
     ):
         
-        self.document = Document(document)
-        self.email = Email(email)
-        self.first_name = Name(first_name)
-        self.last_name = Name(last_name)
+        self.document = document
+        self.email = email
+        self.first_name = first_name
+        self.last_name = last_name
         self.id=id
