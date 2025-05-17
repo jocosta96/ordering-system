@@ -8,17 +8,17 @@ class Product:
 
     def __init__(
         self,
-        name: str,
-        price: float,
-        category: str,
-        sku: str,
-        codebar: str,
+        name: Name,
+        price: Money,
+        category: Name,
+        sku: SKU,
+        codebar: Codebar,
         id:int=None
     ):
         
-        self.name = Name(name)
-        self.price = Money(price)
-        self.category = Name(category)
-        self.sku = SKU(sku)
-        self.codebar = Codebar(codebar)
+        self.name = name
+        self.price = price
+        self.category = category
+        self.sku = sku
+        self.codebar =codebar
         self.id = id
