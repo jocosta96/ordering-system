@@ -1,5 +1,6 @@
 from datetime import datetime
 from app.domain.value_objects.money import Money
+from app.domain.value_objects.status import OrderStatus
 
 
 class Order:
@@ -8,7 +9,7 @@ class Order:
         self,
         id: int,
         customer_id: int,
-        status: str, #(RECEBIDO, EM_PREPARACAO, PRONTO, FINALIZADO)
+        status: OrderStatus,
         start_date: datetime,
         end_date: datetime,
         value: Money,
