@@ -4,10 +4,10 @@ from app.adapter.outbound.repositories.sql.entities import customer_sql
 def to_domain_entity(customer: customer_sql.Customer) -> customer_entity.Customer:
 
     domain_customer = customer_entity.Customer(
-        document = customer.document,
-        email = customer.email,
-        first_name = customer.first_name,
-        last_name = customer.last_name,
+        document = str(customer.document),
+        email = str(customer.email),
+        first_name = str(customer.first_name),
+        last_name = str(customer.last_name),
         id = customer.id
     )
 
