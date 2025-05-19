@@ -22,7 +22,7 @@ register_adapter(email.Email, lambda email: QuotedString(str(email)))
 register_adapter(sku.SKU, lambda sku: QuotedString(str(sku)))
 register_adapter(codebar.Codebar, lambda codebar: QuotedString(str(codebar)))
 register_adapter(money.Money, lambda money: Float(str(money)))
-register_adapter(status.OrderStatus, lambda status: Float(str(status)))
+register_adapter(status.OrderStatus, lambda status: QuotedString(str(status)))
 
 host = os.environ["POSTGRES_HOST"]
 database = os.environ["POSTGRES_DB"]
@@ -43,7 +43,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
-    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
         return db

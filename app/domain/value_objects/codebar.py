@@ -32,4 +32,3 @@ class Codebar(BaseModel):
     @property
     def value(self) -> str:
         return self.code
-

@@ -18,4 +18,4 @@ class Customer(database.Base):
     document = Column(String, unique=True)
 
 
-    orders = relationship('Order', back_populates='order')
+    order = relationship('Order', back_populates='customer')
