@@ -17,7 +17,7 @@ def to_domain_entity(product: product_rest.Product) -> product_entity.Product:
     return domain_product
 
 
-def to_sql_entity(product: product_entity.Product) -> product_rest.Product:
+def to_rest_entity(product: product_entity.Product) -> product_rest.Product:
 
     rest_product = product_rest.Product(
         name= product.name.value,
