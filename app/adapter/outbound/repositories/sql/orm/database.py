@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from psycopg2.extensions import register_adapter, AsIs, QuotedString, Float
+from psycopg2.extensions import register_adapter, AsIs, QuotedString, Float, DECIMAL
 
 from app.domain.value_objects import (
     name,
@@ -13,7 +13,8 @@ from app.domain.value_objects import (
     sku,
     codebar,
     money,
-    status
+    status,
+    category
 )
 
 register_adapter(document.Document, lambda document: QuotedString(str(document)))
@@ -21,8 +22,9 @@ register_adapter(name.Name, lambda name: QuotedString(str(name)))
 register_adapter(email.Email, lambda email: QuotedString(str(email)))
 register_adapter(sku.SKU, lambda sku: QuotedString(str(sku)))
 register_adapter(codebar.Codebar, lambda codebar: QuotedString(str(codebar)))
-register_adapter(money.Money, lambda money: Float(str(money)))
+register_adapter(money.Money, lambda money: DECIMAL(money.amount))
 register_adapter(status.OrderStatus, lambda status: QuotedString(str(status)))
+register_adapter(category.ProductCategory, lambda category: QuotedString(str(category)))
 
 host = os.environ["POSTGRES_HOST"]
 database = os.environ["POSTGRES_DB"]

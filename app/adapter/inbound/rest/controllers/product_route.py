@@ -17,11 +17,11 @@ product = APIRouter(tags=["product"], prefix="/product")
 @product.get('')
 def product_read(search_key, search_value):
 
-    product_rest = uc_product_read.read_product(search_key, search_value)
+    product = uc_product_read.read_product(search_key, search_value)
 
-    product = product_rest_mapper.to_domain_entity(product_rest)
+    product_rest = product_rest_mapper.to_rest_entity(product)
 
-    return product
+    return product_rest
 
 @product.post('')
 def product_create(product_data:product_rest.Product):

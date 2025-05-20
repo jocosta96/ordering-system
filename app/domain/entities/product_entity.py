@@ -2,6 +2,7 @@ from app.domain.value_objects.name import Name
 from app.domain.value_objects.sku import SKU
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.codebar import Codebar
+from app.domain.value_objects.category import ProductCategory
 
 
 class Product:
@@ -10,7 +11,7 @@ class Product:
         self,
         name: Name,
         price: Money,
-        category: Name,
+        category: ProductCategory,
         sku: SKU,
         codebar: Codebar,
         id:int=None
