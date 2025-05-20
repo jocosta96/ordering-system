@@ -3,7 +3,8 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.adapter.inbound.rest.controllers import (
     customer_route,
-    product_route
+    product_route,
+    order_route
 )
 
 def create_application() -> FastAPI:
@@ -21,6 +22,7 @@ def create_application() -> FastAPI:
     )
     app.include_router(router=customer_route.customer)
     app.include_router(router=product_route.product)
+    app.include_router(router=order_route.order)
 
     return app
 

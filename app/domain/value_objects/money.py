@@ -3,8 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class Money(BaseModel):
-
-    amount: Decimal = Field(..., description="Amout of Money in BRL")
+    amount: Decimal = Field(..., description="Amount of Money in BRL")
 
     @field_validator('amount')
     def validate(cls, values):
@@ -17,14 +16,13 @@ class Money(BaseModel):
         assert values >= 0, "Amount must be non-negative."
         normalized = values.normalize()
         decimal_places = -normalized.as_tuple().exponent if normalized.as_tuple().exponent < 0 else 0
-        assert decimal_places >= 2, "Amount must have at most 2 decimal places."
+        assert decimal_places <= 2, "Amount must have at most 2 decimal places."
 
         return values
-    
-    def __float__(self) -> str:
-        return self.amount
+
+    def __float__(self) -> float:
+        return round(self.amount, 2)
 
     @property
-    def value(self) -> str:
-        return self.amount
-
+    def value(self) -> float:
+        return round(self.amount, 2)

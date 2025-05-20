@@ -10,5 +10,5 @@ class Product(BaseModel):
     price: money.Money
     sku: sku.SKU
     codebar: codebar.Codebar
-    id: Optional[int] = None
+#    id: Optional[int] = None
 

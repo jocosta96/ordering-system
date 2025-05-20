@@ -13,7 +13,7 @@ class OrderStatusType(str, Enum):
 class OrderStatus(BaseModel):
 
     status: str = Field(
-        ...,
+        None,
         description="Order Status",
         examples=["RECEBIDO", "EM_PREPARACAO", "PRONTO", "FINALIZADO"]
     )
@@ -29,4 +29,13 @@ class OrderStatus(BaseModel):
     @property
     def value(self) -> str:
         return self.status
+
+    def next_status(self):
+        flow = list(OrderStatusType)
+        try:
+            current_index = flow.index(self.status)
+            next_status = flow[current_index + 1]
+            self.status = next_status
+        except (ValueError, IndexError):
+            pass  # Already at FINALIZADO or invalid
 
