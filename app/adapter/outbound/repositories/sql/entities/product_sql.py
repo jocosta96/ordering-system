@@ -1,4 +1,5 @@
 from sqlalchemy import Column, DECIMAL, String, Sequence, Integer
+from sqlalchemy.orm import relationship
 from app.adapter.outbound.repositories.sql.orm import database
 
 class Product(database.Base):
@@ -15,3 +16,5 @@ class Product(database.Base):
     category = Column(String)
     sku = Column(String, unique=True)
     codebar = Column(String, unique=True)
+
+    order_item = relationship('OrderItem', back_populates='product')

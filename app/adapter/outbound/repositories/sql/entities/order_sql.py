@@ -21,3 +21,4 @@ class Order(database.Base):
     has_payment_verified = Column(Boolean)
 
     customer = relationship('Customer', back_populates='order')
+    order_item = relationship('OrderItem', back_populates='order')
