@@ -1,6 +1,7 @@
 from datetime import datetime
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.status import OrderStatus, OrderStatusType
+from app.domain.entities.order_item_entity import OrderItem
 
 
 class Order:
@@ -9,6 +10,7 @@ class Order:
         self,
         id: int,
         customer_id: int,
+        order_item: list[OrderItem],
         value: Money = 0.00,
         status: OrderStatus = None,
         start_date = None,
@@ -19,6 +21,7 @@ class Order:
         self.id = id
         self.customer_id = customer_id
         self.value = value
+        self.order_item = order_item
 
         self.start_date = start_date
         self.end_date = end_date
