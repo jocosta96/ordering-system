@@ -22,3 +22,4 @@ class Order(database.Base):
 
     customer = relationship('Customer', back_populates='order')
     order_item = relationship('OrderItem', back_populates='order')
+    order_item_receipt = relationship('OrderItemReceipt', back_populates='order_item')

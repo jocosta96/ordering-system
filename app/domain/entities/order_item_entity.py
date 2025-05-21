@@ -18,12 +18,24 @@ class OrderItem:
         self.product = product,
         self.additional_ingredient = additional_ingredient
         self.remove_ingredient = remove_ingredient
+        self.final_ingredient = None
         self.price = price
 
     def update_ingredient(self):
-        # TODO cria a receita do item pega o default que esta dentro de produtos remove a lista em remove_ingredient e adiciona additional_ingredient
-        pass
+        default_ingredient = self.product.default_ingredient
+        additional_ingredient = self.additional_ingredient
+        remove_ingredient = self.remove_ingredient
+
+        final_ingredient = [ing for ing in default_ingredient if ing not in remove_ingredient]
+        for ing in additional_ingredient:
+            if ing not in final_ingredient:
+                final_ingredient.append(ing)
+
+        self.final_ingredient = final_ingredient
+        
 
     def calculate_price(self):
-        # TODO pega o preço default e adiciona o preço dos itens adicionais additional_ingredient
-        pass
+        total_price = self.product.price
+        for ingredient in self.additional_ingredient:
+            total_price += ingredient.price
+        self.price = total_price
