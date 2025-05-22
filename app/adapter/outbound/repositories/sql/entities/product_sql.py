@@ -1,6 +1,18 @@
-from sqlalchemy import Column, DECIMAL, String, Sequence, Integer
+from sqlalchemy import Column, DECIMAL, String, Sequence, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from app.adapter.outbound.repositories.sql.orm import database
+
+
+class ProductReceipt(database.Base):
+    __tablename__ = "product_receipt"
+
+    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
+    quantity = Column(Integer)
+
+    ingredient = relationship('Ingredient', back_populates='product_receipts')
+    product = relationship('Product', back_populates='product_receipts')
+
 
 class Product(database.Base):
 
@@ -18,3 +30,7 @@ class Product(database.Base):
     codebar = Column(String, unique=True)
 
     order_item = relationship('OrderItem', back_populates='product')
+    order_item_receipts = relationship('OrderItemReceipt', back_populates='product')
+    order_items = relationship('OrderItem', back_populates='product')
+    product_receipts = relationship('ProductReceipt', back_populates='product')
+

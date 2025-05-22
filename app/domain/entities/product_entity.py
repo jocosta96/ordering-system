@@ -6,6 +6,17 @@ from app.domain.value_objects.category import ProductCategory
 from app.domain.entities.ingredient_entity import Ingredient
 
 
+class ProductReceiptItem:
+    def __init__(
+            self,
+            ingredient_id: int,
+            quantity: int
+        ):
+        
+        self.ingredient_id = ingredient_id
+        self.quantity = quantity
+
+
 class Product:
 
     def __init__(
@@ -15,7 +26,7 @@ class Product:
         category: ProductCategory,
         sku: SKU,
         codebar: Codebar,
-        default_ingredient: list[Ingredient],
+        default_ingredient: list[ProductReceiptItem],
         id:int=None
     ):
         

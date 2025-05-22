@@ -5,8 +5,8 @@ from app.domain.value_objects import document, name, email
 def to_domain_entity(customer: customer_sql.Customer) -> customer_entity.Customer:
 
     domain_customer = customer_entity.Customer(
-        document = document.Document(document=str(customer.document)),
-        email = email.Email(email=str(customer.email)),
+        document = customer.document,
+        email = customer.email,
         first_name = name.Name(name=str(customer.first_name)),
         last_name = name.Name(name=str(customer.last_name)),
         id = int(customer.id)  # Assuming id is just an integer
