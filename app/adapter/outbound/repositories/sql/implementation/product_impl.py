@@ -5,10 +5,47 @@ from app.domain.ports import product_port
 from app.domain.entities import product_entity
 from app.adapter.outbound.repositories.sql.orm import database
 from app.adapter.outbound.repositories.sql.entities import product_sql
-from app.adapter.outbound.repositories.sql.mapper import product_sql_mapper
-
+from app.domain.value_objects import name, sku, codebar, money, category
+from app.adapter.outbound.repositories.sql.entities import product_sql
 
 class ProductRepoImpl(product_port.ProductPort):
+
+
+    @staticmethod
+    def _to_domain_entity(product: product_sql.Product) -> product_entity.Product:
+        domain_product = product_entity.Product(
+            id = product.id,
+            name= name.Name(name=str(product.name)),
+            price= money.Money(amount=float(product.price)),
+            category= category.ProductCategory(category=str(product.category)),
+            sku= sku.SKU(sku=str(product.sku)),
+            codebar= codebar.Codebar(code=str(product.codebar))
+        )
+        return domain_product
+
+    @staticmethod
+    def _to_sql_entity(product: product_entity.Product) -> product_sql.Product:
+        sql_product = product_sql.Product(
+            id=product.id,
+            name= product.name.value,
+            price= product.price.value,
+            category= product.category.value,
+            sku= product.sku.value,
+            codebar= product.codebar.value
+        )
+        return sql_product
+
+    @staticmethod
+    def _to_sql_receipt_entity(product: product_entity.Product) -> product_sql.ProductReceipt:
+        sql_product = [
+            product_sql.ProductReceipt(
+                product_id= product.id,
+                ingredient_id= ingredient.ingredient_id,
+                quantity= ingredient.quantity,
+            )
+            for ingredient in product.default_ingredient
+        ]
+        return sql_product
 
     def __init__(self) -> None:
         self._database = database.get_db()
@@ -16,7 +53,10 @@ class ProductRepoImpl(product_port.ProductPort):
     
     def create_product(self, product: product_entity.Product) -> None:
 
-        db_product = product_sql_mapper.to_sql_entity(product)
+        db_receip = self._to_sql_receipt_entity(product)
+        db_product = self._to_sql_entity(product)
+
+        self._database.add_all(db_receip)
         self._database.add(db_product)
         self._database.commit()
         self._database.refresh(db_product)
@@ -52,7 +92,7 @@ class ProductRepoImpl(product_port.ProductPort):
         
         try:
             data = self._database.query(product_sql.Product).filter_by(**{search_key:search_value}).one()
-            result = product_sql_mapper.to_domain_entity(data)
+            result = self._to_domain_entity(data)
             self._user_id = result.id
         except NoResultFound:
             result = 'User not found'

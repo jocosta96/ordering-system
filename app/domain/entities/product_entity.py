@@ -4,6 +4,17 @@ from app.domain.value_objects.money import Money
 from app.domain.value_objects.codebar import Codebar
 from app.domain.value_objects.category import ProductCategory
 from app.domain.entities.ingredient_entity import Ingredient
+import uuid
+
+
+class ProductReceiptItem:
+    def __init__(
+            self,
+            ingredient_id: int,
+            quantity: int
+        ):
+        self.ingredient_id = ingredient_id
+        self.quantity = quantity
 
 
 class Product:
@@ -15,14 +26,13 @@ class Product:
         category: ProductCategory,
         sku: SKU,
         codebar: Codebar,
-        default_ingredient: list[Ingredient],
-        id:int=None
+        default_ingredient: list[ProductReceiptItem],
+        id: str | uuid.UUID = None
     ):
-        
+        self.id = uuid.UUID(str(id)) if id else uuid.uuid4()
         self.name = name
         self.price = price
         self.category = category
         self.sku = sku
-        self.codebar =codebar
-        self.id = id
+        self.codebar = codebar
         self.default_ingredient = default_ingredient

@@ -10,19 +10,33 @@ from typing import Optional
 from datetime import datetime
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.status import OrderStatus
+from app.adapter.inbound.rest.entity.ingredient_rest import Ingredient
+from app.adapter.inbound.rest.entity.product_rest import Product
 
 
-class BaseOrder(BaseModel):
+class CreateOrderItem(BaseModel):
+    id: Optional[str] = None
+    order_id: Optional[str] = None
+    product: Product
+    additional_ingredient: list[Ingredient]
+    remove_ingredient: list[Ingredient]
+    price: Money
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
+
+class CreateOrder(BaseModel):
+    id: Optional[str] = None
     customer_id: int
     value: Money
-
-
-class FullOrder(BaseModel):
-    """Used in API responses — includes system-generated fields."""
-    id: int
-    status: Optional[OrderStatus]
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    status: OrderStatus
+    payment_date: Optional[datetime] = None
+    payment_transaction_id: Optional[str] = None
     has_payment_verified: bool
-    customer_id: int
-    value: Money
+    order_items: list[CreateOrderItem]
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }

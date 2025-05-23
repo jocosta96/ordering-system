@@ -20,9 +20,8 @@ class Money(BaseModel):
 
         return values
 
-    def __float__(self) -> float:
-        return round(self.amount, 2)
-
+    def __str__(self) -> str:
+        return str(self.amount)
     @property
     def value(self) -> float:
         return round(self.amount, 2)

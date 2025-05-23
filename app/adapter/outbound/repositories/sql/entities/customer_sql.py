@@ -17,5 +17,4 @@ class Customer(database.Base):
     last_name = Column(String)
     document = Column(String, unique=True)
 
-
-    order = relationship('Order', back_populates='customer')
+    orders = relationship('Order', back_populates='customer')

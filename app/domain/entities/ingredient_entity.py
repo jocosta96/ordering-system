@@ -1,6 +1,7 @@
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.name import Name
 from app.domain.value_objects.category import ProductCategory
+from pydantic_core import core_schema
 
 class Ingredient:
 
@@ -12,7 +13,6 @@ class Ingredient:
         product_category: ProductCategory,
         is_active: bool
     ):
-
         self.id = id
         self.name = name
         self.price = price
