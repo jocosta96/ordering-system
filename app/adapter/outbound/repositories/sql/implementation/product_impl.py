@@ -12,14 +12,29 @@ class ProductRepoImpl(product_port.ProductPort):
 
 
     @staticmethod
-    def _to_domain_entity(product: product_sql.Product) -> product_entity.Product:
+    def _to_domain_entity(
+        product: product_sql.Product,
+        receipt: list[product_sql.ProductReceipt]
+    ) -> product_entity.Product:
+        
+        default_ingredient = [
+
+            product_entity.ProductReceiptItem(
+                ingredient_id= item.ingredient.id,
+                quantity= item.quantity
+            )
+            for item in receipt
+        ]
+        
+
         domain_product = product_entity.Product(
             id = product.id,
             name= name.Name(name=str(product.name)),
             price= money.Money(amount=float(product.price)),
             category= category.ProductCategory(category=str(product.category)),
             sku= sku.SKU(sku=str(product.sku)),
-            codebar= codebar.Codebar(code=str(product.codebar))
+            codebar= codebar.Codebar(code=str(product.codebar)),
+            default_ingredient= default_ingredient
         )
         return domain_product
 
@@ -91,9 +106,21 @@ class ProductRepoImpl(product_port.ProductPort):
     def read_product(self, search_key, search_value) -> product_entity.Product:
         
         try:
-            data = self._database.query(product_sql.Product).filter_by(**{search_key:search_value}).one()
-            result = self._to_domain_entity(data)
-            self._user_id = result.id
+
+            product = self._database.query(
+                product_sql.Product
+            ).filter_by(
+                **{search_key:search_value}
+            ).one()
+
+            receipt = self._database.query(
+                product_sql.ProductReceipt
+            ).filter_by(
+                product_id=product.id
+            ).all()
+
+            result = self._to_domain_entity(product, receipt)
+
         except NoResultFound:
-            result = 'User not found'
+            result = 'Product not found'
         return result
