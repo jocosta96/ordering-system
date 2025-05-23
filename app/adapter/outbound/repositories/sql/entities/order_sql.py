@@ -33,7 +33,7 @@ class OrderItem(database.Base):
         primary_key=True
     )
     order_id = Column(UUID, ForeignKey('order.id'))
-    product_id = Column(Integer, ForeignKey('product.id'))
+    product_id = Column(UUID, ForeignKey('product.id'))
     price = Column(DECIMAL(5,2))
 
     order = relationship('Order', back_populates='order_items')
@@ -46,7 +46,7 @@ class OrderItemReceipt(database.Base):
 
     order_id = Column(UUID, ForeignKey('order.id'), primary_key=True)
     order_item_id = Column(UUID, ForeignKey('order_item.id'), primary_key=True)
-    product_id = Column(Integer, ForeignKey('product.id'))
+    product_id = Column(UUID, ForeignKey('product.id'))
     ingredient_id = Column(Integer, ForeignKey('ingredient.id'))
     quantity = Column(Integer)
 

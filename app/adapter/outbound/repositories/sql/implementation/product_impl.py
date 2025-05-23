@@ -13,7 +13,6 @@ class ProductRepoImpl(product_port.ProductPort):
 
     @staticmethod
     def _to_domain_entity(product: product_sql.Product) -> product_entity.Product:
-
         domain_product = product_entity.Product(
             id = product.id,
             name= name.Name(name=str(product.name)),
@@ -22,28 +21,22 @@ class ProductRepoImpl(product_port.ProductPort):
             sku= sku.SKU(sku=str(product.sku)),
             codebar= codebar.Codebar(code=str(product.codebar))
         )
-
         return domain_product
 
     @staticmethod
     def _to_sql_entity(product: product_entity.Product) -> product_sql.Product:
-
         sql_product = product_sql.Product(
+            id=product.id,
             name= product.name.value,
             price= product.price.value,
             category= product.category.value,
             sku= product.sku.value,
             codebar= product.codebar.value
         )
-
         return sql_product
-
 
     @staticmethod
     def _to_sql_receipt_entity(product: product_entity.Product) -> product_sql.ProductReceipt:
-
-        print('****'*20, len(product.default_ingredient), "INGREDIENTS")
-
         sql_product = [
             product_sql.ProductReceipt(
                 product_id= product.id,
@@ -52,7 +45,6 @@ class ProductRepoImpl(product_port.ProductPort):
             )
             for ingredient in product.default_ingredient
         ]
-
         return sql_product
 
     def __init__(self) -> None:

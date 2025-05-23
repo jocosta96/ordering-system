@@ -1,12 +1,14 @@
-from sqlalchemy import Column, DECIMAL, String, Sequence, Integer, ForeignKey
+from sqlalchemy import Column, DECIMAL, String, ForeignKey, Integer
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 from app.adapter.outbound.repositories.sql.orm import database
 
 
 class ProductReceipt(database.Base):
     __tablename__ = "product_receipt"
 
-    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    product_id = Column(UUID(as_uuid=True), ForeignKey('product.id'), primary_key=True)
     ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
     quantity = Column(Integer)
 
@@ -19,9 +21,9 @@ class Product(database.Base):
     __tablename__ = "product"
 
     id = Column(
-        Integer,
-        Sequence('product_id_seq', start=1, increment=1),
-        primary_key=True
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
     )
     name = Column(String, unique=True)
     price = Column(DECIMAL(5,2))
