@@ -38,15 +38,25 @@ class CustomerRepoImpl(customer_port.CustomerPort):
 
         self._database.commit()
 
-    def delete_customer(self):
+    def delete_customer(self, search_key, search_value):
+
+        try:
+            data = self._database.query(customer_sql.Customer).filter_by(**{search_key:search_value}).one()
+            result = customer_sql_mapper.to_domain_entity(data)
+            self._user_id = result.id
+        except NoResultFound:
+            result = 'User not found'
         
         self._database.query(
             customer_sql.Customer
         ).filter_by(
             id=self._user_id
         ).delete()
-        
         self._database.commit()
+        result = 'User deleted'
+
+        return result
+        
         
     def read_customer(self, search_key, search_value) -> customer_entity.Customer:
         
