@@ -17,11 +17,13 @@ class CustomerCreate(BaseCustomerUseCase):
 
 class CustomerDelete(BaseCustomerUseCase):
 
-    def check_customer():
-        pass
+    def delete_customer(self,seach_key, search_value) -> str:
 
-    def delete_customer(self, customer: customer_entity.Customer) -> int:
-        return self.port.delete_customer(customer)
+        key = seach_key.strip().lower()
+        if key not in ['id', 'document', 'email']:
+            raise ValueError("Invalid search key. Use 'id', 'document', or 'email'.")
+
+        return self.port.delete_customer(seach_key, search_value)
     
 class CustomerRead(BaseCustomerUseCase):
 
