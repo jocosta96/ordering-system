@@ -14,7 +14,7 @@ from app.adapter.inbound.rest.entity.ingredient_rest import Ingredient
 from app.adapter.inbound.rest.entity.product_rest import Product
 
 
-class CreateOrderItem(BaseModel):
+class OrderItem(BaseModel):
     id: Optional[str] = None
     order_id: Optional[str] = None
     product: Product
@@ -27,7 +27,7 @@ class CreateOrderItem(BaseModel):
     }
 
 
-class CreateOrder(BaseModel):
+class Order(BaseModel):
     id: Optional[str] = None
     customer_id: int
     value: Money
@@ -35,7 +35,7 @@ class CreateOrder(BaseModel):
     payment_date: Optional[datetime] = None
     payment_transaction_id: Optional[str] = None
     has_payment_verified: bool
-    order_items: list[CreateOrderItem]
+    order_items: list[OrderItem]
 
     model_config = {
         "arbitrary_types_allowed": True

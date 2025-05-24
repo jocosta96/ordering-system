@@ -48,7 +48,21 @@ class OrderItem:
     def get_item_receipt(self):
         if self.item_receipt is None:
             self.update_ingredient()
-        return self.item_receipt
+        # Retorna uma lista de OrderItemReceiptEntity ao invés de ProductReceiptItem
+        receipts = []
+        for ing in self.item_receipt:
+            # ing pode ser ProductReceiptItem ou Ingredient
+            ingredient_obj = ing if isinstance(ing, Ingredient) else None
+            ingredient_id = ing.ingredient_id if hasattr(ing, 'ingredient_id') else getattr(ing, 'id', None)
+            quantity = ing.quantity if hasattr(ing, 'quantity') else 1
+            receipts.append(OrderItemReceiptEntity(
+                order_id=self.order_id,
+                order_item_id=self.id,
+                product_id=self.product.id,
+                ingredient=ingredient_obj,
+                quantity=quantity
+            ))
+        return receipts
 
     def calculate_price(self):
         total_price = self.product.price
@@ -111,3 +125,12 @@ class Order:
 
     def next_status(self):
         self.status.next_status()
+
+
+class OrderItemReceiptEntity:
+    def __init__(self, order_id, order_item_id, product_id, ingredient, quantity):
+        self.order_id = order_id
+        self.order_item_id = order_item_id
+        self.product_id = product_id
+        self.ingredient = ingredient
+        self.quantity = quantity
