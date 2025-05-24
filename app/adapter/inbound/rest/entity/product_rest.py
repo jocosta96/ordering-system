@@ -17,8 +17,8 @@ class Product(BaseModel):
     sku: sku.SKU
     id: Optional[str | UUID] = None  # Accepts both str and UUID
 
-    class Config:
-        schema_extra = {
+    ConfigDict(
+        json_schema_extra = {
             "example": {
                 "name": { "name": "X-Burger" },
                 "category": { "category": "LANCHE" },
@@ -30,3 +30,4 @@ class Product(BaseModel):
                 "sku": { "sku": "PROD-1238-XYZ" }
             }
         }
+    )
