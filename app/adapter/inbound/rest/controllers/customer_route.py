@@ -14,13 +14,10 @@ uc_customer_update = customer_uc.CustomerUpdate(repo_customer)
 
 customer = APIRouter(tags=["customer"], prefix="/customer")
 
-@customer.get('')
+@customer.get('', response_model=customer_rest.Customer)
 def customer_read(search_key, search_value):
-
-    customer_rest = uc_customer_read.read_customer(search_key, search_value)
-
-    customer = customer_rest_mapper.to_domain_entity(customer_rest)
-
+    customer_rest_obj = uc_customer_read.read_customer(search_key, search_value)
+    customer = customer_rest_mapper.to_domain_entity(customer_rest_obj)
     return customer
 
 @customer.post('')
@@ -38,5 +35,7 @@ def customer_update(search_key, search_value, customer_data:customer_rest.Custom
     return uc_customer_update.update_customer(search_key, search_value, customer)
 
 @customer.delete('')
-def customer_delete():
-    pass
+def customer_delete(search_key, search_value):
+    
+    return uc_customer_delete.delete_customer(search_key, search_value)
+
