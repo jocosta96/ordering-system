@@ -31,12 +31,12 @@ def product_create(product_data:product_rest.Product):
     return uc_product_create.create_product(product)
 
 @product.put('')
-def product_update(search_key, search_value, product_data:product_rest.Product):
+def product_update(product_data:product_rest.Product):
     
     product = product_rest_mapper.to_domain_entity(product_data)
 
-    return uc_product_update.update_product(search_key, search_value, product)
+    return uc_product_update.update_product(product)
 
-@product.delete('')
-def product_delete():
-    pass
+@product.delete('/{product_id}')
+def product_delete(product_id: str):
+    return uc_product_delete.delete_product(product_id)

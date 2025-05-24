@@ -15,7 +15,6 @@ class Product(BaseModel):
     default_ingredient: list[ProductReceiptItem]
     price: money.Money
     sku: sku.SKU
-    codebar: codebar.Codebar
     id: Optional[str | UUID] = None  # Accepts both str and UUID
 
     class Config:
@@ -28,7 +27,6 @@ class Product(BaseModel):
                     { "ingredient_id": 2, "quantity": 1 }
                 ],
                 "price": { "amount": 12.5 },
-                "sku": { "sku": "PROD-1238-XYZ" },
-                "codebar": { "code": "4006381333931" }
+                "sku": { "sku": "PROD-1238-XYZ" }
             }
         }

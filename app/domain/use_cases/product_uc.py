@@ -32,6 +32,6 @@ class ProductRead(BaseProductUseCase):
 
 class ProductUpdate(BaseProductUseCase):
 
-    def update_product(self, search_key, search_value, product: product_entity.Product) -> int:
+    def update_product(self, product: product_entity.Product) -> int:
 
-        return self.port.update_product(search_key, search_value, product)
+        return self.port.update_product(product)

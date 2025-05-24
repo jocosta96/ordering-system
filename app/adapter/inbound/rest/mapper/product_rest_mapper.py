@@ -1,6 +1,6 @@
 from app.domain.entities import product_entity
 from app.adapter.inbound.rest.entity import product_rest
-from app.domain.value_objects import category, name, money, sku, codebar
+from app.domain.value_objects import category, name, money, sku
 
 def to_domain_entity(product: product_rest.Product) -> product_entity.Product:
     # Convert REST ProductReceiptItem to domain ProductReceiptItem
@@ -18,7 +18,6 @@ def to_domain_entity(product: product_rest.Product) -> product_entity.Product:
         price=product.price,
         category=product.category,
         sku=product.sku,
-        codebar=product.codebar,
         default_ingredient=domain_default_ingredient
     )
 
@@ -42,7 +41,6 @@ def to_rest_entity(product: product_entity.Product) -> product_rest.Product:
         price=product.price,
         category=product.category,
         sku=product.sku,
-        codebar=product.codebar,
         id=product.id,
         default_ingredient=rest_product_receipt
     )

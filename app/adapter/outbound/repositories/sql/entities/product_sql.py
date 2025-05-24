@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DECIMAL, String, ForeignKey, Integer
+from sqlalchemy import Column, DECIMAL, String, ForeignKey, Integer, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -29,7 +29,7 @@ class Product(database.Base):
     price = Column(DECIMAL(5,2))
     category = Column(String)
     sku = Column(String, unique=True)
-    codebar = Column(String, unique=True)
+    is_active = Column(Boolean, default=True)
 
     order_item = relationship('OrderItem', back_populates='product')
     order_item_receipts = relationship('OrderItemReceipt', back_populates='product')
