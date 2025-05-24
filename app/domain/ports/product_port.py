@@ -20,3 +20,11 @@ class ProductPort(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def delete_product(self) -> product_entity.Product:
         raise NotImplementedError
+    
+    @abc.abstractmethod
+    def restore_deleted_product(self) -> product_entity.Product:
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def list_product(self) -> list[product_entity.Product]:
+        raise NotImplementedError

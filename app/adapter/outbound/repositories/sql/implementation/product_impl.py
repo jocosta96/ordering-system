@@ -1,4 +1,3 @@
-import typing
 from sqlalchemy.orm.exc import NoResultFound
 
 from app.domain.ports import product_port
@@ -77,6 +76,7 @@ class ProductRepoImpl(product_port.ProductPort):
 
         product_dict = product.__dict__.copy()
         product_dict.pop('default_ingredient', None)
+        product_dict.pop('id', None)
 
         db_receip = self._to_sql_receipt_entity(product)
 
@@ -124,14 +124,14 @@ class ProductRepoImpl(product_port.ProductPort):
         self._database.commit()
 
 
-    def read_product(self, search_key, search_value) -> product_entity.Product:
+    def read_product(self, product_id) -> product_entity.Product:
         
         try:
 
             product = self._database.query(
                 product_sql.Product
             ).filter_by(
-                **{search_key:search_value}
+                id=product_id
             ).filter_by(
                 is_active = True
             ).one()
@@ -147,3 +147,31 @@ class ProductRepoImpl(product_port.ProductPort):
         except NoResultFound:
             result = 'Product not found'
         return result
+
+
+    def list_product(self, search_key=None, search_value=None) -> list[product_entity.Product]:
+
+        products = self._database.query(
+            product_sql.Product
+        ).filter_by(
+            is_active = True
+        ).filter_by(
+            **{search_key: search_value}
+        ).all()
+
+        result = []
+        
+        for product in products:
+
+            receipts = self._database.query(
+                product_sql.ProductReceipt
+            ).filter_by(
+                product_id=product.id
+            ).all()
+            
+            result.append(self._to_domain_entity(product, receipts))
+        
+        return result
+
+
+
