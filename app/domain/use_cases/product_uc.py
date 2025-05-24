@@ -26,12 +26,21 @@ class ProductDelete(BaseProductUseCase):
 
 class ProductRead(BaseProductUseCase):
 
-    def read_product(self, seach_key, search_value) -> int:
-        return self.port.read_product(seach_key, search_value)
+    def read_product(self, product_id) -> int:
+        return self.port.read_product(product_id)
 
 
 class ProductUpdate(BaseProductUseCase):
 
-    def update_product(self, search_key, search_value, product: product_entity.Product) -> int:
+    def update_product(self, product: product_entity.Product) -> int:
+        return self.port.update_product(product)
+    
+class ProductRestoreDeleted(BaseProductUseCase):
 
-        return self.port.update_product(search_key, search_value, product)
+    def restore_deleted_product(self, product: product_entity.Product) -> int:
+        return self.port.restore_deleted_product(product)
+    
+class ProductList(BaseProductUseCase):
+
+    def list_product(self, search_key=None, search_value=None):
+        return self.port.list_product(search_key, search_value)

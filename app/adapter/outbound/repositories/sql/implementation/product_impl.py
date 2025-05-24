@@ -1,25 +1,37 @@
-import typing
 from sqlalchemy.orm.exc import NoResultFound
 
 from app.domain.ports import product_port
 from app.domain.entities import product_entity
 from app.adapter.outbound.repositories.sql.orm import database
 from app.adapter.outbound.repositories.sql.entities import product_sql
-from app.domain.value_objects import name, sku, codebar, money, category
+from app.domain.value_objects import name, sku, money, category
 from app.adapter.outbound.repositories.sql.entities import product_sql
 
 class ProductRepoImpl(product_port.ProductPort):
 
-
     @staticmethod
-    def _to_domain_entity(product: product_sql.Product) -> product_entity.Product:
+    def _to_domain_entity(
+        product: product_sql.Product,
+        receipt: list[product_sql.ProductReceipt]
+    ) -> product_entity.Product:
+        
+        default_ingredient = [
+
+            product_entity.ProductReceiptItem(
+                ingredient_id= item.ingredient.id,
+                quantity= item.quantity
+            )
+            for item in receipt
+        ]
+        
+
         domain_product = product_entity.Product(
             id = product.id,
             name= name.Name(name=str(product.name)),
             price= money.Money(amount=float(product.price)),
             category= category.ProductCategory(category=str(product.category)),
             sku= sku.SKU(sku=str(product.sku)),
-            codebar= codebar.Codebar(code=str(product.codebar))
+            default_ingredient= default_ingredient
         )
         return domain_product
 
@@ -30,8 +42,7 @@ class ProductRepoImpl(product_port.ProductPort):
             name= product.name.value,
             price= product.price.value,
             category= product.category.value,
-            sku= product.sku.value,
-            codebar= product.codebar.value
+            sku= product.sku.value
         )
         return sql_product
 
@@ -61,39 +72,106 @@ class ProductRepoImpl(product_port.ProductPort):
         self._database.commit()
         self._database.refresh(db_product)
 
-    def update_product(self, search_key, search_value, product: product_entity.Product) -> None:
-
-        self.read_product(search_key, search_value)
+    def update_product(self, product: product_entity.Product) -> None:
 
         product_dict = product.__dict__.copy()
+        product_dict.pop('default_ingredient', None)
         product_dict.pop('id', None)
+
+        db_receip = self._to_sql_receipt_entity(product)
+
+        self._database.query(
+            product_sql.ProductReceipt
+        ).filter_by(
+            product_id=product.id
+        ).delete()
+
+        self._database.add_all(db_receip)
 
         self._database.query(
             product_sql.Product
         ).filter_by(
-            id=self._user_id
+            id=product.id
         ).update(
             product_dict
         )
 
         self._database.commit()
 
-    def delete_product(self):
-        
+
+    def delete_product(self, product_id: str) -> None:
+
         self._database.query(
             product_sql.Product
         ).filter_by(
-            id=self._user_id
-        ).delete()
+            id=product_id
+        ).update(
+            {'is_active': False}
+        )
         
         self._database.commit()
         
-    def read_product(self, search_key, search_value) -> product_entity.Product:
+    def restore_deleted_product(self, product_id: str) -> None:
+
+        self._database.query(
+            product_sql.Product
+        ).filter_by(
+            id=product_id
+        ).update(
+            {'is_active': True}
+        )
+        
+        self._database.commit()
+
+
+    def read_product(self, product_id) -> product_entity.Product:
         
         try:
-            data = self._database.query(product_sql.Product).filter_by(**{search_key:search_value}).one()
-            result = self._to_domain_entity(data)
-            self._user_id = result.id
+
+            product = self._database.query(
+                product_sql.Product
+            ).filter_by(
+                id=product_id
+            ).filter_by(
+                is_active = True
+            ).one()
+
+            receipt = self._database.query(
+                product_sql.ProductReceipt
+            ).filter_by(
+                product_id=product.id
+            ).all()
+
+            result = self._to_domain_entity(product, receipt)
+
         except NoResultFound:
-            result = 'User not found'
+            result = 'Product not found'
         return result
+
+
+    def list_product(self, search_key=None, search_value=None) -> list[product_entity.Product]:
+
+        products = self._database.query(
+            product_sql.Product
+        ).filter_by(
+            is_active = True
+        ).filter_by(
+            **{search_key: search_value}
+        ).all()
+
+        result = []
+        
+        for product in products:
+
+            receipts = self._database.query(
+                product_sql.ProductReceipt
+            ).filter_by(
+                product_id=product.id
+            ).all()
+            
+            result.append(self._to_domain_entity(product, receipts))
+        
+        return result
+
+
+

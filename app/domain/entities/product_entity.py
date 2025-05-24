@@ -1,7 +1,6 @@
 from app.domain.value_objects.name import Name
 from app.domain.value_objects.sku import SKU
 from app.domain.value_objects.money import Money
-from app.domain.value_objects.codebar import Codebar
 from app.domain.value_objects.category import ProductCategory
 from app.domain.entities.ingredient_entity import Ingredient
 import uuid
@@ -25,7 +24,6 @@ class Product:
         price: Money,
         category: ProductCategory,
         sku: SKU,
-        codebar: Codebar,
         default_ingredient: list[ProductReceiptItem],
         id: str | uuid.UUID = None
     ):
@@ -34,5 +32,4 @@ class Product:
         self.price = price
         self.category = category
         self.sku = sku
-        self.codebar = codebar
         self.default_ingredient = default_ingredient
