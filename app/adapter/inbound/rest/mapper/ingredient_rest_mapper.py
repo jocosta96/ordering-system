@@ -28,8 +28,8 @@ def to_rest_entity(
         id = ingredient.id,
         name = Name(name=ingredient.name),
         price = Money(amount=ingredient.price),
-        product_category = ProductCategory(ingredient.product_category),
-        is_actuve = ingredient.is_active
+        product_category = ingredient.product_category,
+        is_active = ingredient.is_active
     )
 
     return rest_ingredient
