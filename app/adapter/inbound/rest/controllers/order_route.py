@@ -24,7 +24,7 @@ def order_read(search_key, search_value):
     return order
 
 @order.post('')
-def order_create(order_data:order_rest.CreateOrder):
+def order_create(order_data:order_rest.Order):
 
     order = order_rest_mapper.to_domain_entity(order_data)
     order.set_start_date()
@@ -33,7 +33,7 @@ def order_create(order_data:order_rest.CreateOrder):
     return uc_order_create.create_order(order)
 
 @order.put('')
-def order_update(search_key, search_value, order_data:order_rest.CreateOrder):
+def order_update(search_key, search_value, order_data:order_rest.Order):
     
     order = order_rest_mapper.to_domain_entity(order_data)
 

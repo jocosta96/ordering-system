@@ -5,7 +5,7 @@ from app.domain.value_objects.money import Money
 from app.adapter.inbound.rest.mapper import product_rest_mapper, ingredient_rest_mapper
 
 def to_domain_entity(
-    order:order_rest.CreateOrder
+    order:order_rest.Order
 ) -> order_entity.Order:
     
     order_items = [
