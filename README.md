@@ -13,7 +13,7 @@ A fast food self-service system designed for Software Architecture Postgraduate 
 
 ## Technologies Used
 - Python 3.10+
-- FastAPI (or Flask, if used)
+- FastAPI
 - SQLAlchemy
 - Alembic (for migrations)
 - Docker (for containerization)
