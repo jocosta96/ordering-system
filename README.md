@@ -2,11 +2,7 @@
 A fast food self-service system designed for Software Architecture Postgraduate coursework.
 
 ## System Architecture
-[View the system architecture diagram on Miro](https://miro.com/app/live-embed/uXjVIDKgo30=/?moveToViewport=-4029,6808,21003,7650&embedId=895617138777)
-
-<sub>*If you are viewing this README on a platform that supports HTML, you can use the live embed below:*</sub>
-
-<iframe width="768" height="432" src="https://miro.com/app/live-embed/uXjVIDKgo30=/?moveToViewport=-4029,6808,21003,7650&embedId=895617138777" frameborder="0" scrolling="no" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
+[View the system architecture diagram on Miro](https://miro.com/app/board/uXjVIDKgo30=/?share_link_id=192061516718)
 
 ## Features
 - Customer self-service ordering
@@ -60,7 +56,7 @@ compose.yaml         # Docker Compose setup
 ## Usage
 - Access the API at `http://localhost:8000` (or the port specified in your config).
 - Use tools like Postman or curl to interact with the endpoints
- - Using swagger is higly encouraged.
+ - Using Swagger is highly encouraged.
  check at `http://127.0.0.1:8080/redoc` or `http://127.0.0.1:8080/docs`
 
 ## Running Tests
@@ -69,7 +65,7 @@ pytest
 ```
 
 ## Contributing
-This project has educational purposes, that means that PR's will be done only by the project members
+This project has educational purposes, which means that PR's will be done only by the project members
 
 ## License
 This project is licensed under the MIT License.
