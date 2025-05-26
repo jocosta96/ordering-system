@@ -9,11 +9,16 @@ import uuid
 class ProductReceiptItem:
     def __init__(
             self,
-            ingredient_id: int,
+            ingredient: Ingredient,
             quantity: int
         ):
-        self.ingredient_id = ingredient_id
+        self.ingredient = ingredient
         self.quantity = quantity
+
+    def __tuple__(self):
+        return self.ingredient, self.quantity
+        
+
 
 
 class Product:

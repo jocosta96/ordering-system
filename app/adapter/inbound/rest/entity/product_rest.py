@@ -1,11 +1,11 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
-from app.domain.value_objects import name, sku, money, codebar, category
+from app.domain.value_objects import name, sku, money, category
 from app.adapter.inbound.rest.entity.ingredient_rest import Ingredient
 from uuid import UUID
 
 class ProductReceiptItem(BaseModel):
-    ingredient_id: int
+    ingredient: Ingredient
     quantity: int
 
 class Product(BaseModel):
@@ -17,17 +17,17 @@ class Product(BaseModel):
     sku: sku.SKU
     id: Optional[str | UUID] = None  # Accepts both str and UUID
 
-    ConfigDict(
-        json_schema_extra = {
-            "example": {
-                "name": { "name": "X-Burger" },
-                "category": { "category": "LANCHE" },
-                "default_ingredient": [
-                    { "ingredient_id": 1, "quantity": 2 },
-                    { "ingredient_id": 2, "quantity": 1 }
-                ],
-                "price": { "amount": 12.5 },
-                "sku": { "sku": "PROD-1238-XYZ" }
-            }
-        }
-    )
+#    ConfigDict(
+#        json_schema_extra = {
+#            "example": {
+#                "name": { "name": "X-Burger" },
+#                "category": { "category": "LANCHE" },
+#                "default_ingredient": [
+#                    { "ingredient_id": 1, "quantity": 2 },
+#                    { "ingredient_id": 2, "quantity": 1 }
+#                ],
+#                "price": { "amount": 12.5 },
+#                "sku": { "sku": "PROD-1238-XYZ" }
+#            }
+#        }
+#    )

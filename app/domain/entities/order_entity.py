@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
+from collections import Counter
 
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.status import OrderStatus, OrderStatusType
-from app.domain.entities.product_entity import Product
+from app.domain.entities.product_entity import Product, ProductReceiptItem
 from app.domain.entities.ingredient_entity import Ingredient
-
 
 class OrderItem:
 
@@ -15,7 +15,7 @@ class OrderItem:
         product: Product,
         additional_ingredient: list[Ingredient],
         remove_ingredient: list[Ingredient],
-        price: Money, 
+        price: Money = Money(amount=0.0), 
         id: str=None
     ):
         self.id = id
@@ -23,34 +23,64 @@ class OrderItem:
         self.product = product
         self.additional_ingredient = additional_ingredient
         self.remove_ingredient = remove_ingredient
-        self.item_receipt = None
+        self.item_receipt: list[ProductReceiptItem] = []
         self.price = price
 
         self._check_or_create_uuid()
+        self._generate_item_receipt()
+        self._calculate_price()
 
     def _check_or_create_uuid(self):
         if not self.id:
             self.id = uuid.uuid4()
 
-    def update_ingredient(self):
-        default_ingredient = self.product.default_ingredient
+
+    def _serialize_default_ingredients(self):
+        result = []
+        for item in self.product.default_ingredient:
+            if item.quantity > 1:
+                result.extend([item.ingredient] * item.quantity)
+            else:
+                result.append(item.ingredient)
+        return result
+    
+
+    def _generate_item_receipt(self):
+        default_ingredient = self._serialize_default_ingredients()
         additional_ingredient = self.additional_ingredient
         remove_ingredient = self.remove_ingredient
 
-        item_receipt = [ing for ing in default_ingredient if ing not in remove_ingredient]
-        for ing in additional_ingredient:
-            if ing not in item_receipt:
-                item_receipt.append(ing)
+        # Only keep default ingredients not in remove_ingredient
+        filtered_default = [item for item in default_ingredient if item not in remove_ingredient]
 
-        self.final_ingredient = item_receipt
-        self.item_receipt = item_receipt
+        # Combine all ingredients (filtered default + additional)
+        full_list = filtered_default + additional_ingredient
+
+        # Use id for grouping to avoid duplicate objects with same id
+        ingredient_map = {}
+        for ingredient in full_list:
+
+            key = getattr(ingredient, "id", id(ingredient))
+            if key in ingredient_map:
+                ingredient_map[key]["quantity"] += 1
+            else:
+                ingredient_map[key] = {"ingredient": ingredient, "quantity": 1}
+
+        self.item_receipt = [
+            ProductReceiptItem(
+                ingredient=entry["ingredient"],
+                quantity=entry["quantity"]
+            )
+            for entry in ingredient_map.values()
+        ]
+
 
     def get_item_receipt(self):
         if self.item_receipt is None:
             self.update_ingredient()
         return self.item_receipt
 
-    def calculate_price(self):
+    def _calculate_price(self):
         total_price = self.product.price
         for ingredient in self.additional_ingredient:
             total_price += ingredient.price
@@ -64,7 +94,7 @@ class Order:
 
         customer_id: int,
         order_items: list[OrderItem],
-        value: Money = 0.00,
+        value: Money = Money(amount=0.0),
         status: OrderStatus = None,
         start_date = None,
         end_date = None,
@@ -88,7 +118,7 @@ class Order:
 
         self._check_or_create_uuid()
         self._check_or_create_status()
-
+        self.calculate_value()
 
     def _check_or_create_status(self):
         if not self.status:
@@ -111,3 +141,12 @@ class Order:
 
     def next_status(self):
         self.status.next_status()
+
+    def calculate_value(self):
+
+        total_value = Money(amount=0.0)
+
+        for item in self.order_items:
+            total_value += Money(amount=item.price)
+
+        self.value = total_value

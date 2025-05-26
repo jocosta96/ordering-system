@@ -1,11 +1,10 @@
 from sqlalchemy.orm.exc import NoResultFound
 
 from app.domain.ports import product_port
-from app.domain.entities import product_entity
+from app.domain.entities import product_entity, ingredient_entity
 from app.adapter.outbound.repositories.sql.orm import database
-from app.adapter.outbound.repositories.sql.entities import product_sql
 from app.domain.value_objects import name, sku, money, category
-from app.adapter.outbound.repositories.sql.entities import product_sql
+from app.adapter.outbound.repositories.sql.entities import product_sql, ingredient_sql
 from app.domain.errors.custom_errors import NotFoundError
 
 class ProductRepoImpl(product_port.ProductPort):
@@ -16,10 +15,25 @@ class ProductRepoImpl(product_port.ProductPort):
         receipt: list[product_sql.ProductReceipt]
     ) -> product_entity.Product:
         
+        print('****'*20, product.__dict__)
+        print('****'*20, receipt[0].__dict__)
+        
         default_ingredient = [
 
             product_entity.ProductReceiptItem(
-                ingredient_id= item.ingredient.id,
+                ingredient = ingredient_entity.Ingredient(
+                    id = item.ingredient_id,
+                    name = name.Name(
+                        name=str(item.ingredient.name)
+                    ),
+                    price = money.Money(
+                        amount=float(item.ingredient.price)
+                    ),
+                    product_category = category.ProductCategory(
+                        category=str(item.ingredient.product_category)
+                    ),
+                    is_active = item.ingredient.is_active,
+                ),
                 quantity= item.quantity
             )
             for item in receipt
@@ -52,7 +66,7 @@ class ProductRepoImpl(product_port.ProductPort):
         sql_product = [
             product_sql.ProductReceipt(
                 product_id= product.id,
-                ingredient_id= ingredient.ingredient_id,
+                ingredient = ingredient.ingredient.id,
                 quantity= ingredient.quantity,
             )
             for ingredient in product.default_ingredient
@@ -143,6 +157,9 @@ class ProductRepoImpl(product_port.ProductPort):
                 product_sql.ProductReceipt
             ).filter_by(
                 product_id=product.id
+            ).join(
+                ingredient_sql.Ingredient,
+                product_sql.ProductReceipt.ingredient_id == ingredient_sql.Ingredient.id
             ).all()
 
             if not receipt:
@@ -178,6 +195,9 @@ class ProductRepoImpl(product_port.ProductPort):
                     product_sql.ProductReceipt
                 ).filter_by(
                     product_id=product.id
+                ).join(
+                    ingredient_sql.Ingredient,
+                    product_sql.ProductReceipt.ingredient_id == ingredient_sql.Ingredient.id
                 ).all()
 
                 if not receipts:

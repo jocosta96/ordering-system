@@ -46,8 +46,8 @@ class OrderItemReceipt(database.Base):
 
     order_id = Column(UUID, ForeignKey('order.id'), primary_key=True)
     order_item_id = Column(UUID, ForeignKey('order_item.id'), primary_key=True)
-    product_id = Column(UUID, ForeignKey('product.id'))
-    ingredient_id = Column(Integer, ForeignKey('ingredient.id'))
+    product_id = Column(UUID, ForeignKey('product.id'), primary_key=True)
+    ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
     quantity = Column(Integer)
 
     ingredient = relationship('Ingredient', back_populates='order_item_receipts')
