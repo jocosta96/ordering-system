@@ -42,20 +42,20 @@ compose.yaml         # Docker Compose setup
    ```
 3. **Configure the .env like this sample:
    
-    POSTGRES_USER=""
-    POSTGRES_PASSWORD=""
-    POSTGRES_DB=""
-    PGADMIN_MAIL=""
-    PGADMIN_PW=""
-    POSTGRES_HOST='postgres'
-    HOST='localhost'
-    DRIVER_NAME = 'postgresql'
+    - POSTGRES_USER=""
+    - POSTGRES_PASSWORD=""
+    - POSTGRES_DB=""
+    - PGADMIN_MAIL=""
+    - PGADMIN_PW=""
+    - POSTGRES_HOST='postgres'
+    - HOST='localhost'
+    - DRIVER_NAME = 'postgresql'
 
-3. **Run database migrations:**
+4. **Run database migrations:**
    ```bash
    alembic upgrade head
    ```
-4. ** with Docker:
+5. ** with Docker:
    ```bash
    docker compose up --build
    ```
