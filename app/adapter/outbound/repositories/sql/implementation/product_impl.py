@@ -6,6 +6,7 @@ from app.adapter.outbound.repositories.sql.orm import database
 from app.adapter.outbound.repositories.sql.entities import product_sql
 from app.domain.value_objects import name, sku, money, category
 from app.adapter.outbound.repositories.sql.entities import product_sql
+from app.domain.errors.custom_errors import NotFoundError
 
 class ProductRepoImpl(product_port.ProductPort):
 
@@ -98,7 +99,6 @@ class ProductRepoImpl(product_port.ProductPort):
 
         self._database.commit()
 
-
     def delete_product(self, product_id: str) -> None:
 
         self._database.query(
@@ -125,7 +125,7 @@ class ProductRepoImpl(product_port.ProductPort):
 
 
     def read_product(self, product_id) -> product_entity.Product:
-        
+
         try:
 
             product = self._database.query(
@@ -136,42 +136,56 @@ class ProductRepoImpl(product_port.ProductPort):
                 is_active = True
             ).one()
 
+            if not product:
+                raise NotFoundError('Product not found')
+
             receipt = self._database.query(
                 product_sql.ProductReceipt
             ).filter_by(
                 product_id=product.id
             ).all()
 
+            if not receipt:
+                raise NotFoundError('Product receipt not found')
+
             result = self._to_domain_entity(product, receipt)
 
+            return result
+        
         except NoResultFound:
-            result = 'Product not found'
-        return result
+            raise NotFoundError('Product not found')
 
 
     def list_product(self, search_key=None, search_value=None) -> list[product_entity.Product]:
 
-        products = self._database.query(
-            product_sql.Product
-        ).filter_by(
-            is_active = True
-        ).filter_by(
-            **{search_key: search_value}
-        ).all()
-
-        result = []
-        
-        for product in products:
-
-            receipts = self._database.query(
-                product_sql.ProductReceipt
+        try:
+            products = self._database.query(
+                product_sql.Product
             ).filter_by(
-                product_id=product.id
+                is_active = True
+            ).filter_by(
+                **{search_key: search_value}
             ).all()
+
+            result = []
+
+            if not products:
+                raise NotFoundError('No products found')
             
-            result.append(self._to_domain_entity(product, receipts))
-        
-        return result
+            for product in products:
 
+                receipts = self._database.query(
+                    product_sql.ProductReceipt
+                ).filter_by(
+                    product_id=product.id
+                ).all()
 
+                if not receipts:
+                    raise NotFoundError(f'Receipt for product {product.id} not found')
+                
+                result.append(self._to_domain_entity(product, receipts))
+            
+            return result
 
+        except NoResultFound:
+            raise NotFoundError('Product not found')
