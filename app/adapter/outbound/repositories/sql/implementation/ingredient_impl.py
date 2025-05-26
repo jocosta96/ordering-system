@@ -22,7 +22,6 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
             name=ingredient.name,
             price=ingredient.price,
             product_category=category.ProductCategory(category=str(ingredient.product_category)),
-            # ingredient.product_category,
             is_active=ingredient.is_active
         )
 
