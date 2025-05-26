@@ -8,7 +8,7 @@ from app.domain.entities import ingredient_entity
 from app.adapter.outbound.repositories.sql.orm import database
 from app.adapter.outbound.repositories.sql.entities import ingredient_sql
 from app.domain.value_objects import name, sku, codebar, money, category
-
+from app.domain.errors.custom_errors import NotFoundError
 
 class IngredientRepoImpl(ingredient_port.IngredientPort):
 
@@ -92,7 +92,7 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
             self._ingredient_id = result.id
             return result
         except NoResultFound:
-            NoResultFound('Ingredient not found')
+            NotFoundError('Ingredient not found')
 
     def restore_deleted_ingredient(self, ingredient_id: int) -> None:
         self.read_ingredient(ingredient_id)
@@ -119,4 +119,4 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
             result = [self._to_domain_entity(ing) for ing in ingredients]
             return result
         except NoResultFound:
-            NoResultFound('Ingredients not found')
+            NotFoundError('Ingredients not found')
