@@ -40,15 +40,22 @@ compose.yaml         # Docker Compose setup
    ```bash
    pip install -r requirements.txt
    ```
+3. **Configure the .env like this sample:
+   
+    POSTGRES_USER=""
+    POSTGRES_PASSWORD=""
+    POSTGRES_DB=""
+    PGADMIN_MAIL=""
+    PGADMIN_PW=""
+    POSTGRES_HOST='postgres'
+    HOST='localhost'
+    DRIVER_NAME = 'postgresql'
+
 3. **Run database migrations:**
    ```bash
    alembic upgrade head
    ```
-4. **Start the application:**
-   ```bash
-   python -m app.main
-   ```
-   Or with Docker:
+4. ** with Docker:
    ```bash
    docker compose up --build
    ```
