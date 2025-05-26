@@ -50,9 +50,9 @@ class OrderRepoImpl(OrderPort):
 
         order_item_receipt_sql = [
             order_sql.OrderItemReceipt(
-                order_id = receipt.order_id,
-                order_item_id = receipt.order_item_id,
-                product_id = receipt.product_id,
+                order_id = order.id,
+                order_item_id = item.id,
+                product_id = item.product.id,
                 ingredient_id = receipt.ingredient.id,
                 quantity = receipt.quantity
             ) for item in order.order_items

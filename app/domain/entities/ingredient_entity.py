@@ -17,4 +17,9 @@ class Ingredient:
         self.name = name
         self.price = price
         self.product_category = product_category
-        self.is_active = is_active
+        self._is_active = is_active
+
+    @property
+    def is_active(self) -> bool:
+        """Check if the ingredient is active."""
+        return self._is_active

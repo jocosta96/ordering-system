@@ -1,9 +1,10 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_EVEN
 from pydantic import BaseModel, Field, field_validator
 
 
 class Money(BaseModel):
     amount: Decimal = Field(..., description="Amount of Money in BRL")
+
 
     @field_validator('amount')
     def validate(cls, values):
@@ -21,7 +22,7 @@ class Money(BaseModel):
         return values
 
     def __str__(self) -> str:
-        return str(self.amount)
+        return str(self.amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_EVEN))
     @property
     def value(self) -> float:
-        return round(self.amount, 2)
+        return float(self.amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_EVEN))
