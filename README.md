@@ -55,7 +55,7 @@ compose.yaml         # Docker Compose setup
    ```bash
    alembic upgrade head
    ```
-5. ** with Docker:
+5. **with Docker:
    ```bash
    docker compose up --build
    ```
