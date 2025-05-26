@@ -7,10 +7,6 @@ from app.domain.value_objects.status import OrderStatus, OrderStatusType
 from app.domain.entities.product_entity import Product, ProductReceiptItem
 from app.domain.entities.ingredient_entity import Ingredient
 
-
-
-
-
 class OrderItem:
 
     def __init__(
@@ -32,6 +28,7 @@ class OrderItem:
 
         self._check_or_create_uuid()
         self._generate_item_receipt()
+        self._calculate_price()
 
     def _check_or_create_uuid(self):
         if not self.id:
@@ -62,6 +59,7 @@ class OrderItem:
         # Use id for grouping to avoid duplicate objects with same id
         ingredient_map = {}
         for ingredient in full_list:
+
             key = getattr(ingredient, "id", id(ingredient))
             if key in ingredient_map:
                 ingredient_map[key]["quantity"] += 1
@@ -82,7 +80,7 @@ class OrderItem:
             self.update_ingredient()
         return self.item_receipt
 
-    def calculate_price(self):
+    def _calculate_price(self):
         total_price = self.product.price
         for ingredient in self.additional_ingredient:
             total_price += ingredient.price
@@ -120,7 +118,7 @@ class Order:
 
         self._check_or_create_uuid()
         self._check_or_create_status()
-
+        self.calculate_value()
 
     def _check_or_create_status(self):
         if not self.status:
@@ -143,3 +141,12 @@ class Order:
 
     def next_status(self):
         self.status.next_status()
+
+    def calculate_value(self):
+
+        total_value = Money(amount=0.0)
+
+        for item in self.order_items:
+            total_value += Money(amount=item.price)
+
+        self.value = total_value

@@ -20,9 +20,20 @@ class Money(BaseModel):
         assert decimal_places <= 2, "Amount must have at most 2 decimal places."
 
         return values
+    
+    @staticmethod
+    def _format(value: Decimal) -> str:
+        """
+        Formats the amount to a string with 2 decimal places.
+        """
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_EVEN)
 
     def __str__(self) -> str:
-        return str(self.amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_EVEN))
+        return str(self._format(self.amount))
+    
     @property
     def value(self) -> float:
-        return float(self.amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_EVEN))
+        return float(self._format(self.amount))
+    
+    def __add__(self, other: 'Money') -> 'Money':
+        return self._format(value=Decimal(self.amount) + Decimal(other.amount))
