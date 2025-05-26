@@ -19,7 +19,7 @@ uc_product_list = product_uc.ProductList(repo_product)
 product = APIRouter(prefix="/product", tags=["product"])
 
 @product.get("/list")
-async def product_list(search_key, search_value):
+async def product_list(search_key, search_value) -> list[product_rest.Product]:
     try:
         products = uc_product_list.list_product(
             search_key=search_key, 
@@ -30,7 +30,7 @@ async def product_list(search_key, search_value):
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
 
 @product.get("/{product_id}")
-async def product_read(product_id):
+async def product_read(product_id) -> product_rest.Product:
     try:
         product = uc_product_read.read_product(product_id)
         return product_rest_mapper.to_rest_entity(product)
