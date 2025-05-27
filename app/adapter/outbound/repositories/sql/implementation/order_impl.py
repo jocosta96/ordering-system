@@ -13,18 +13,18 @@ class OrderRepoImpl(OrderPort):
 
     @staticmethod
     def _order_entity_to_sql(order: order_entity.Order) -> order_sql.Order:
-        
+
         order_sql_entity = order_sql.Order(
-            
-            id = order.id,
-            customer_id = order.customer_id,
-            value = order.value,
-            payment_date = order.payment_date,
-            payment_transaction_id = order.payment_transaction_id,
-            start_date = order.start_date,
-            end_date = order.end_date,
-            has_payment_verified = order.has_payment_verified,
-            status = order.status 
+
+            id=order.id,
+            customer_id=order.customer_id,
+            value=order.value,
+            payment_date=order.payment_date,
+            payment_transaction_id=order.payment_transaction_id,
+            start_date=order.start_date,
+            end_date=order.end_date,
+            has_payment_verified=order.has_payment_verified,
+            status=order.status
         )
 
         return order_sql_entity
@@ -35,15 +35,15 @@ class OrderRepoImpl(OrderPort):
         order_item_sql = [
 
             order_sql.OrderItem(
-                id = item.id,
-                order_id = order.id,
-                product_id = item.product.id,
-                price = item.price
+                id=item.id,
+                order_id=order.id,
+                product_id=item.product.id,
+                price=item.price
             ) for item in order.order_items
         ]
 
         return order_item_sql
-    
+
     @staticmethod
     def _order_item_receipt_entity_to_sql(order: order_entity.Order) -> order_sql.OrderItemReceipt:
 
@@ -52,17 +52,16 @@ class OrderRepoImpl(OrderPort):
 
         order_item_receipt_sql = [
             order_sql.OrderItemReceipt(
-                order_id = order.id,
-                order_item_id = item.id,
-                product_id = item.product.id,
-                ingredient_id = receipt.ingredient.id,
-                quantity = receipt.quantity
+                order_id=order.id,
+                order_item_id=item.id,
+                product_id=item.product.id,
+                ingredient_id=receipt.ingredient.id,
+                quantity=receipt.quantity
             ) for item in order.order_items
-              for receipt in item.get_item_receipt()
+            for receipt in item.get_item_receipt()
         ]
 
         return order_item_receipt_sql
-
 
     def create_order(self, order: order_entity.Order) -> None:
 
@@ -82,8 +81,16 @@ class OrderRepoImpl(OrderPort):
         for receipt in db_order_item_receipts:
             self._database.refresh(receipt)
 
-    def update_order(self, search_key, search_value, order: order_entity.Order) -> None:
-        pass
+    def update_order(self, order_id: str, status: status.OrderStatus) -> None:
+        self._database.query(
+            order_sql.Order
+        ).filter_by(
+            id=order_id
+        ).update(
+            {'status': status}
+        )
+
+        self._database.commit()
 
     def delete_order(self):
         pass
@@ -93,23 +100,23 @@ class OrderRepoImpl(OrderPort):
             order_sql: order_sql.Order,
             list_order_items_sql: list[order_sql.OrderItem],
             list_order_item_receipts_sql: list[order_sql.OrderItemReceipt]
-        ) -> order_entity.Order:
-        
+    ) -> order_entity.Order:
+
         order_items = [
             order_entity.OrderItem(
                 order_id=order_sql.id,
-                product = product_entity.Product(
-                    name = order_items_sql.product.name,
-                    price = order_items_sql.product.price,
-                    category = order_items_sql.product.category,
-                    sku = sku.SKU(sku=order_items_sql.product.sku),
-                    default_ingredient = [
+                product=product_entity.Product(
+                    name=order_items_sql.product.name,
+                    price=order_items_sql.product.price,
+                    category=order_items_sql.product.category,
+                    sku=sku.SKU(sku=order_items_sql.product.sku),
+                    default_ingredient=[
                         product_entity.ProductReceiptItem(
-                            ingredient = ingredient_entity.Ingredient(
-                                id = receipt.ingredient.id,
-                                name = receipt.ingredient.name,
-                                price = money.Money(amount=receipt.ingredient.price),
-                                product_category = product_entity.ProductCategory(
+                            ingredient=ingredient_entity.Ingredient(
+                                id=receipt.ingredient.id,
+                                name=receipt.ingredient.name,
+                                price=money.Money(amount=receipt.ingredient.price),
+                                product_category=product_entity.ProductCategory(
                                     category=receipt.ingredient.product_category
                                 ),
                                 is_active=receipt.ingredient.is_active
@@ -118,14 +125,14 @@ class OrderRepoImpl(OrderPort):
                         )
                         for receipt in order_items_sql.product.product_receipts
                     ],
-                    id = order_items_sql.product.id
+                    id=order_items_sql.product.id
                 ),
-                additional_ingredient = [],
-                remove_ingredient = [],
-                price = money.Money(amount=order_items_sql.price),
-                item_receipt = [
+                additional_ingredient=[],
+                remove_ingredient=[],
+                price=money.Money(amount=order_items_sql.price),
+                item_receipt=[
                     product_entity.ProductReceiptItem(
-                        ingredient= ingredient_entity.Ingredient(
+                        ingredient=ingredient_entity.Ingredient(
                             id=receipt.ingredient_id,
                             name=receipt.ingredient.name,
                             price=money.Money(amount=receipt.ingredient.price),
@@ -134,33 +141,32 @@ class OrderRepoImpl(OrderPort):
                             ),
                             is_active=receipt.ingredient.is_active
                         ),
-                        quantity = receipt.quantity
+                        quantity=receipt.quantity
                     )
                     for receipt in list_order_item_receipts_sql
                     if receipt.order_item_id == order_items_sql.id
                 ],
-                id = order_items_sql.id
+                id=order_items_sql.id
             ) for order_items_sql in list_order_items_sql
         ]
 
         order = order_entity.Order(
-            customer_id = order_sql.customer_id,
-            order_items = order_items,
-            value  = order_sql.value,
-            status = status.OrderStatus(status=status.OrderStatusType(order_sql.status)),
-            start_date = order_sql.start_date,
-            end_date = order_sql.end_date,
-            has_payment_verified = order_sql.has_payment_verified,
-            payment_date = order_sql.payment_date,
-            payment_transaction_id = order_sql.payment_transaction_id,
-            id = order_sql.id
+            customer_id=order_sql.customer_id,
+            order_items=order_items,
+            value=order_sql.value,
+            status=status.OrderStatus(status=status.OrderStatusType(order_sql.status)),
+            start_date=order_sql.start_date,
+            end_date=order_sql.end_date,
+            has_payment_verified=order_sql.has_payment_verified,
+            payment_date=order_sql.payment_date,
+            payment_transaction_id=order_sql.payment_transaction_id,
+            id=order_sql.id
         )
 
         return order
-        
 
     def read_order(self, search_key, search_value) -> order_entity.Order:
-        
+
         order = self._database.query(
             order_sql.Order
         ).filter_by(
@@ -201,4 +207,3 @@ class OrderRepoImpl(OrderPort):
         )
 
         return domain_order
- 
