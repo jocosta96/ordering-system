@@ -204,7 +204,7 @@ class OrderRepoImpl(OrderPort):
         return domain_order
  
     
-test = OrderRepoImpl().read_order(
-    'id', 
-    'f80ddf99-245f-455a-8b21-a05cee4195c5'
-)
+#test = OrderRepoImpl().read_order(
+#    'id', 
+#    'f80ddf99-245f-455a-8b21-a05cee4195c5'
+#)
