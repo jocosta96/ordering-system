@@ -1,5 +1,6 @@
 from decimal import Decimal, ROUND_HALF_EVEN
 from pydantic import BaseModel, Field, field_validator
+from typing import Union
 
 
 class Money(BaseModel):

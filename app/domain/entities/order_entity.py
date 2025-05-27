@@ -15,6 +15,7 @@ class OrderItem:
         product: Product,
         additional_ingredient: list[Ingredient],
         remove_ingredient: list[Ingredient],
+        item_receipt: list[ProductReceiptItem] = [],
         price: Money = Money(amount=0.0), 
         id: str=None
     ):
@@ -23,7 +24,7 @@ class OrderItem:
         self.product = product
         self.additional_ingredient = additional_ingredient
         self.remove_ingredient = remove_ingredient
-        self.item_receipt: list[ProductReceiptItem] = []
+        self.item_receipt = item_receipt
         self.price = price
 
         self._check_or_create_uuid()
@@ -46,6 +47,10 @@ class OrderItem:
     
 
     def _generate_item_receipt(self):
+
+        if self.item_receipt:
+            return
+
         default_ingredient = self._serialize_default_ingredients()
         additional_ingredient = self.additional_ingredient
         remove_ingredient = self.remove_ingredient
@@ -81,6 +86,9 @@ class OrderItem:
         return self.item_receipt
 
     def _calculate_price(self):
+        if not self.price.amount == Money(amount=0.0).amount:
+            return
+
         total_price = self.product.price
         for ingredient in self.additional_ingredient:
             total_price += ingredient.price
@@ -147,6 +155,6 @@ class Order:
         total_value = Money(amount=0.0)
 
         for item in self.order_items:
-            total_value += Money(amount=item.price)
+            total_value += Money(amount=item.price) if not isinstance(item.price, Money) else item.price
 
         self.value = total_value
