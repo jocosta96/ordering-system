@@ -19,6 +19,8 @@ def order_read(search_key, search_value):
 
     order = uc_order_read.read_order(search_key, search_value)
 
+    print('****' * 20, order.__dict__)
+
     order = order_rest_mapper.to_rest_entity(order)
 
     return order

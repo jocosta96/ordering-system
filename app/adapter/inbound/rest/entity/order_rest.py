@@ -4,15 +4,16 @@ from datetime import datetime
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.status import OrderStatus, OrderStatusType
 from app.adapter.inbound.rest.entity.ingredient_rest import Ingredient
-from app.adapter.inbound.rest.entity.product_rest import Product
+from app.adapter.inbound.rest.entity.product_rest import Product, ProductReceiptItem
 
 
 class OrderItem(BaseModel):
     id: Optional[str] = None
     order_id: Optional[str] = None
     product: Product
-    additional_ingredient: list[Ingredient]
-    remove_ingredient: list[Ingredient]
+    additional_ingredient: list[Ingredient] = []
+    remove_ingredient: list[Ingredient] = []
+    item_receipt: list[ProductReceiptItem] = []
     price: Money= Money(amount=0.00)
 
     model_config = {

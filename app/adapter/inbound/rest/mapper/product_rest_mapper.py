@@ -33,16 +33,13 @@ def to_domain_entity(product: product_rest.Product) -> product_entity.Product:
 
 
 def to_rest_entity(product: product_entity.Product) -> product_rest.Product:
-
     rest_product_receipt = [
         product_rest.ProductReceiptItem(
             ingredient=product_rest.Ingredient(
                 id=item.ingredient.id,
                 name=name.Name(name=str(item.ingredient.name)),
                 price=money.Money(amount=str(item.ingredient.price)),
-                product_category=category.ProductCategory(
-                    category=str(item.ingredient.product_category)
-                ),
+                product_category=category.ProductCategory(category=str(item.ingredient.product_category)),
                 is_active=item.ingredient.is_active
             ),
             quantity=item.quantity
@@ -51,11 +48,11 @@ def to_rest_entity(product: product_entity.Product) -> product_rest.Product:
     ]
 
     rest_product = product_rest.Product(
-        name=product.name,
-        price=product.price,
-        category=product.category,
-        sku=product.sku,
-        id=product.id,
+        name=name.Name(name=str(product.name)),
+        price=money.Money(amount=str(product.price)),
+        category=category.ProductCategory(category=str(product.category)),
+        sku=sku.SKU(sku=str(product.sku)),
+        id=str(product.id) if product.id is not None else None,
         default_ingredient=rest_product_receipt
     )
 

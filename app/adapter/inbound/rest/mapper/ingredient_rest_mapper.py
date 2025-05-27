@@ -25,11 +25,11 @@ def to_rest_entity(
     print('*'*100, ingredient.__dict__)
     
     rest_ingredient = ingredient_rest.Ingredient(
-        id = ingredient.id,
-        name = Name(name=ingredient.name),
-        price = Money(amount=ingredient.price),
-        product_category = ingredient.product_category,
-        is_active = ingredient.is_active
+        id=ingredient.id,
+        name=Name(name=str(ingredient.name)),
+        price=Money(amount=str(ingredient.price)),
+        product_category=ingredient.product_category,
+        is_active=ingredient.is_active
     )
 
     return rest_ingredient
