@@ -1,13 +1,15 @@
 from app.domain.ports import customer_port
 from app.domain.entities import customer_entity
 
+
 class BaseCustomerUseCase():
 
     def __init__(
-        self,
-        port: customer_port.CustomerPort
+            self,
+            port: customer_port.CustomerPort
     ) -> None:
         self.port = port
+
 
 class CustomerCreate(BaseCustomerUseCase):
 
@@ -17,24 +19,23 @@ class CustomerCreate(BaseCustomerUseCase):
 
 class CustomerDelete(BaseCustomerUseCase):
 
-    def delete_customer(self,seach_key, search_value) -> str:
+    def delete_customer(self, ingredient_id: int) -> str:
+        return self.port.delete_customer(ingredient_id)
 
-        key = seach_key.strip().lower()
-        if key not in ['id', 'document', 'email']:
-            raise ValueError("Invalid search key. Use 'id', 'document', or 'email'.")
 
-        return self.port.delete_customer(seach_key, search_value)
-    
 class CustomerRead(BaseCustomerUseCase):
 
-    def read_customer(self, seach_key, search_value) -> customer_entity.Customer:
+    def read_customer(self, customer_id: int) -> customer_entity.Customer:
+        return self.port.read_customer(customer_id)
 
-        key = seach_key.strip().lower()
 
-        return self.port.read_customer(key, search_value)
-    
 class CustomerUpdate(BaseCustomerUseCase):
 
-    def update_customer(self, search_key, search_value, customer: customer_entity.Customer) -> None:
+    def update_customer(self, customer: customer_entity.Customer) -> int:
+        return self.port.update_customer(customer)
 
-        return self.port.update_customer(search_key, search_value, customer)
+
+class CustomerList(BaseCustomerUseCase):
+
+    def list_customer(self, search_key=None, search_value=None):
+        return self.port.list_customer(search_key, search_value)
