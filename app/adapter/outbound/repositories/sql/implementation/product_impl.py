@@ -65,9 +65,9 @@ class ProductRepoImpl(product_port.ProductPort):
     def _to_sql_receipt_entity(product: product_entity.Product) -> product_sql.ProductReceipt:
         sql_product = [
             product_sql.ProductReceipt(
-                product_id= product.id,
-                ingredient = ingredient.ingredient.id,
-                quantity= ingredient.quantity,
+                product_id=product.id,
+                ingredient_id=ingredient.ingredient.id,
+                quantity=ingredient.quantity,
             )
             for ingredient in product.default_ingredient
         ]
@@ -78,12 +78,15 @@ class ProductRepoImpl(product_port.ProductPort):
         self._user_id = None
     
     def create_product(self, product: product_entity.Product) -> None:
+        
+        print('***'*100, product.__dict__)
 
         db_receip = self._to_sql_receipt_entity(product)
         db_product = self._to_sql_entity(product)
 
-        self._database.add_all(db_receip)
         self._database.add(db_product)
+        self._database.add_all(db_receip)
+
         self._database.commit()
         self._database.refresh(db_product)
 
