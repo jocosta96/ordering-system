@@ -19,7 +19,6 @@ class OrderRepoImpl(OrderPort):
             id = order.id,
             customer_id = order.customer_id,
             value = order.value,
-#            order_items = order.order_items,
             payment_date = order.payment_date,
             payment_transaction_id = order.payment_transaction_id,
             start_date = order.start_date,
@@ -95,7 +94,7 @@ class OrderRepoImpl(OrderPort):
             list_order_items_sql: list[order_sql.OrderItem],
             list_order_item_receipts_sql: list[order_sql.OrderItemReceipt]
         ) -> order_entity.Order:
-        """"""
+        
         order_items = [
             order_entity.OrderItem(
                 order_id=order_sql.id,
@@ -158,7 +157,7 @@ class OrderRepoImpl(OrderPort):
         )
 
         return order
-        """"""
+        
 
     def read_order(self, search_key, search_value) -> order_entity.Order:
         
@@ -203,8 +202,3 @@ class OrderRepoImpl(OrderPort):
 
         return domain_order
  
-    
-#test = OrderRepoImpl().read_order(
-#    'id', 
-#    'f80ddf99-245f-455a-8b21-a05cee4195c5'
-#)
