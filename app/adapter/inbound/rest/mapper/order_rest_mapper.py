@@ -70,3 +70,19 @@ def to_rest_entity(
         has_payment_verified=order.has_payment_verified,
         order_items=order_items
     )
+
+
+def to_simple_reader(
+    order: order_entity.Order
+) -> order_rest.SimpleOrderReader:
+    
+    print('*****'*20, order.__dict__)
+
+    return order_rest.SimpleOrderReader(
+        id=str(order.id),
+        customer_id=order.customer_id,
+        value=Money(amount=str(order.value)),
+        status=OrderStatus(status=str(order.status)),
+        order_display_id=order.order_display_id,
+        order_start_date=order.start_date
+    )
