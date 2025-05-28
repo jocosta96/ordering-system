@@ -36,5 +36,7 @@ class Money(BaseModel):
     def value(self) -> float:
         return float(self._format(self.amount))
     
-    def __add__(self, other: 'Money') -> 'Money':
-        return self._format(value=Decimal(self.amount) + Decimal(other.amount))
+    def __add__(self, other: Union['Money', Decimal]) -> 'Money':
+        if isinstance(other, Decimal):
+            other = Money(amount=other)
+        return Money(amount=Decimal(self.amount) + Decimal(other.amount))
