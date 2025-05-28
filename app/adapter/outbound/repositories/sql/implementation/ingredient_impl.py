@@ -15,8 +15,6 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
     @staticmethod
     def _to_domain_entity(ingredient: ingredient_sql.Ingredient) -> ingredient_entity.Ingredient:
 
-        print('*' * 100, ingredient)
-
         domain_ingredient = ingredient_entity.Ingredient(
             id=ingredient.id,
             name=ingredient.name,
@@ -43,6 +41,13 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
         self._database = database.get_db()
         self._ingredient_id = None
 
+    def try_commit(self) -> None:
+        try:
+            self._database.commit()
+        except Exception as e:
+            self._database.rollback()
+            raise e
+
     def create_ingredient(self, ingredient: ingredient_entity.Ingredient) -> None:
 
         db_ingredient = self._to_sql_entity(ingredient)
@@ -62,7 +67,7 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
             ingredient_dict
         )
 
-        self._database.commit()
+        self.try_commit()
 
     def delete_ingredient(self, ingredient_id: int):
         self.read_ingredient(ingredient_id)
@@ -74,7 +79,7 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
             {'is_active': False}
         )
 
-        self._database.commit()
+        self.try_commit()
 
     def read_ingredient(self, ingredient_id: int) -> ingredient_entity.Ingredient:
         try:
@@ -103,7 +108,7 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
             {'is_active': True}
         )
 
-        self._database.commit()
+        self.try_commit()
 
     def list_ingredient(self, search_key=None, search_value=None) -> list[ingredient_entity.Ingredient]:
         try:
@@ -114,7 +119,7 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
             ).filter_by(
                 **{search_key: search_value}
             ).all()
-            print([])
+
             result = [self._to_domain_entity(ing) for ing in ingredients]
             return result
         except NoResultFound:
