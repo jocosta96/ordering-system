@@ -36,26 +36,18 @@ compose.yaml         # Docker Compose setup
    git clone <repo-url>
    cd ordering-system
    ```
-2. **Install dependencies:**
+2. **Configure the .env like this sample:**
    ```bash
-   pip install -r requirements.txt
-   ```
-3. **Configure the .env like this sample:
-   
     - POSTGRES_USER=""
     - POSTGRES_PASSWORD=""
     - POSTGRES_DB=""
     - PGADMIN_MAIL=""
     - PGADMIN_PW=""
     - POSTGRES_HOST='postgres'
-    - HOST='localhost'
     - DRIVER_NAME = 'postgresql'
-
-4. **Run database migrations:**
-   ```bash
-   alembic revision --autogenerate && alembic upgrade head
    ```
-5. **with Docker:
+
+5. **Start up Docker:**
    ```bash
    docker compose up --build
    ```
@@ -67,9 +59,9 @@ compose.yaml         # Docker Compose setup
  check at `http://127.0.0.1:80/redoc` or `http://127.0.0.1:80/docs`
 
 ## Running Tests
-```bash
-pytest
-```
+   ```bash
+      pytest
+   ```
 
 ## Contributing
 This project has educational purposes, which means that PR's will be done only by the project members
