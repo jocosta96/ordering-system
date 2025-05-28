@@ -31,7 +31,7 @@ async def order_list(search_key, search_value) -> List[order_rest.Order]:
     except NotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
 
-@order.get("/qeue/{status}")
+@order.get("/queue/{status}")
 async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
     try:
         orders = uc_order_list.list_order(
@@ -62,8 +62,8 @@ async def order_create(order_data: order_rest.Order):
     return uc_order_create.create_order(order)
 
 
-@order.put('')
-async def order_update(order_id: str, status: str):
+@order.patch('/{order_id}')
+async def order_update_status(order_id: str, status: str):
     status = obj_status.OrderStatus(status=status)
     return uc_order_update.update_order(order_id, status)
 
