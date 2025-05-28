@@ -21,3 +21,7 @@ class OrderPort(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def delete_order(self, order_id: str) -> order_entity.Order:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def list_order(self, search_key, search_value) -> list[order_entity.Order]:
+        raise NotImplementedError

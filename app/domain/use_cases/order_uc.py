@@ -26,11 +26,17 @@ class OrderDelete(BaseOrderUseCase):
 
 class OrderRead(BaseOrderUseCase):
 
-    def read_order(self, seach_key, search_value) -> int:
-        return self.port.read_order(seach_key, search_value)
+    def read_order(self, order_id: str) -> order_entity.Order:
+        return self.port.read_order(order_id)
 
 
 class OrderUpdate(BaseOrderUseCase):
 
     def update_order(self, order_id: str, status: status.OrderStatus) -> int:
         return self.port.update_order(order_id, status)
+
+
+class OrderList(BaseOrderUseCase):
+
+    def list_order(self, search_key, search_value):
+        return self.port.list_order(search_key, search_value)
