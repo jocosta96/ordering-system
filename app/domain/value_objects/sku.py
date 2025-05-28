@@ -3,7 +3,11 @@ import re
 
 class SKU(BaseModel):
     
-    sku: str = Field(..., description="Stock Keeping Unit")
+    sku: str = Field(
+        ...,
+        description="Stock Keeping Unit",
+        examples=['PROD-1234-XYZ']
+    )
 
     @field_validator('sku')
     def _check(cls, values):
