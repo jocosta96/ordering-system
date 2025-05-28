@@ -53,7 +53,7 @@ compose.yaml         # Docker Compose setup
 
 4. **Run database migrations:**
    ```bash
-   alembic upgrade head
+   alembic revision --autogenerate && alembic upgrade head
    ```
 5. **with Docker:
    ```bash
@@ -61,10 +61,10 @@ compose.yaml         # Docker Compose setup
    ```
 
 ## Usage
-- Access the API at `http://localhost:8000` (or the port specified in your config).
+- Access the API at `http://localhost:80` (or the port specified in your config).
 - Use tools like Postman or curl to interact with the endpoints
  - Using Swagger is highly encouraged.
- check at `http://127.0.0.1:8080/redoc` or `http://127.0.0.1:8080/docs`
+ check at `http://127.0.0.1:80/redoc` or `http://127.0.0.1:80/docs`
 
 ## Running Tests
 ```bash
