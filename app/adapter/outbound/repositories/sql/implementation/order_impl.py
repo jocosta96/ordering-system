@@ -47,8 +47,8 @@ class OrderRepoImpl(OrderPort):
     @staticmethod
     def _order_item_receipt_entity_to_sql(order: order_entity.Order) -> order_sql.OrderItemReceipt:
 
-        print('****'*20, order.__dict__)
-        print('****'*20, order.order_items[0].__dict__)
+        print('****' * 20, order.__dict__)
+        print('****' * 20, order.order_items[0].__dict__)
 
         order_item_receipt_sql = [
             order_sql.OrderItemReceipt(
@@ -165,12 +165,12 @@ class OrderRepoImpl(OrderPort):
 
         return order
 
-    def read_order(self, search_key, search_value) -> order_entity.Order:
+    def read_order(self, order_id: str) -> order_entity.Order:
 
         order = self._database.query(
             order_sql.Order
         ).filter_by(
-            **{search_key: search_value}
+            id=order_id
         ).one()
 
         if not order:
@@ -207,3 +207,49 @@ class OrderRepoImpl(OrderPort):
         )
 
         return domain_order
+
+    def list_order(self, search_key, search_value) -> list[order_entity.Order]:
+        orders = self._database.query(
+            order_sql.Order
+        ).filter_by(
+            **{search_key: search_value}
+        ).all()
+
+        if not orders:
+            raise NotFoundError('No Orders found')
+
+        list_orders_domain = list()
+        for order in orders:
+            print('***' * 100, order.__dict__)
+            list_order_items = self._database.query(
+                order_sql.OrderItem
+            ).filter(
+                order_sql.OrderItem.order_id == order.id
+            ).join(
+                product_sql.Product,
+                order_sql.OrderItem.product_id == product_sql.Product.id
+            ).join(
+                product_sql.ProductReceipt,
+                product_sql.Product.id == product_sql.ProductReceipt.product_id
+            ).join(
+                ingredient_sql.Ingredient,
+                product_sql.ProductReceipt.ingredient_id == ingredient_sql.Ingredient.id
+            ).all()
+
+            list_order_item_receipts = self._database.query(
+                order_sql.OrderItemReceipt
+            ).filter(
+                order_sql.OrderItemReceipt.order_id == order.id
+            ).join(
+                ingredient_sql.Ingredient,
+                order_sql.OrderItemReceipt.ingredient_id == ingredient_sql.Ingredient.id
+            ).all()
+
+            domain_order = self._to_domain_entity(
+                order_sql=order,
+                list_order_items_sql=list_order_items,
+                list_order_item_receipts_sql=list_order_item_receipts
+            )
+
+            list_orders_domain.append(domain_order)
+        return list_orders_domain
