@@ -76,6 +76,13 @@ class ProductRepoImpl(product_port.ProductPort):
     def __init__(self) -> None:
         self._database = database.get_db()
         self._user_id = None
+
+    def try_commit(self) -> None:
+        try:
+            self._database.commit()
+        except Exception as e:
+            self._database.rollback()
+            raise e
     
     def create_product(self, product: product_entity.Product) -> None:
         
@@ -87,7 +94,7 @@ class ProductRepoImpl(product_port.ProductPort):
         self._database.add(db_product)
         self._database.add_all(db_receip)
 
-        self._database.commit()
+        self.try_commit()
         self._database.refresh(db_product)
 
     def update_product(self, product: product_entity.Product) -> None:
@@ -114,7 +121,7 @@ class ProductRepoImpl(product_port.ProductPort):
             product_dict
         )
 
-        self._database.commit()
+        self.try_commit()
 
     def delete_product(self, product_id: str) -> None:
 
@@ -126,7 +133,7 @@ class ProductRepoImpl(product_port.ProductPort):
             {'is_active': False}
         )
         
-        self._database.commit()
+        self.try_commit()
         
     def restore_deleted_product(self, product_id: str) -> None:
 
@@ -138,7 +145,7 @@ class ProductRepoImpl(product_port.ProductPort):
             {'is_active': True}
         )
         
-        self._database.commit()
+        self.try_commit()
 
 
     def read_product(self, product_id) -> product_entity.Product:

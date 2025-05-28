@@ -15,6 +15,13 @@ class CustomerRepoImpl(customer_port.CustomerPort):
         self._database = database.get_db()
         self._customer_id = None
 
+    def try_commit(self) -> None:
+        try:
+            self._database.commit()
+        except Exception as e:
+            self._database.rollback()
+            raise e
+
     @staticmethod
     def _to_domain_entity(customer: customer_sql.Customer) -> customer_entity.Customer:
 
@@ -44,7 +51,7 @@ class CustomerRepoImpl(customer_port.CustomerPort):
 
         db_customer = self._to_sql_entity(customer)
         self._database.add(db_customer)
-        self._database.commit()
+        self.try_commit()
         self._database.refresh(db_customer)
 
     def update_customer(self, customer: customer_entity.Customer) -> None:
@@ -59,7 +66,7 @@ class CustomerRepoImpl(customer_port.CustomerPort):
             customer_dict
         )
 
-        self._database.commit()
+        self.try_commit()
 
     def delete_customer(self, customer_id: int):
         self.read_customer(customer_id)
@@ -68,7 +75,7 @@ class CustomerRepoImpl(customer_port.CustomerPort):
         ).filter_by(
             id=self._customer_id
         ).delete()
-        self._database.commit()
+        self.try_commit()
 
     def read_customer(self, customer_id: int) -> customer_entity.Customer:
         try:

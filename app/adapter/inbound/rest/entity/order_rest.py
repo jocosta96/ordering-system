@@ -21,6 +21,15 @@ class OrderItem(BaseModel):
     }
 
 
+class SimpleOrderReader(BaseModel):
+    id: str
+    customer_id: int
+    value: Money
+    status: OrderStatus
+    order_display_id: str
+    order_start_date: datetime
+
+
 class Order(BaseModel):
     id: Optional[str] = None
     customer_id: int

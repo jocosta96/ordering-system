@@ -39,6 +39,15 @@ class OrderStatus(BaseModel):
         except (ValueError, IndexError):
             pass  # Already at FINALIZADO or invalid
 
+    def previous_status(self):
+        flow = list(OrderStatusType)
+        try:
+            current_index = flow.index(self.status)
+            prev_status = flow[current_index - 1]
+            self.status = prev_status
+        except (ValueError, IndexError):
+            pass  # Already at FINALIZADO or invalid
+
 
 class PaymentStatusType(str, Enum):
 

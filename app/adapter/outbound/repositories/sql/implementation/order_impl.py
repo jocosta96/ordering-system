@@ -11,6 +11,13 @@ class OrderRepoImpl(OrderPort):
     def __init__(self) -> None:
         self._database = database.get_db()
 
+    def try_commit(self) -> None:
+        try:
+            self._database.commit()
+        except Exception as e:
+            self._database.rollback()
+            raise e
+
     @staticmethod
     def _order_entity_to_sql(order: order_entity.Order) -> order_sql.Order:
 
@@ -47,9 +54,6 @@ class OrderRepoImpl(OrderPort):
     @staticmethod
     def _order_item_receipt_entity_to_sql(order: order_entity.Order) -> order_sql.OrderItemReceipt:
 
-        print('****' * 20, order.__dict__)
-        print('****' * 20, order.order_items[0].__dict__)
-
         order_item_receipt_sql = [
             order_sql.OrderItemReceipt(
                 order_id=order.id,
@@ -73,7 +77,7 @@ class OrderRepoImpl(OrderPort):
         self._database.add_all(db_order_items)
         self._database.add_all(db_order_item_receipts)
 
-        self._database.commit()
+        self.try_commit()
 
         self._database.refresh(db_order)
         for item in db_order_items:
@@ -90,7 +94,7 @@ class OrderRepoImpl(OrderPort):
             {'status': status}
         )
 
-        self._database.commit()
+        self.try_commit()
 
     def delete_order(self):
         pass
@@ -160,7 +164,8 @@ class OrderRepoImpl(OrderPort):
             has_payment_verified=order_sql.has_payment_verified,
             payment_date=order_sql.payment_date,
             payment_transaction_id=order_sql.payment_transaction_id,
-            id=order_sql.id
+            id=order_sql.id,
+            order_number=order_sql.order_number
         )
 
         return order
@@ -213,6 +218,8 @@ class OrderRepoImpl(OrderPort):
             order_sql.Order
         ).filter_by(
             **{search_key: search_value}
+        ).order_by(
+            order_sql.Order.order_number.asc()
         ).all()
 
         if not orders:
