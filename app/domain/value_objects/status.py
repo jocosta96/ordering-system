@@ -15,7 +15,7 @@ class OrderStatus(BaseModel):
     status: str = Field(
         None,
         description="Order Status",
-        examples=["RECEBIDO", "EM_PREPARACAO", "PRONTO", "FINALIZADO"]
+        examples=["RECEBIDO", "EM_PREPARACAO", "PRONTO", "FINALIZADO", "CANCELADO"]
     )
 
     @field_validator("status")
