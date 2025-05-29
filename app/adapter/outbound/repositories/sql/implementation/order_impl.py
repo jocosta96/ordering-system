@@ -96,9 +96,6 @@ class OrderRepoImpl(OrderPort):
 
         self.try_commit()
 
-    def delete_order(self):
-        pass
-
     def _to_domain_entity(
             self,
             order_sql: order_sql.Order,
