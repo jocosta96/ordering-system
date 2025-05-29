@@ -30,17 +30,6 @@ async def order_list(search_key, search_value) -> List[order_rest.Order]:
     except NotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
 
-@order.get("/queue/{status}")
-async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
-    try:
-        orders = uc_order_list.list_order(
-            search_key='status',
-            search_value=status
-        )
-        return [order_rest_mapper.to_simple_reader(o) for o in orders]
-    except NotFoundError as e:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
-
 
 @order.get("/queue/{status}")
 async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
