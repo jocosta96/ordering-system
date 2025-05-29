@@ -35,6 +35,36 @@ class CustomerRepoImpl(customer_port.CustomerPort):
 
         return domain_customer
 
+    def get_anonymous_customer(self) -> customer_entity.Customer:
+
+        try:
+
+            sql_customer = self._database.query(
+                customer_sql.Customer
+            ).filter_by(
+                id=-1
+            ).one()
+
+        except NoResultFound:
+
+            sql_customer = customer_sql.Customer(
+                document='',
+                email='',
+                first_name='',
+                last_name='',
+                id=-1
+            )
+
+            self._database.add(sql_customer)
+            self.try_commit()
+            self._database.refresh(sql_customer)
+
+        finally:
+
+            domain_customer = self._to_domain_entity(sql_customer)
+
+        return domain_customer
+
     @staticmethod
     def _to_sql_entity(customer: customer_entity.Customer) -> customer_sql.Customer:
 

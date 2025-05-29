@@ -39,3 +39,7 @@ class CustomerList(BaseCustomerUseCase):
 
     def list_customer(self, search_key=None, search_value=None):
         return self.port.list_customer(search_key, search_value)
+
+class CustomerAnonymous(BaseCustomerUseCase):
+    def get_anonymous_customer(self) -> customer_entity.Customer:
+        return self.port.get_anonymous_customer()

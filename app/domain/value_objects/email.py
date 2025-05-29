@@ -11,7 +11,9 @@ class Email(BaseModel):
 
     @field_validator("email")
     def validate(cls, value: str) -> str:
-        assert validate_email(value), "Please provide a valid email address"
+        assert (
+            validate_email(value) or value == ""
+        ), "Please provide a valid email address"
         return value
 
     def __str__(self) -> str:

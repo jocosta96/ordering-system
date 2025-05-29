@@ -11,6 +11,10 @@ class Document(BaseModel):
 
     @field_validator("document")
     def validate_cpf(cls, value: str) -> str:
+        
+        if value == "":
+            return value
+        
         assert re.fullmatch(r"\d{11}", value), "CPF must have exactly 11 digits"
         numbers = [int(d) for d in value]
         sum1 = sum(a * b for a, b in zip(numbers[:9], range(10, 1, -1)))

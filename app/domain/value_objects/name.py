@@ -10,7 +10,7 @@ class Name(BaseModel):
 
     @field_validator("name")
     def validate_name(cls, value: str) -> str:
-        assert value, "Name cannot be empty"
+        assert isinstance(value, str), "Name cannot be empty"
         return value
 
     def __str__(self) -> str:
