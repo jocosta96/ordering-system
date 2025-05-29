@@ -18,12 +18,6 @@ class OrderCreate(BaseOrderUseCase):
         return self.port.create_order(order)
 
 
-class OrderDelete(BaseOrderUseCase):
-
-    def delete_order(self, order: order_entity.Order) -> int:
-        return self.port.delete_order(order)
-
-
 class OrderRead(BaseOrderUseCase):
 
     def read_order(self, order_id: str) -> order_entity.Order:

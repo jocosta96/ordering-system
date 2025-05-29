@@ -12,7 +12,6 @@ from app.domain.errors.custom_errors import NotFoundError
 
 repo_order = order_impl.OrderRepoImpl()
 uc_order_create = order_uc.OrderCreate(repo_order)
-uc_order_delete = order_uc.OrderDelete(repo_order)
 uc_order_read = order_uc.OrderRead(repo_order)
 uc_order_update = order_uc.OrderUpdate(repo_order)
 uc_order_list = order_uc.OrderList(repo_order)
@@ -30,6 +29,18 @@ async def order_list(search_key, search_value) -> List[order_rest.Order]:
         return [order_rest_mapper.to_rest_entity(o) for o in orders]
     except NotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
+
+@order.get("/queue/{status}")
+async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
+    try:
+        orders = uc_order_list.list_order(
+            search_key='status',
+            search_value=status
+        )
+        return [order_rest_mapper.to_simple_reader(o) for o in orders]
+    except NotFoundError as e:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
+
 
 @order.get("/queue/{status}")
 async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
@@ -66,8 +77,3 @@ async def order_create(order_data: order_rest.Order):
 async def order_update_status(order_id: str, status: str):
     status = obj_status.OrderStatus(status=status)
     return uc_order_update.update_order(order_id, status)
-
-
-@order.delete('')
-async def order_delete():
-    pass
