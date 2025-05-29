@@ -11,15 +11,6 @@ $$;
 
 GRANT ALL PRIVILEGES ON DATABASE ordering TO ordering;
 
-INSERT INTO "ordering".public.customer (
-      id
-    , email
-    , first_name
-    , last_name
-    , document
-)
-VALUES (-1000, NULL, NULL, NULL, NULL);
-
 CREATE SEQUENCE IF NOT EXISTS "ordering".public.order_number_seq
 	INCREMENT BY 1
 	MINVALUE 1
