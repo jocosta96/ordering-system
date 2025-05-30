@@ -17,17 +17,64 @@ class Product(BaseModel):
     sku: sku.SKU
     id: Optional[str | UUID] = None  # Accepts both str and UUID
 
-#    ConfigDict(
-#        json_schema_extra = {
-#            "example": {
-#                "name": { "name": "X-Burger" },
-#                "category": { "category": "LANCHE" },
-#                "default_ingredient": [
-#                    { "ingredient_id": 1, "quantity": 2 },
-#                    { "ingredient_id": 2, "quantity": 1 }
-#                ],
-#                "price": { "amount": 12.5 },
-#                "sku": { "sku": "PROD-1238-XYZ" }
-#            }
-#        }
-#    )
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "json_schema_extra": {
+            "example":   {
+                "name": {
+                    "name": "X-Burguer"
+                },
+                "category": {
+                    "category": "LANCHE"
+                },
+                "default_ingredient": [
+
+                {"ingredient": {
+                    "id": 1,
+                    "name": {
+                    "name": "ALFACE"
+                    },
+                    "price": {
+                    "amount": "5.00"
+                    },
+                    "product_category": {
+                    "category": "LANCHE"
+                    },
+                    "is_active": True
+                }, "quantity": 1},
+                    {"ingredient": {
+                    "id": 2,
+                    "name": {
+                    "name": "PAO"
+                    },
+                    "price": {
+                    "amount": "5.00"
+                    },
+                    "product_category": {
+                    "category": "LANCHE"
+                    },
+                    "is_active": True
+                }, "quantity": 2},
+                    {"ingredient": {
+                    "id": 3,
+                    "name": {
+                    "name": "QUEIJO"
+                    },
+                    "price": {
+                    "amount": "5.00"
+                    },
+                    "product_category": {
+                    "category": "LANCHE"
+                    },
+                    "is_active": True
+                }, "quantity": 3}
+                ],
+                "price": {
+                    "amount": 32.00
+                },
+                "sku": {
+                    "sku": "PROD-1234-XYZ"
+                }
+            }
+        }
+    }   
