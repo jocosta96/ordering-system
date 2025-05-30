@@ -17,6 +17,7 @@ services:
   python:
     command: >
       sh -c "
+        alembic revision --autogenerate &&
         alembic upgrade head &&
         uvicorn app.main:app --host 0.0.0.0 --port 80
       "
@@ -29,25 +30,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-
-  post-init:
-    image: postgres:14.17
-    depends_on:
-      python:
-        condition: service_started
-      postgres:
-        condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      - PGPASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - ./init-ordering-user.sql:/init-ordering-user.sql
-    entrypoint: >
-      bash -c "
-        psql -h postgres -U fastfoodapp -d ordering -f /init-ordering-user.sql
-      "
-    restart: "no"
 
 volumes:
   postgres-db-volume:
