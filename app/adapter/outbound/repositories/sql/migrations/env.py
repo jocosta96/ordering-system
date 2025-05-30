@@ -18,7 +18,7 @@ fileConfig(config.config_file_name)
 usr = os.getenv
 
 # Set your DATABASE_URL from environment
-host = os.environ["HOST"]
+host = os.environ["POSTGRES_HOST"]
 database = os.environ["POSTGRES_DB"]
 user = os.environ["POSTGRES_USER"]
 password = os.environ["POSTGRES_PASSWORD"]
