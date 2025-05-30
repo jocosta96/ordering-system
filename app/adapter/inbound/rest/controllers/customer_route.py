@@ -25,6 +25,14 @@ async def list_customer(search_key=None, search_value=None) -> List[customer_res
     except NotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Not found customers')
 
+@customer.get('/anonymous')
+def get_anonymous_customer() -> customer_rest.Customer:
+    try:
+        customer_obj = repo_customer.get_anonymous_customer()
+        return customer_rest_mapper.to_rest_entity(customer_obj)
+    except NotFoundError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Not found anonymous customer')
+
 @customer.get("/{customer_id}")
 async def customer_read(customer_id: int) -> customer_rest.Customer:
     try:
@@ -51,4 +59,3 @@ async def customer_delete(customer_id: int):
         return uc_customer_delete.delete_customer(customer_id)
     except NotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Not found customer')
-

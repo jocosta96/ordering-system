@@ -24,3 +24,7 @@ class CustomerPort(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def list_customer(self, search_key=None, search_value=None):
         raise NotImplementedError
+    
+    @abc.abstractmethod
+    def get_anonymous_customer(self) -> customer_entity.Customer:
+        raise NotImplementedError

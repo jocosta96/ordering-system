@@ -9,6 +9,7 @@ from app.adapter.inbound.rest.mapper import order_rest_mapper
 from app.domain.value_objects import status as obj_status
 from app.domain.errors.custom_errors import NotFoundError
 
+
 repo_order = order_impl.OrderRepoImpl()
 uc_order_create = order_uc.OrderCreate(repo_order)
 uc_order_read = order_uc.OrderRead(repo_order)
