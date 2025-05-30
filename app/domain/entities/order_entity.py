@@ -110,7 +110,7 @@ class Order:
         payment_date: datetime = None,
         payment_transaction_id: str = '',
         id: str = None,
-        order_number: int = None,
+        internal_id: int = None,
     ):
         
         self.id = id
@@ -125,7 +125,7 @@ class Order:
         self.has_payment_verified = has_payment_verified
         self.status = status
 
-        self.order_number = order_number
+        self.internal_id = internal_id
         self.order_display_id: str = ''
 
         self._check_or_create_uuid()
@@ -134,8 +134,8 @@ class Order:
         self._set_display_id()
 
     def _set_display_id(self):
-        if self.order_number:
-            self.order_display_id = str(self.order_number).zfill(3)[:3]
+        if self.internal_id:
+            self.order_display_id = str(self.internal_id).zfill(3)[:3]
         return self.order_display_id
 
     def _check_or_create_status(self):

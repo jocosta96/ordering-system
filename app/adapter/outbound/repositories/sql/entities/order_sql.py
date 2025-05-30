@@ -8,7 +8,12 @@ from sqlalchemy.dialects.postgresql import UUID
 class Order(database.Base):
     __tablename__ = "order"
     
-    id:uuid = Column(UUID, primary_key=True)
+    id:uuid = Column(UUID, unique=True, nullable=False, index=True)
+    internal_id = Column(
+        Integer,
+        Sequence('order_internal_id_seq', start=1, increment=1),
+        primary_key=True
+    )
     customer_id = Column(Integer, ForeignKey('customer.id'))
     status = Column(String)
     start_date = Column(DateTime)
@@ -17,7 +22,6 @@ class Order(database.Base):
     payment_date = Column(DateTime)
     payment_transaction_id = Column(String)
     has_payment_verified = Column(Boolean)
-    order_number = Column(Integer, Sequence('order_number_seq', start=1, increment=1))
     customer = relationship('Customer', back_populates='orders')
     order_items = relationship('OrderItem', back_populates='order')
     order_item_receipts = relationship('OrderItemReceipt', back_populates='order')

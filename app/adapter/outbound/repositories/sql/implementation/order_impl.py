@@ -162,7 +162,7 @@ class OrderRepoImpl(OrderPort):
             payment_date=order_sql.payment_date,
             payment_transaction_id=order_sql.payment_transaction_id,
             id=order_sql.id,
-            order_number=order_sql.order_number
+            internal_id=order_sql.internal_id
         )
 
         return order
@@ -216,7 +216,7 @@ class OrderRepoImpl(OrderPort):
         ).filter_by(
             **{search_key: search_value}
         ).order_by(
-            order_sql.Order.order_number.asc()
+            order_sql.Order.internal_id.asc()
         ).all()
 
         if not orders:
