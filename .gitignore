@@ -133,6 +133,7 @@ celerybeat.pid
 .scannerwork/
 env/
 venv/
+kubectl
 ENV/
 .idea/
 env.bak/
