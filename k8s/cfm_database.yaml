@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cfm-database
+data:
+  POSTGRES_USER: fastfoodapp
+  POSTGRES_PASSWORD: fastfoodpwd
+  POSTGRES_DB: ordering
+  PGADMIN_MAIL: nao@tem
+  PGADMIN_PW: nao@tem
+  POSTGRES_HOST: svc-database-clusterip
+  DRIVER_NAME: postgresql

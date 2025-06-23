@@ -130,8 +130,10 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.scannerwork/
 env/
 venv/
+kubectl
 ENV/
 .idea/
 env.bak/

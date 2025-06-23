@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dpm-database
+  labels:
+    app: dpm-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dpm-database
+  template:
+    metadata:
+      labels:
+        app: dpm-database
+    spec:
+      volumes:
+        - name: dbdata
+          persistentVolumeClaim:
+            claimName: pvc-database
+      containers:
+        - name: database
+          image: postgres:14.17
+          volumeMounts:
+            - name: dbdata
+              mountPath: /var/lib/postgresql/data
+          ports:
+            - containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: POSTGRES_DB
+            - name: PGADMIN_MAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: PGADMIN_MAIL
+            - name: PGADMIN_PW
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: PGADMIN_PW
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: POSTGRES_HOST
+            - name: DRIVER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: DRIVER_NAME
