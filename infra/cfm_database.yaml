@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cfm-database
+data:
+  POSTGRES_HOST: svc-database-clusterip
+  DRIVER_NAME: postgresql
