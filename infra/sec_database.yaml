@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sec-database
+type: Opaque
+data:
+  POSTGRES_USER: ZmFzdGZvb2RhcHA=
+  POSTGRES_PASSWORD: ZmFzdGZvb2Rwd2Q=
+  POSTGRES_DB: b3JkZXJpbmc=
+  PGADMIN_MAIL: bmFvQHRlbQ==
+  PGADMIN_PW: bmFvQHRlbQ==
