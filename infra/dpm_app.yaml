@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: jocosta96/soat-challenge:v1
+          image: jocosta96/soat-challenge
           ports:
             - containerPort: 8080
 #          readinessProbe:
@@ -75,4 +75,6 @@ spec:
               cpu: "500m"
           command: ["sh", "-c"]
           args:
-            - uvicorn app.main:app --host 0.0.0.0 --port 8080
+            - |
+              PYTHONPATH=/code python app/adapter/outbound/repositories/sql/migrations/database_init.py
+              uvicorn app.main:app --host 0.0.0.0 --port 8080
