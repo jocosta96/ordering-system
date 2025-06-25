@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: jocosta96/soat-challenge:v1.7
+          image: jocosta96/soat-challenge
           ports:
             - containerPort: 8080
 #          readinessProbe:
