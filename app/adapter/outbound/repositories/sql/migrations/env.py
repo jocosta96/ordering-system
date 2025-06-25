@@ -1,10 +1,13 @@
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, text
+from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
+
+from app.adapter.outbound.repositories.sql.orm.database import Base
+from app.adapter.outbound.repositories.sql.entities import *
 
 load_dotenv()
 
@@ -27,13 +30,6 @@ driver = os.environ["DRIVER_NAME"]
 connection_string = f"{driver}://{user}:{password}@{host}/{database}"
 
 config.set_main_option("sqlalchemy.url", connection_string)
-
-# Import your metadata (SQLAlchemy Base)
-from app.adapter.outbound.repositories.sql.orm.database import Base, SessionLocal
-
-# Import all models to register them with the Base metadata
-# This is crucial so Alembic knows what tables to look for
-from app.adapter.outbound.repositories.sql.entities import customer_sql, order_sql
 
 target_metadata = Base.metadata
 
@@ -74,19 +70,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
-
-if not os.environ.get("DATABASE_INITIALIZED"):
-
-    with open('app/adapter/outbound/repositories/sql/orm/database_init.sql') as fs:
-        init_script = text(fs.read())
-
-    with SessionLocal() as session:
-        try:
-            session.execute(init_script)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            print(f"Error during database initialization: {e}")
-
-    os.environ["DATABASE_INITIALIZED"] = "true"
