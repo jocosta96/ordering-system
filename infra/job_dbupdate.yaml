@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-dbupdate
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: database-update
+        image: jocosta96/soat-challenge
+        command: ["sh", "-c"]
+        args:
+          - |
+            PYTHONPATH=/code python app/adapter/outbound/repositories/sql/migrations/database_update.py
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: POSTGRES_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: POSTGRES_PASSWORD
+          - name: POSTGRES_DB
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: POSTGRES_DB
+          - name: PGADMIN_MAIL
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: PGADMIN_MAIL
+          - name: PGADMIN_PW
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: PGADMIN_PW
+          - name: POSTGRES_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: cfm-database
+                key: POSTGRES_HOST
+          - name: DRIVER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: cfm-database
+                key: DRIVER_NAME
+
