@@ -17,19 +17,19 @@ spec:
           image: jocosta96/soat-challenge
           ports:
             - containerPort: 8080
-          readinessProbe:
-            httpGet:
-              path: /customer/anonymous
-              port: 8080
-            initialDelaySeconds: 60
-            failureThreshold: 3
-            periodSeconds: 60
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 60
+#          readinessProbe:
+#            httpGet:
+#              path: / #add a request
+#              port: 8080
+#            initialDelaySeconds: 60
+#            failureThreshold: 3
+#            periodSeconds: 60
+#          livenessProbe:
+#            httpGet:
+#              path: / #add healthcheck
+#              port: 8080
+#            initialDelaySeconds: 15
+#            periodSeconds: 60
           env:
             - name: POSTGRES_USER
               valueFrom:
