@@ -5,7 +5,8 @@ from app.adapter.inbound.rest.controllers import (
     customer_route,
     product_route,
     order_route,
-    ingredient_route
+    ingredient_route,
+    health
 )
 
 def create_application() -> FastAPI:
@@ -21,6 +22,7 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.include_router(router=health.healthcheck)
     app.include_router(router=customer_route.customer)
     app.include_router(router=product_route.product)
     app.include_router(router=order_route.order)

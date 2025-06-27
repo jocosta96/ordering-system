@@ -15,10 +15,6 @@ with get_db() as session:
         session.commit()
         os.system('alembic revision --autogenerate && alembic upgrade head')
 
-    except NoResultFound as e:
-        session.rollback()
-        os.system('alembic revision --autogenerate && alembic upgrade head')
-
     except Exception as e:
         session.rollback()
-        print(e)
+        raise e

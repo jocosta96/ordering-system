@@ -1,3 +1,4 @@
+#update the database tables according to the orm objects
 apiVersion: batch/v1
 kind: Job
 metadata:
