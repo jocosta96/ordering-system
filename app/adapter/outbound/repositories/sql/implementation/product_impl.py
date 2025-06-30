@@ -7,7 +7,13 @@ from app.domain.value_objects import name, sku, money, category
 from app.adapter.outbound.repositories.sql.entities import product_sql, ingredient_sql
 from app.domain.errors.custom_errors import NotFoundError
 
+from app.adapter.outbound.repositories.sql.implementation import sql_impl
+
 class ProductRepoImpl(product_port.ProductPort):
+
+    def __init__(self) -> None:
+        self._sql_impl = sql_impl.SQLRepoImpl()
+        self._user_id = None
 
     @staticmethod
     def _to_domain_entity(
@@ -73,16 +79,6 @@ class ProductRepoImpl(product_port.ProductPort):
         ]
         return sql_product
 
-    def __init__(self) -> None:
-        self._database = database.get_db()
-        self._user_id = None
-
-    def try_commit(self) -> None:
-        try:
-            self._database.commit()
-        except Exception as e:
-            self._database.rollback()
-            raise e
     
     def create_product(self, product: product_entity.Product) -> None:
         
@@ -91,11 +87,8 @@ class ProductRepoImpl(product_port.ProductPort):
         db_receip = self._to_sql_receipt_entity(product)
         db_product = self._to_sql_entity(product)
 
-        self._database.add(db_product)
-        self._database.add_all(db_receip)
-
-        self.try_commit()
-        self._database.refresh(db_product)
+        self._sql_impl.add_one(db_product)
+        self._sql_impl.add_all(db_receip)
 
     def update_product(self, product: product_entity.Product) -> None:
 
@@ -105,72 +98,64 @@ class ProductRepoImpl(product_port.ProductPort):
 
         db_receip = self._to_sql_receipt_entity(product)
 
-        self._database.query(
-            product_sql.ProductReceipt
-        ).filter_by(
-            product_id=product.id
-        ).delete()
-
-        self._database.add_all(db_receip)
-
-        self._database.query(
-            product_sql.Product
-        ).filter_by(
-            id=product.id
-        ).update(
-            product_dict
+        self._sql_impl.delete(
+            entity=product_sql.ProductReceipt,
+            dict_filter={
+                'product_id': product.id
+            }
         )
 
-        self.try_commit()
+        self._sql_impl.add_all(
+            entities=db_receip
+        )
+
+        self._sql_impl.update(
+            entity=product_sql.Product,
+            entity_dict=product_dict,
+            dict_filter={
+                'id': product.id
+            }
+        )
 
     def delete_product(self, product_id: str) -> None:
-
-        self._database.query(
-            product_sql.Product
-        ).filter_by(
-            id=product_id
-        ).update(
-            {'is_active': False}
+        self._sql_impl.update(
+            entity=product_sql.Product,
+            entity_dict={'is_active': False},
+            dict_filter={
+                'id': product_id
+            }
         )
-        
-        self.try_commit()
         
     def restore_deleted_product(self, product_id: str) -> None:
 
-        self._database.query(
-            product_sql.Product
-        ).filter_by(
-            id=product_id
-        ).update(
-            {'is_active': True}
+        self._sql_impl.update(
+            entity=product_sql.Product,
+            entity_dict={'is_active': True},
+            dict_filter={
+                'id': product_id
+            }
         )
-        
-        self.try_commit()
-
 
     def read_product(self, product_id) -> product_entity.Product:
 
         try:
-
-            product = self._database.query(
-                product_sql.Product
-            ).filter_by(
-                id=product_id
-            ).filter_by(
-                is_active = True
-            ).one()
+            
+            product = self._sql_impl.get_one(
+                entity=product_sql.Product,
+                dict_filter={
+                    'id': product_id,
+                    'is_active': True
+                }
+            )
 
             if not product:
                 raise NotFoundError('Product not found')
 
-            receipt = self._database.query(
-                product_sql.ProductReceipt
-            ).filter_by(
+            receipt = self._sql_impl.list_product_receipts(
+                product_sql_entity=product_sql.ProductReceipt,
+                ingredient_sql_entity=ingredient_sql.Ingredient,
                 product_id=product.id
-            ).join(
-                ingredient_sql.Ingredient,
-                product_sql.ProductReceipt.ingredient_id == ingredient_sql.Ingredient.id
-            ).all()
+            )
 
             if not receipt:
                 raise NotFoundError('Product receipt not found')
@@ -186,13 +171,15 @@ class ProductRepoImpl(product_port.ProductPort):
     def list_product(self, search_key=None, search_value=None) -> list[product_entity.Product]:
 
         try:
-            products = self._database.query(
-                product_sql.Product
-            ).filter_by(
-                is_active = True
-            ).filter_by(
-                **{search_key: search_value}
-            ).all()
+
+            products = self._sql_impl.list_all(
+                entity=product_sql.Product,
+                dict_filter={
+                    'is_active': True,
+                    search_key: search_value
+                }
+            )
+
 
             result = []
 
@@ -201,14 +188,11 @@ class ProductRepoImpl(product_port.ProductPort):
             
             for product in products:
 
-                receipts = self._database.query(
-                    product_sql.ProductReceipt
-                ).filter_by(
+                receipts = self._sql_impl.list_product_receipts(
+                    product_sql_entity=product_sql,
+                    ingredient_sql_entity=ingredient_sql,
                     product_id=product.id
-                ).join(
-                    ingredient_sql.Ingredient,
-                    product_sql.ProductReceipt.ingredient_id == ingredient_sql.Ingredient.id
-                ).all()
+                )
 
                 if not receipts:
                     raise NotFoundError(f'Receipt for product {product.id} not found')
