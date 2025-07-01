@@ -44,7 +44,7 @@ class SQLRepoImpl(SQLRepository):
         query = self._database.query(entity)
         if dict_filter:
             query = query.filter_by(**dict_filter)
-        if order_by_column:
+        if order_by_column is not None:
             query = query.order_by(order_by_column)
         return query.all()
 
