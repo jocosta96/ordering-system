@@ -1,4 +1,5 @@
 import abc
+from datetime import datetime
 
 from app.domain.entities import order_entity
 from app.domain.value_objects import status
@@ -16,6 +17,10 @@ class OrderPort(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def update_order(self, order_id: str, status: status.OrderStatus) -> order_entity.Order:
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def pay_order(self, order_id: str, payment_date: datetime, payment_transaction_id:str) -> order_entity.Order:
         raise NotImplementedError
 
     @abc.abstractmethod
