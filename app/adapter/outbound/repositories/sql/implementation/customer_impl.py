@@ -8,19 +8,13 @@ from app.adapter.outbound.repositories.sql.entities import customer_sql
 from app.domain.value_objects import document, name, email
 from app.domain.errors.custom_errors import NotFoundError
 
+from app.adapter.outbound.repositories.sql.implementation import sql_impl
 
 class CustomerRepoImpl(customer_port.CustomerPort):
-
+    
     def __init__(self) -> None:
-        self._database = database.get_db()
         self._customer_id = None
-
-    def try_commit(self) -> None:
-        try:
-            self._database.commit()
-        except Exception as e:
-            self._database.rollback()
-            raise e
+        self._sql_impl = sql_impl.SQLRepoImpl()
 
     @staticmethod
     def _to_domain_entity(customer: customer_sql.Customer) -> customer_entity.Customer:
@@ -38,15 +32,11 @@ class CustomerRepoImpl(customer_port.CustomerPort):
     def get_anonymous_customer(self) -> customer_entity.Customer:
 
         try:
-
-            sql_customer = self._database.query(
-                customer_sql.Customer
-            ).filter_by(
-                id=-1
-            ).one()
-
+            sql_customer = self._sql_impl.get_one(
+                customer_sql.Customer,
+                dict_filter={'id': -1}
+            )
         except NoResultFound:
-
             sql_customer = customer_sql.Customer(
                 document='',
                 email='',
@@ -54,66 +44,52 @@ class CustomerRepoImpl(customer_port.CustomerPort):
                 last_name='',
                 id=-1
             )
-
-            self._database.add(sql_customer)
-            self.try_commit()
-            self._database.refresh(sql_customer)
-
+            self._sql_impl.add_one(sql_customer)
         finally:
-
             domain_customer = self._to_domain_entity(sql_customer)
-
         return domain_customer
 
     @staticmethod
     def _to_sql_entity(customer: customer_entity.Customer) -> customer_sql.Customer:
-
         sql_customer = customer_sql.Customer(
             document=customer.document.value,
             email=customer.email.value,
             first_name=customer.first_name.value,
             last_name=customer.last_name.value
         )
-
         return sql_customer
 
     def create_customer(self, customer: customer_entity.Customer) -> None:
-
         db_customer = self._to_sql_entity(customer)
-        self._database.add(db_customer)
-        self.try_commit()
-        self._database.refresh(db_customer)
+        self._sql_impl.add_one(db_customer)
 
     def update_customer(self, customer: customer_entity.Customer) -> None:
-
         customer_dict = customer.__dict__.copy()
-
-        self._database.query(
-            customer_sql.Customer
-        ).filter_by(
-            id=customer_dict['id']
-        ).update(
-            customer_dict
+        self._sql_impl.update(
+            customer_sql.Customer,
+            entity_dict=customer_dict,
+            dict_filter={
+                'id': customer_dict['id']
+            }
         )
-
-        self.try_commit()
 
     def delete_customer(self, customer_id: int):
         self.read_customer(customer_id)
-        self._database.query(
-            customer_sql.Customer
-        ).filter_by(
-            id=self._customer_id
-        ).delete()
-        self.try_commit()
+        self._sql_impl.delete(
+            customer_sql.Customer,
+            dict_filter={
+                'id': customer_id
+            }
+        )
 
     def read_customer(self, customer_id: int) -> customer_entity.Customer:
         try:
-            customer = self._database.query(
-                customer_sql.Customer
-            ).filter_by(
-                id=customer_id
-            ).one()
+            customer = self._sql_impl.get_one(
+                customer_sql.Customer,
+                dict_filter={
+                    'id': customer_id
+                }
+            )
             if not customer:
                 raise NoResultFound('Customer not found')
             result = self._to_domain_entity(customer)
@@ -124,10 +100,12 @@ class CustomerRepoImpl(customer_port.CustomerPort):
 
     def list_customer(self, search_key=None, search_value=None) -> list[customer_entity.Customer]:
         try:
-            query = self._database.query(customer_sql.Customer).filter_by()
-            if search_key and search_value is not None:
-                query = query.filter_by(**{search_key: search_value})
-            customers = query.all()
+            customers = self._sql_impl.list_all(
+                customer_sql.Customer,
+                dict_filter={
+                    search_key: search_value
+                } if search_key and search_value else {}
+            )
             if not customers:
                 raise NoResultFound('Customers not found')
             result = [self._to_domain_entity(cust) for cust in customers]

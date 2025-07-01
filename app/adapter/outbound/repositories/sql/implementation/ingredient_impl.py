@@ -10,6 +10,8 @@ from app.adapter.outbound.repositories.sql.entities import ingredient_sql
 from app.domain.value_objects import name, sku, codebar, money, category
 from app.domain.errors.custom_errors import NotFoundError
 
+from app.adapter.outbound.repositories.sql.implementation import sql_impl
+
 class IngredientRepoImpl(ingredient_port.IngredientPort):
 
     @staticmethod
@@ -38,58 +40,42 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
         return sql_ingredient
 
     def __init__(self) -> None:
-        self._database = database.get_db()
+        self._sql_impl = sql_impl.SQLRepoImpl()
         self._ingredient_id = None
 
-    def try_commit(self) -> None:
-        try:
-            self._database.commit()
-        except Exception as e:
-            self._database.rollback()
-            raise e
-
     def create_ingredient(self, ingredient: ingredient_entity.Ingredient) -> None:
-
         db_ingredient = self._to_sql_entity(ingredient)
-        self._database.add(db_ingredient)
-        self._database.commit()
-        self._database.refresh(db_ingredient)
+        self._sql_impl.add_one(db_ingredient)
 
     def update_ingredient(self, ingredient: ingredient_entity.Ingredient) -> None:
-
         ingredient_dict = ingredient.__dict__.copy()
-
-        self._database.query(
-            ingredient_sql.Ingredient
-        ).filter_by(
-            id=ingredient_dict['id']
-        ).update(
-            ingredient_dict
+        self._sql_impl.update(
+            entity=ingredient_sql.Ingredient,
+            entity_dict=ingredient_dict,
+            dict_filter={
+                'id': ingredient_dict['id']
+            }
         )
-
-        self.try_commit()
 
     def delete_ingredient(self, ingredient_id: int):
         self.read_ingredient(ingredient_id)
-        self._database.query(
-            ingredient_sql.Ingredient
-        ).filter_by(
-            id=ingredient_id
-        ).update(
-            {'is_active': False}
+        self._sql_impl.update(
+            entity=ingredient_sql.Ingredient,
+            entity_dict={'is_active': False},
+            dict_filter={
+                'id': ingredient_id
+            }
         )
-
-        self.try_commit()
 
     def read_ingredient(self, ingredient_id: int) -> ingredient_entity.Ingredient:
         try:
-            ingredient = self._database.query(
-                ingredient_sql.Ingredient
-            ).filter_by(
-                id=ingredient_id
-            ).filter_by(
-                is_active=True
-            ).one()
+            ingredient = self._sql_impl.get_one(
+                entity=ingredient_sql.Ingredient,
+                dict_filter={
+                    'id': ingredient_id,
+                    'is_active': True
+                }
+            )
             if not ingredient:
                 raise NoResultFound('Ingredient not found')
             result = self._to_domain_entity(ingredient)
@@ -100,27 +86,29 @@ class IngredientRepoImpl(ingredient_port.IngredientPort):
 
     def restore_deleted_ingredient(self, ingredient_id: int) -> None:
         self.read_ingredient(ingredient_id)
-        self._database.query(
-            ingredient_sql.Ingredient
-        ).filter_by(
-            id=ingredient_id
-        ).update(
-            {'is_active': True}
+        self._sql_impl.update(
+            entity=ingredient_sql.Ingredient,
+            entity_dict={'is_active': True},
+            dict_filter={
+                'id': ingredient_id
+            }
         )
-
-        self.try_commit()
 
     def list_ingredient(self, search_key=None, search_value=None) -> list[ingredient_entity.Ingredient]:
         try:
-            ingredients = self._database.query(
-                ingredient_sql.Ingredient
-            ).filter_by(
-                is_active=True
-            ).filter_by(
-                **{search_key: search_value}
-            ).all()
-
-            result = [self._to_domain_entity(ing) for ing in ingredients]
-            return result
+            if search_key and search_value:
+                dict_filter = {
+                    'is_active': True,
+                    search_key: search_value
+                }
+            else:
+                dict_filter = {'is_active': True}
+            ingredients = self._sql_impl.list_all(
+                entity=ingredient_sql.Ingredient,
+                dict_filter=dict_filter
+            )
+            if not ingredients:
+                raise NoResultFound('Ingredients not found')
+            return [self._to_domain_entity(ing) for ing in ingredients]
         except NoResultFound:
-            NotFoundError('Ingredients not found')
+            raise NotFoundError('Ingredients not found')
