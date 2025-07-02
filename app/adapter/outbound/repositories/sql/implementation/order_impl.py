@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from app.domain.ports.order_port import OrderPort
 from app.domain.entities import order_entity, product_entity, ingredient_entity
 from app.domain.value_objects import money, status, category, sku
@@ -70,6 +72,19 @@ class OrderRepoImpl(OrderPort):
         self._sql_impl.update(
             entity=order_sql.Order,
             entity_dict={'status': status},
+            dict_filter={
+                'id': order_id
+            }
+        )
+
+    def pay_order(self, order_id: str, payment_date: datetime, payment_transaction_id:str) -> None:
+        self.read_order(order_id)
+        self._sql_impl.update(
+            entity=order_sql.Order,
+            entity_dict={
+                'payment_date': payment_date,
+                'payment_transaction_id': payment_transaction_id
+            },
             dict_filter={
                 'id': order_id
             }

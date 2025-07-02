@@ -5,12 +5,17 @@ from fastapi.responses import JSONResponse
 
 from app.adapter.inbound.rest.entity import payment_rest
 
-app = FastAPI()
+webhook = FastAPI()
 
-@app.webhooks.post('payment')
+@webhook.get("/health")
+def check() -> bool:
+    return True
+
+
+@webhook.webhooks.post('payment')
 def new_payment(body: payment_rest.Payment):
 
-    url = 'http://localhost:8080/fastfood/api/some-endpoint'
+    url = f'http://localhost:8080/fastfood/api/order/pay/{body["order_id"]}'
 
     try:
         response = requests.post(url, json=body)

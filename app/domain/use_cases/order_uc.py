@@ -39,3 +39,7 @@ class OrderList(BaseOrderUseCase):
 
     def list_order(self, search_key, search_value):
         return self.port.list_order(search_key, search_value)
+
+class OrderDelete(BaseOrderUseCase):
+    def delete_order(self, order_id: str) -> int:
+        return self.port.delete_order(order_id)
