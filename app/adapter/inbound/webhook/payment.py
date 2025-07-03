@@ -1,25 +1,30 @@
-import requests
-from fastapi import FastAPI
-from fastapi import status
+import httpx
+from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
-
-from app.adapter.inbound.rest.entity import payment_rest
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 
 webhook = FastAPI()
 
+class MercadoPagoNotification(BaseModel):
+    payment_date: Optional[str] = None
+    payment_transaction_id: Optional[str] = None
+    order_id: str
+
+
 @webhook.get("/health")
-def check() -> bool:
-    return True
+def check() -> dict:
+    return {"status": "ok"}
 
-
-@webhook.webhooks.post('payment')
-def new_payment(body: payment_rest.Payment):
-
-    url = f'http://localhost:8080/order/pay/{body["order_id"]}'
-
+@webhook.post("/webhook/mercadopago", status_code=status.HTTP_200_OK)
+async def mercadopago_webhook(notification: MercadoPagoNotification):
+    # Example: Forward notification to order service or process as needed
+    url = f'http://localhost:8080/order/pay/{notification.order_id}'
     try:
-        response = requests.post(url, json=body)
-        response.raise_for_status()
-        return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Payment processed and forwarded."})
-    except requests.RequestException as e:
+        async with httpx.AsyncClient() as client:
+            response = await client.patch(url, json=dict(notification))
+            response.raise_for_status()
+        return {"message": "Notification received and processed."}
+    except httpx.RequestError as e:
         return JSONResponse(status_code=status.HTTP_502_BAD_GATEWAY, content={"error": str(e)})

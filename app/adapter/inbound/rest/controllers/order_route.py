@@ -72,10 +72,10 @@ async def order_update_status(order_id: str, status: str):
 
 
 @order.patch('/pay/{order_id}')
-async def order_payment(body: payment_rest.Payment):
+async def order_payment(payment: payment_rest.Payment):
 
     return uc_order_payment.pay_order(
-        body['order_id'],
-        body['payment_date'],
-        body['payment_transaction_id'],
+        payment.order_id,
+        payment.payment_date,
+        payment.payment_transaction_id,
     )
