@@ -83,7 +83,8 @@ class OrderRepoImpl(OrderPort):
             entity=order_sql.Order,
             entity_dict={
                 'payment_date': payment_date,
-                'payment_transaction_id': payment_transaction_id
+                'payment_transaction_id': payment_transaction_id,
+                'has_payment_verified': True
             },
             dict_filter={
                 'id': order_id

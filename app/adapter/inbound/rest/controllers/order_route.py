@@ -6,6 +6,7 @@ from datetime import datetime
 from app.adapter.outbound.repositories.sql.implementation import order_impl
 from app.domain.use_cases import order_uc
 from app.adapter.inbound.rest.entity import order_rest
+from app.adapter.inbound.rest.entity import payment_rest
 from app.adapter.inbound.rest.mapper import order_rest_mapper
 from app.domain.value_objects import status as obj_status
 from app.domain.errors.custom_errors import NotFoundError
@@ -71,5 +72,10 @@ async def order_update_status(order_id: str, status: str):
 
 
 @order.patch('/pay/{order_id}')
-async def order_payment(order_id: str, payment_date: datetime, payment_transaction_id:str):
-    return uc_order_payment.pay_order(order_id, payment_date, payment_transaction_id)
+async def order_payment(body: payment_rest.Payment):
+
+    return uc_order_payment.pay_order(
+        body['order_id'],
+        body['payment_date'],
+        body['payment_transaction_id'],
+    )

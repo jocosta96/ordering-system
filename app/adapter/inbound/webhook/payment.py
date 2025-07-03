@@ -15,7 +15,7 @@ def check() -> bool:
 @webhook.webhooks.post('payment')
 def new_payment(body: payment_rest.Payment):
 
-    url = f'http://localhost:8080/fastfood/api/order/pay/{body["order_id"]}'
+    url = f'http://localhost:8080/order/pay/{body["order_id"]}'
 
     try:
         response = requests.post(url, json=body)

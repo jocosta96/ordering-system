@@ -7,4 +7,4 @@ class Payment(BaseModel):
 
     payment_date: Optional[datetime] = None
     payment_transaction_id: Optional[str] = None
-    has_payment_verified: bool
+    order_id: str
