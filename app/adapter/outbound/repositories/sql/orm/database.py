@@ -35,7 +35,6 @@ connection_string = f"postgresql://{user}:{password}@{host}/{database}"
 
 engine = create_engine(
     connection_string,
-    echo=True,
     pool_pre_ping=True,
     pool_recycle=600
 )

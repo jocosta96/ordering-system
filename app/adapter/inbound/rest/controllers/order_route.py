@@ -72,7 +72,10 @@ async def order_update_status(order_id: str, status: str):
 
 
 @order.patch('/pay/{order_id}')
-async def order_payment(payment: payment_rest.Payment):
+async def order_payment(payment: payment_rest.Payment, order_id):
+
+    order = uc_order_read.read_order(order_id)
+    order.validate_duplicated_payment()
 
     return uc_order_payment.pay_order(
         payment.order_id,

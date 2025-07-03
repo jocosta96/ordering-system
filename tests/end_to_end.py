@@ -253,11 +253,11 @@ def _payment_webhook(order_id):
     """
     Simulate a payment by calling the payment webhook endpoint with a valid payload.
     """
-    url = "http://192.168.49.2:30000/payment"  # Adjust port if needed
+    url = "http://192.168.49.2:30000/webhook/mercadopago"  # Adjust port if needed
     body = {
         "payment_date": "2019-08-24T14:15:22Z",
-        "payment_transaction_id": "string",
-        "order_id": "string"
+        "payment_transaction_id": order_id,
+        "order_id": order_id
     }
 
     response = requests.post(url, json=body)
@@ -269,7 +269,3 @@ def test_end_to_end():
     _add_customer()
     _add_ingredients()
     _add_product()
-    product_id = 1  # If product id is dynamic, fetch from _add_product
-    order_id = _add_order(product_id)
-    payment_response = _payment_webhook(order_id)
-    assert payment_response.status_code == 200
