@@ -28,6 +28,6 @@ def create_application() -> FastAPI:
     app.include_router(router=order_route.order)
     app.include_router(router=ingredient_route.ingredient)
 
-    return app
+    return app     
 
 app = create_application()

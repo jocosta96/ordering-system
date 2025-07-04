@@ -37,7 +37,7 @@ class Order(BaseModel):
     status: OrderStatus = OrderStatus(status=OrderStatusType.RECEBIDO)
     payment_date: Optional[datetime] = None
     payment_transaction_id: Optional[str] = None
-    has_payment_verified: bool
+    has_payment_verified: bool = False
     order_items: list[OrderItem]
 
     model_config = {

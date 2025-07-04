@@ -6,6 +6,7 @@ from app.domain.value_objects.money import Money
 from app.domain.value_objects.status import OrderStatus, OrderStatusType
 from app.domain.entities.product_entity import Product, ProductReceiptItem
 from app.domain.entities.ingredient_entity import Ingredient
+from app.domain.errors.custom_errors import DuplicatedPaymentError
 
 class OrderItem:
 
@@ -152,11 +153,11 @@ class Order:
     def set_end_date(self):
         self.end_date = datetime.now()
 
-    def execute_payment(self, payment_date, transaction_id):
-        self.has_payment_verified = True
-        self.payment_date = payment_date,
-        self.payment_transaction_id = transaction_id
+    def validate_duplicated_payment(self):
 
+        if self.has_payment_verified:
+            raise DuplicatedPaymentError()
+        
     def next_status(self):
         self.status.next_status()
 

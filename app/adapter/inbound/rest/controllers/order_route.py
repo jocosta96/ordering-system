@@ -1,10 +1,12 @@
 from http import HTTPStatus
 from fastapi import APIRouter, HTTPException
 from typing import List
+from datetime import datetime
 
 from app.adapter.outbound.repositories.sql.implementation import order_impl
 from app.domain.use_cases import order_uc
 from app.adapter.inbound.rest.entity import order_rest
+from app.adapter.inbound.rest.entity import payment_rest
 from app.adapter.inbound.rest.mapper import order_rest_mapper
 from app.domain.value_objects import status as obj_status
 from app.domain.errors.custom_errors import NotFoundError
@@ -14,6 +16,7 @@ repo_order = order_impl.OrderRepoImpl()
 uc_order_create = order_uc.OrderCreate(repo_order)
 uc_order_read = order_uc.OrderRead(repo_order)
 uc_order_update = order_uc.OrderUpdate(repo_order)
+uc_order_payment = order_uc.OrderPay(repo_order)
 uc_order_list = order_uc.OrderList(repo_order)
 
 order = APIRouter(tags=["order"], prefix="/order")
@@ -43,7 +46,7 @@ async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
 
 
-@order.get('/{order_id}')
+@order.get('/read/{order_id}')
 async def order_read(order_id: str):
     order = uc_order_read.read_order(order_id)
 
@@ -62,7 +65,20 @@ async def order_create(order_data: order_rest.Order):
     return uc_order_create.create_order(order)
 
 
-@order.patch('/{order_id}')
+@order.patch('/update/{order_id}')
 async def order_update_status(order_id: str, status: str):
     status = obj_status.OrderStatus(status=status)
     return uc_order_update.update_order(order_id, status)
+
+
+@order.patch('/pay/{order_id}')
+async def order_payment(payment: payment_rest.Payment, order_id):
+
+    order = uc_order_read.read_order(order_id)
+    order.validate_duplicated_payment()
+
+    return uc_order_payment.pay_order(
+        payment.order_id,
+        payment.payment_date,
+        payment.payment_transaction_id,
+    )
