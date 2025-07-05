@@ -42,22 +42,19 @@ async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
 
 
 @order.get("/read/{order_id}")
-async def order_read(order_id: str):
+async def order_read(order_id: str) -> order_rest.Order:
     order = uc_order_read.read_order(order_id)
-
     print("****" * 20, order.__dict__)
-
     order = order_rest_mapper.to_rest_entity(order)
-
     return order
 
 
 @order.post("")
-async def order_create(order_data: order_rest.Order):
+async def order_create(order_data: order_rest.Order) -> order_rest.SimpleOrderReader:
     order = order_rest_mapper.to_domain_entity(order_data)
     order.set_start_date()
-
-    return uc_order_create.create_order(order)
+    order_entity = uc_order_create.create_order(order)
+    return order_rest_mapper.to_simple_reader(order_entity)
 
 
 @order.patch("/update/{order_id}")

@@ -11,7 +11,7 @@ class BaseOrderUseCase:
 
 
 class OrderCreate(BaseOrderUseCase):
-    def create_order(self, order: order_entity.Order) -> int:
+    def create_order(self, order: order_entity.Order) -> order_entity.Order:
         return self.port.create_order(order)
 
 
