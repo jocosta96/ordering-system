@@ -7,7 +7,6 @@ from alembic import context
 from dotenv import load_dotenv
 
 from app.adapter.outbound.repositories.sql.orm.database import Base
-from app.adapter.outbound.repositories.sql.entities import *
 
 load_dotenv()
 
@@ -32,6 +31,7 @@ connection_string = f"{driver}://{user}:{password}@{host}/{database}"
 config.set_main_option("sqlalchemy.url", connection_string)
 
 target_metadata = Base.metadata
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""

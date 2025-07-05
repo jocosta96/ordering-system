@@ -18,16 +18,17 @@ uc_product_list = product_uc.ProductList(repo_product)
 
 product = APIRouter(prefix="/product", tags=["product"])
 
+
 @product.get("/list")
 async def product_list(search_key, search_value) -> list[product_rest.Product]:
     try:
         products = uc_product_list.list_product(
-            search_key=search_key, 
-            search_value=search_value
+            search_key=search_key, search_value=search_value
         )
         return [product_rest_mapper.to_rest_entity(p) for p in products]
     except NotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
+
 
 @product.get("/{product_id}")
 async def product_read(product_id) -> product_rest.Product:
@@ -37,27 +38,31 @@ async def product_read(product_id) -> product_rest.Product:
     except NotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
 
-@product.post('')
-async def product_create(product_data:product_rest.Product):
+
+@product.post("")
+async def product_create(product_data: product_rest.Product):
     product = product_rest_mapper.to_domain_entity(product_data)
     return uc_product_create.create_product(product)
 
-@product.put('')
-async def product_update(product_data:product_rest.Product):
+
+@product.put("")
+async def product_update(product_data: product_rest.Product):
     try:
         product = product_rest_mapper.to_domain_entity(product_data)
         return uc_product_update.update_product(product)
     except NotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
 
-@product.delete('/{product_id}')
+
+@product.delete("/{product_id}")
 async def product_delete(product_id: str):
     try:
         return uc_product_delete.delete_product(product_id)
     except NotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
 
-@product.patch('/restore/{product_id}')
+
+@product.patch("/restore/{product_id}")
 async def product_restore_deleted(product_id: str):
     try:
         return uc_product_restore.restore_deleted_product(product_id)

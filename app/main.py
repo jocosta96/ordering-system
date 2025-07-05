@@ -6,13 +6,12 @@ from app.adapter.inbound.rest.controllers import (
     product_route,
     order_route,
     ingredient_route,
-    health
+    health,
 )
 
+
 def create_application() -> FastAPI:
-    app = FastAPI(
-        prefix="/fastfood/api"
-    )
+    app = FastAPI(prefix="/fastfood/api")
     origins = ["*"]
 
     app.add_middleware(
@@ -28,6 +27,7 @@ def create_application() -> FastAPI:
     app.include_router(router=order_route.order)
     app.include_router(router=ingredient_route.ingredient)
 
-    return app     
+    return app
+
 
 app = create_application()

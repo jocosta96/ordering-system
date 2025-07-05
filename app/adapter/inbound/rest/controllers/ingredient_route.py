@@ -25,7 +25,9 @@ async def list_ingredient(search_key, search_value) -> List[ingredient_rest.Ingr
         ingredients = uc_ingredient_list.list_ingredient(search_key, search_value)
         return [ingredient_rest_mapper.to_rest_entity(ing) for ing in ingredients]
     except NotFoundError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Not found ingredients')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+        )
 
 
 @ingredient.get("/{ingredient_id}")
@@ -33,36 +35,42 @@ async def ingredient_read(ingredient_id: int) -> ingredient_rest.Ingredient:
     try:
         ingredient = uc_ingredient_read.read_ingredient(ingredient_id)
         if not ingredient:
-            raise NotFoundError('Ingredient not found')
+            raise NotFoundError("Ingredient not found")
         return ingredient_rest_mapper.to_rest_entity(ingredient)
     except NotFoundError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Not found ingredients')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+        )
 
 
-@ingredient.post('')
+@ingredient.post("")
 async def ingredient_create(ingredient_data: ingredient_rest.Ingredient):
     ingredient = ingredient_rest_mapper.to_domain_entity(ingredient_data)
     return uc_ingredient_create.create_ingredient(ingredient)
 
 
-@ingredient.put('')
+@ingredient.put("")
 async def ingredient_update(ingredient_data: ingredient_rest.Ingredient):
     ingredient = ingredient_rest_mapper.to_domain_entity(ingredient_data)
 
     return uc_ingredient_update.update_ingredient(ingredient)
 
 
-@ingredient.delete('/{ingredient_id}')
+@ingredient.delete("/{ingredient_id}")
 async def ingredient_delete(ingredient_id: int):
     try:
         return uc_ingredient_delete.delete_ingredient(ingredient_id)
     except NotFoundError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Not found ingredients')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+        )
 
 
-@ingredient.patch('/restore/{ingredient_id}')
+@ingredient.patch("/restore/{ingredient_id}")
 async def ingredient_restore_deleted(ingredient_id: int):
     try:
         return uc_ingredient_restore.restore_deleted_ingredient(ingredient_id)
     except NotFoundError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Not found ingredients')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+        )

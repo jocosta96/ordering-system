@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from collections import Counter
 
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.status import OrderStatus, OrderStatusType
@@ -8,8 +7,8 @@ from app.domain.entities.product_entity import Product, ProductReceiptItem
 from app.domain.entities.ingredient_entity import Ingredient
 from app.domain.errors.custom_errors import DuplicatedPaymentError
 
-class OrderItem:
 
+class OrderItem:
     def __init__(
         self,
         order_id: str,
@@ -17,8 +16,8 @@ class OrderItem:
         additional_ingredient: list[Ingredient],
         remove_ingredient: list[Ingredient],
         item_receipt: list[ProductReceiptItem] = [],
-        price: Money = Money(amount=0.0), 
-        id: str=None
+        price: Money = Money(amount=0.0),
+        id: str = None,
     ):
         self.id = id
         self.order_id = order_id
@@ -36,7 +35,6 @@ class OrderItem:
         if not self.id:
             self.id = uuid.uuid4()
 
-
     def _serialize_default_ingredients(self):
         result = []
         for item in self.product.default_ingredient:
@@ -45,10 +43,8 @@ class OrderItem:
             else:
                 result.append(item.ingredient)
         return result
-    
 
     def _generate_item_receipt(self):
-
         if self.item_receipt:
             return
 
@@ -57,7 +53,9 @@ class OrderItem:
         remove_ingredient = self.remove_ingredient
 
         # Only keep default ingredients not in remove_ingredient
-        filtered_default = [item for item in default_ingredient if item not in remove_ingredient]
+        filtered_default = [
+            item for item in default_ingredient if item not in remove_ingredient
+        ]
 
         # Combine all ingredients (filtered default + additional)
         full_list = filtered_default + additional_ingredient
@@ -65,7 +63,6 @@ class OrderItem:
         # Use id for grouping to avoid duplicate objects with same id
         ingredient_map = {}
         for ingredient in full_list:
-
             key = getattr(ingredient, "id", id(ingredient))
             if key in ingredient_map:
                 ingredient_map[key]["quantity"] += 1
@@ -74,12 +71,10 @@ class OrderItem:
 
         self.item_receipt = [
             ProductReceiptItem(
-                ingredient=entry["ingredient"],
-                quantity=entry["quantity"]
+                ingredient=entry["ingredient"], quantity=entry["quantity"]
             )
             for entry in ingredient_map.values()
         ]
-
 
     def get_item_receipt(self):
         if self.item_receipt is None:
@@ -97,23 +92,20 @@ class OrderItem:
 
 
 class Order:
-
     def __init__(
         self,
-
         customer_id: int,
         order_items: list[OrderItem],
         value: Money = Money(amount=0.0),
         status: OrderStatus = None,
-        start_date = None,
-        end_date = None,
-        has_payment_verified = False,
+        start_date=None,
+        end_date=None,
+        has_payment_verified=False,
         payment_date: datetime = None,
-        payment_transaction_id: str = '',
+        payment_transaction_id: str = "",
         id: str = None,
         internal_id: int = None,
     ):
-        
         self.id = id
         self.customer_id = customer_id
         self.value = value
@@ -127,7 +119,7 @@ class Order:
         self.status = status
 
         self.internal_id = internal_id
-        self.order_display_id: str = ''
+        self.order_display_id: str = ""
 
         self._check_or_create_uuid()
         self._check_or_create_status()
@@ -154,18 +146,20 @@ class Order:
         self.end_date = datetime.now()
 
     def validate_duplicated_payment(self):
-
         if self.has_payment_verified:
             raise DuplicatedPaymentError()
-        
+
     def next_status(self):
         self.status.next_status()
 
     def calculate_value(self):
-
         total_value = Money(amount=0.0)
 
         for item in self.order_items:
-            total_value += Money(amount=item.price) if not isinstance(item.price, Money) else item.price
+            total_value += (
+                Money(amount=item.price)
+                if not isinstance(item.price, Money)
+                else item.price
+            )
 
         self.value = total_value

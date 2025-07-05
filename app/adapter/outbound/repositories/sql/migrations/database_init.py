@@ -4,23 +4,25 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app.adapter.outbound.repositories.sql.orm.database import get_db
 
-db_name = os.environ['POSTGRES_DB']
-usr_pwd = os.environ['POSTGRES_PASSWORD']
+db_name = os.environ["POSTGRES_DB"]
+usr_pwd = os.environ["POSTGRES_PASSWORD"]
 
 
 with get_db() as session:
     try:
-        alembic = session.execute(text(
-            "SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'alembic_version'"
-        )).one()
+        alembic = session.execute(
+            text(
+                "SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename  = 'alembic_version'"
+            )
+        ).one()
         if not alembic:
-            os.system('alembic revision --autogenerate && alembic upgrade head')
+            os.system("alembic revision --autogenerate && alembic upgrade head")
         else:
-            print('database already initalized')  
+            print("database already initalized")
 
-    except NoResultFound as e:
+    except NoResultFound:
         session.rollback()
-        os.system('alembic revision --autogenerate && alembic upgrade head')
+        os.system("alembic revision --autogenerate && alembic upgrade head")
 
     except Exception as e:
         session.rollback()
@@ -28,7 +30,8 @@ with get_db() as session:
 
 with get_db() as session:
     try:
-        session.execute(text(f"""
+        session.execute(
+            text(f"""
             DO $$
             BEGIN
             IF NOT EXISTS (
@@ -39,10 +42,10 @@ with get_db() as session:
             END $$;
 
             GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {db_name};
-        """))
+        """)
+        )
         session.commit()
 
     except Exception as e:
         session.rollback()
         print(f"Error during database initialization: {e}")
-

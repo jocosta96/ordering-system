@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from app.domain.value_objects.money import Money
@@ -14,11 +14,9 @@ class OrderItem(BaseModel):
     additional_ingredient: list[Ingredient] = []
     remove_ingredient: list[Ingredient] = []
     item_receipt: list[ProductReceiptItem] = []
-    price: Money= Money(amount=0.00)
+    price: Money = Money(amount=0.00)
 
-    model_config = {
-        "arbitrary_types_allowed": True
-    }
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class SimpleOrderReader(BaseModel):
@@ -51,72 +49,46 @@ class Order(BaseModel):
                 "order_items": [
                     {
                         "product": {
-                            "name": {
-                                "name": "X-Bullgerrrrrr"
-                            },
-                            "category": {
-                                "category": "LANCHE"
-                            },
+                            "name": {"name": "X-Bullgerrrrrr"},
+                            "category": {"category": "LANCHE"},
                             "default_ingredient": [
                                 {
                                     "ingredient": {
                                         "id": 1,
-                                        "name": {
-                                            "name": "QUEIJO PRATO"
-                                        },
-                                        "price": {
-                                            "amount": "0.0"
-                                        },
-                                        "product_category": {
-                                            "category": "LANCHE"
-                                        },
-                                        "is_active": True
+                                        "name": {"name": "QUEIJO PRATO"},
+                                        "price": {"amount": "0.0"},
+                                        "product_category": {"category": "LANCHE"},
+                                        "is_active": True,
                                     },
-                                    "quantity": 3
+                                    "quantity": 3,
                                 },
                                 {
                                     "ingredient": {
                                         "id": 2,
-                                        "name": {
-                                            "name": "ALFACE"
-                                        },
-                                        "price": {
-                                            "amount": "0.0"
-                                        },
-                                        "product_category": {
-                                            "category": "LANCHE"
-                                        },
-                                        "is_active": True
+                                        "name": {"name": "ALFACE"},
+                                        "price": {"amount": "0.0"},
+                                        "product_category": {"category": "LANCHE"},
+                                        "is_active": True,
                                     },
-                                    "quantity": 1
-                                }
+                                    "quantity": 1,
+                                },
                             ],
-                            "price": {
-                                "amount": "12.5"
-                            },
-                            "sku": {
-                                "sku": "PROD-1238-XYZ"
-                            },
-                            "id": "5bc76687-014a-4950-8a23-999959157630"
+                            "price": {"amount": "12.5"},
+                            "sku": {"sku": "PROD-1238-XYZ"},
+                            "id": "5bc76687-014a-4950-8a23-999959157630",
                         },
                         "additional_ingredient": [
                             {
                                 "id": 1,
-                                "name": {
-                                    "name": "QUEIJO PRATO"
-                                },
-                                "price": {
-                                    "amount": "0.00"
-                                },
-                                "product_category": {
-                                    "category": "LANCHE"
-                                },
-                                "is_active": True
+                                "name": {"name": "QUEIJO PRATO"},
+                                "price": {"amount": "0.00"},
+                                "product_category": {"category": "LANCHE"},
+                                "is_active": True,
                             }
                         ],
-                        "remove_ingredient": []
+                        "remove_ingredient": [],
                     }
-                ]
+                ],
             }
-        }
+        },
     }

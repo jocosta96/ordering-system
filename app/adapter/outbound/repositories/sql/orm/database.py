@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from psycopg2.extensions import register_adapter, QuotedString, DECIMAL
+from psycopg2.extensions import register_adapter, QuotedString
 
 from app.domain.value_objects import (
     name,
@@ -14,7 +14,7 @@ from app.domain.value_objects import (
     codebar,
     money,
     status,
-    category
+    category,
 )
 
 register_adapter(document.Document, lambda document: QuotedString(str(document)))
@@ -33,15 +33,12 @@ password = os.environ["POSTGRES_PASSWORD"]
 
 connection_string = f"postgresql://{user}:{password}@{host}/{database}"
 
-engine = create_engine(
-    connection_string,
-    pool_pre_ping=True,
-    pool_recycle=600
-)
+engine = create_engine(connection_string, pool_pre_ping=True, pool_recycle=600)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()
