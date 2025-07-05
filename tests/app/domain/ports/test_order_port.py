@@ -8,11 +8,17 @@ class DummyOrderPort(OrderPort):
     def read_order(self, order_id):
         return order_id
 
-    def update_order(self, order):
+    def update_order(self, order, status=None):
         return order
 
     def delete_order(self, order_id):
         return order_id
+
+    def pay_order(self, order_id, payment_date, payment_transaction_id):
+        return (order_id, payment_date, payment_transaction_id)
+
+    def list_order(self, search_key, search_value):
+        return [(search_key, search_value)]
 
 
 def test_order_port_interface():

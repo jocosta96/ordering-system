@@ -1,18 +1,26 @@
 from app.adapter.inbound.rest.entity.order_rest import Order, OrderItem
+from app.adapter.inbound.rest.entity.product_rest import Product, ProductReceiptItem
+from app.adapter.inbound.rest.entity.ingredient_rest import Ingredient
 from app.domain.value_objects.money import Money
-from app.domain.entities.product_entity import Product, ProductReceiptItem
 from app.domain.value_objects.name import Name
 from app.domain.value_objects.sku import SKU
 from app.domain.value_objects.category import ProductCategory
 
 
 def make_product():
+    ingredient = Ingredient(
+        id=1,
+        name=Name(name="ALFACE"),
+        price=Money(amount=5.00),
+        product_category=ProductCategory(category="LANCHE"),
+        is_active=True,
+    )
     return Product(
         name=Name(name="X-Burger"),
         price=Money(amount=12.50),
         category=ProductCategory(category="LANCHE"),
         sku=SKU(sku="PROD-1234-XYZ"),
-        default_ingredient=[ProductReceiptItem(ingredient_id=1, quantity=2)],
+        default_ingredient=[ProductReceiptItem(ingredient=ingredient, quantity=2)],
     )
 
 

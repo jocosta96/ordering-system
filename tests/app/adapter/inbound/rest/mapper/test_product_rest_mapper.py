@@ -11,12 +11,21 @@ from app.domain.value_objects.category import ProductCategory
 
 
 def test_to_domain_entity():
+    from app.adapter.inbound.rest.entity.ingredient_rest import Ingredient
+
+    ingredient = Ingredient(
+        id=1,
+        name=Name(name="ALFACE"),
+        price=Money(amount=5.00),
+        product_category=ProductCategory(category="LANCHE"),
+        is_active=True,
+    )
     rest_product = Product(
         name=Name(name="X-Burger"),
         price=Money(amount=12.50),
         category=ProductCategory(category="LANCHE"),
         sku=SKU(sku="PROD-1234-XYZ"),
-        default_ingredient=[ProductReceiptItem(ingredient_id=1, quantity=2)],
+        default_ingredient=[ProductReceiptItem(ingredient=ingredient, quantity=2)],
     )
     domain_product = product_rest_mapper.to_domain_entity(rest_product)
     assert isinstance(domain_product, DomainProduct)
@@ -28,12 +37,21 @@ def test_to_domain_entity():
 
 
 def test_to_rest_entity():
+    from app.domain.entities.ingredient_entity import Ingredient
+
+    ingredient = Ingredient(
+        id=1,
+        name=Name(name="ALFACE"),
+        price=Money(amount=5.00),
+        product_category=ProductCategory(category="LANCHE"),
+        is_active=True,
+    )
     domain_product = DomainProduct(
         name=Name(name="X-Burger"),
         price=Money(amount=12.50),
         category=ProductCategory(category="LANCHE"),
         sku=SKU(sku="PROD-1234-XYZ"),
-        default_ingredient=[DomainReceiptItem(ingredient_id=1, quantity=2)],
+        default_ingredient=[DomainReceiptItem(ingredient=ingredient, quantity=2)],
     )
     rest_product = product_rest_mapper.to_rest_entity(domain_product)
     assert isinstance(rest_product, Product)
