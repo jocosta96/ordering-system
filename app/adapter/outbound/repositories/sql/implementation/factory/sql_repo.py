@@ -41,3 +41,7 @@ class SQLRepository(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def list_order_item_receipts(self) -> None:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def list_order(self) -> None:
+        raise NotImplementedError

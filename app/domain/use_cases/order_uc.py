@@ -33,7 +33,7 @@ class OrderPay(BaseOrderUseCase):
 
 
 class OrderList(BaseOrderUseCase):
-    def list_order(self, search_key, search_value):
+    def list_order(self, search_key=None, search_value=None):
         return self.port.list_order(search_key, search_value)
 
 

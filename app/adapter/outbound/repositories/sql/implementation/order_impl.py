@@ -192,11 +192,12 @@ class OrderRepoImpl(OrderPort):
 
         return domain_order
 
-    def list_order(self, search_key, search_value) -> list[order_entity.Order]:
-        orders = self._sql_impl.list_all(
-            entity=order_sql.Order,
-            dict_filter={search_key: search_value},
-            order_by_column=order_sql.Order.internal_id.asc(),
+    def list_order(self, search_key=None, search_value=None) -> list[order_entity.Order]:
+        orders = self._sql_impl.list_order(
+            order_sql_entity=order_sql,
+            dict_filter={search_key: search_value}
+                if search_key and search_value
+                else {}
         )
 
         if not orders:

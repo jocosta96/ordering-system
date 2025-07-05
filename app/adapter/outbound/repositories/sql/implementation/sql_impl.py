@@ -3,6 +3,7 @@ from app.adapter.outbound.repositories.sql.implementation.factory.sql_repo impor
     SQLRepository,
 )
 from app.adapter.outbound.repositories.sql.orm import database
+from sqlalchemy import case
 
 
 class SQLRepoImpl(SQLRepository):
@@ -118,3 +119,37 @@ class SQLRepoImpl(SQLRepository):
             .all()
         )
         return list_receipts
+
+    def list_order(
+        self, 
+        order_sql_entity: Type[database.Base],
+        dict_filter: dict = None
+    ) -> list[Type[database.Base]]:
+        status_order = case(
+            (order_sql_entity.Order.status == "PRONTO", 1),
+            (order_sql_entity.Order.status == "EM_PREPARACAO", 2),
+            (order_sql_entity.Order.status == "RECEBIDO", 3),
+            else_=4
+        )
+
+        if dict_filter is None:
+            statuses_to_exclude = ["FINALIZADO", "CANCELADO"]
+
+            orders = self._database.query(
+                order_sql_entity.Order
+            ).filter(
+                order_sql_entity.Order.status.notin_(statuses_to_exclude)
+            ).order_by(
+                status_order.asc(),
+                order_sql_entity.Order.internal_id.asc()
+            ).all()
+
+        orders = self._database.query(
+           order_sql_entity.Order
+        ).filter_by(
+            **dict_filter if dict_filter else {}
+        ).order_by(
+            status_order.asc(),
+            order_sql_entity.Order.internal_id.asc()
+        ).all()
+        return orders
