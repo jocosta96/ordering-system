@@ -96,7 +96,7 @@ class Order:
         self,
         customer_id: int,
         order_items: list[OrderItem],
-        value: Money = Money(amount=0.0),
+        value: Money = None,
         status: OrderStatus = None,
         start_date=None,
         end_date=None,
@@ -108,7 +108,6 @@ class Order:
     ):
         self.id = id
         self.customer_id = customer_id
-        self.value = value
         self.order_items = order_items
         self.payment_date = payment_date
         self.payment_transaction_id = payment_transaction_id
@@ -123,7 +122,10 @@ class Order:
 
         self._check_or_create_uuid()
         self._check_or_create_status()
-        self.calculate_value()
+        if value is not None:
+            self.value = value
+        else:
+            self.calculate_value()
         self._set_display_id()
 
     def _set_display_id(self):
@@ -163,3 +165,9 @@ class Order:
             )
 
         self.value = total_value
+
+    def execute_payment(self, payment_date: datetime, payment_transaction_id: str):
+        self.validate_duplicated_payment()
+        self.payment_date = payment_date
+        self.payment_transaction_id = payment_transaction_id
+        self.has_payment_verified = True

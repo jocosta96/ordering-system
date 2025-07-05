@@ -13,11 +13,13 @@ class DummyIngredient(Ingredient):
     def __init__(
         self, id=1, name=None, price=None, product_category=None, is_active=True
     ):
-        self.id = id
-        self.name = name or Name(name="Test Ingredient")
-        self.price = price or Money(amount=1.0)
-        self.product_category = product_category or ProductCategory(category="LANCHE")
-        self.is_active = is_active
+        super().__init__(
+            id=id,
+            name=name or Name(name="Test Ingredient"),
+            price=price or Money(amount=1.0),
+            product_category=product_category or ProductCategory(category="LANCHE"),
+            is_active=is_active,
+        )
 
 
 def make_product():
@@ -26,7 +28,7 @@ def make_product():
         price=Money(amount=12.50),
         category=ProductCategory(category="LANCHE"),
         sku=SKU(sku="PROD-1234-XYZ"),
-        default_ingredient=[ProductReceiptItem(ingredient_id=1, quantity=2)],
+        default_ingredient=[ProductReceiptItem(ingredient=DummyIngredient(), quantity=2)],
     )
 
 

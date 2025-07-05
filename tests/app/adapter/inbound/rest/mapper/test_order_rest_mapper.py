@@ -11,12 +11,21 @@ from app.domain.value_objects.category import ProductCategory
 
 
 def make_product():
+    from app.domain.entities.ingredient_entity import Ingredient
+
+    ingredient = Ingredient(
+        id=1,
+        name=Name(name="ALFACE"),
+        price=Money(amount=5.00),
+        product_category=ProductCategory(category="LANCHE"),
+        is_active=True,
+    )
     return Product(
         name=Name(name="X-Burger"),
         price=Money(amount=12.50),
         category=ProductCategory(category="LANCHE"),
         sku=SKU(sku="PROD-1234-XYZ"),
-        default_ingredient=[ProductReceiptItem(ingredient_id=1, quantity=2)],
+        default_ingredient=[ProductReceiptItem(ingredient=ingredient, quantity=2)],
     )
 
 
