@@ -63,7 +63,7 @@ class OrderRepoImpl(OrderPort):
         ]
         return order_item_receipt_sql
 
-    def create_order(self, order: order_entity.Order) -> None:
+    def create_order(self, order: order_entity.Order) -> order_entity.Order:
         db_order = self._order_entity_to_sql(order)
         db_order_items = self._order_item_entity_to_sql(order)
         db_order_item_receipts = self._order_item_receipt_entity_to_sql(order)
@@ -71,6 +71,9 @@ class OrderRepoImpl(OrderPort):
         self._sql_impl.add_one(db_order)
         self._sql_impl.add_all(db_order_items)
         self._sql_impl.add_all(db_order_item_receipts)
+
+        order_entity = self.read_order(order.id)
+        return order_entity
 
     def update_order(self, order_id: str, status: status.OrderStatus) -> None:
         self.read_order(order_id)
