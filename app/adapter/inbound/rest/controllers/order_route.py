@@ -22,7 +22,7 @@ order = APIRouter(tags=["order"], prefix="/order")
 
 
 @order.get("/list")
-async def order_list(search_key, search_value) -> List[order_rest.Order]:
+async def order_list(search_key=None, search_value=None) -> List[order_rest.Order]:
     try:
         orders = uc_order_list.list_order(
             search_key=search_key, search_value=search_value

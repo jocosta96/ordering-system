@@ -27,5 +27,5 @@ class OrderPort(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def list_order(self, search_key, search_value) -> list[order_entity.Order]:
+    def list_order(self, search_key=None, search_value=None) -> list[order_entity.Order]:
         raise NotImplementedError
