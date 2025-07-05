@@ -4,9 +4,10 @@ from app.domain.entities import customer_entity
 
 
 class CustomerPort(metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
-    def create_customer(self, customer: customer_entity.Customer) -> customer_entity.Customer:
+    def create_customer(
+        self, customer: customer_entity.Customer
+    ) -> customer_entity.Customer:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -14,7 +15,9 @@ class CustomerPort(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_customer(self, customer: customer_entity.Customer) -> customer_entity.Customer:
+    def update_customer(
+        self, customer: customer_entity.Customer
+    ) -> customer_entity.Customer:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -24,7 +27,7 @@ class CustomerPort(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def list_customer(self, search_key=None, search_value=None):
         raise NotImplementedError
-    
+
     @abc.abstractmethod
     def get_anonymous_customer(self) -> customer_entity.Customer:
         raise NotImplementedError

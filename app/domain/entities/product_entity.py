@@ -7,22 +7,15 @@ import uuid
 
 
 class ProductReceiptItem:
-    def __init__(
-            self,
-            ingredient: Ingredient,
-            quantity: int
-        ):
+    def __init__(self, ingredient: Ingredient, quantity: int):
         self.ingredient = ingredient
         self.quantity = quantity
 
     def __tuple__(self):
         return self.ingredient, self.quantity
-        
-
 
 
 class Product:
-
     def __init__(
         self,
         name: Name,
@@ -30,7 +23,7 @@ class Product:
         category: ProductCategory,
         sku: SKU,
         default_ingredient: list[ProductReceiptItem],
-        id: str | uuid.UUID = None
+        id: str | uuid.UUID = None,
     ):
         self.id = uuid.UUID(str(id)) if id else uuid.uuid4()
         self.name = name

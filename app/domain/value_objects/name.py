@@ -3,9 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class Name(BaseModel):
     name: str = Field(
-        ...,
-        description="A person's first or last name",
-        examples=["Name"]
+        ..., description="A person's first or last name", examples=["Name"]
     )
 
     @field_validator("name")

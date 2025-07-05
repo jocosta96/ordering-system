@@ -1,5 +1,6 @@
 import pytest
-from app.domain.value_objects.status import OrderStatus, OrderStatusType
+from app.domain.value_objects.status import OrderStatus
+
 
 def test_valid_status():
     status = OrderStatus(status="RECEBIDO")
@@ -7,9 +8,11 @@ def test_valid_status():
     assert str(status) == "RECEBIDO"
     assert status.value == "RECEBIDO"
 
+
 def test_invalid_status():
     with pytest.raises(ValueError):
         OrderStatus(status="INVALID")
+
 
 def test_next_status():
     status = OrderStatus(status="RECEBIDO")

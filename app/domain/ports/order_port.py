@@ -6,7 +6,6 @@ from app.domain.value_objects import status
 
 
 class OrderPort(metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def create_order(self, order: order_entity.Order) -> order_entity.Order:
         raise NotImplementedError
@@ -16,11 +15,15 @@ class OrderPort(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_order(self, order_id: str, status: status.OrderStatus) -> order_entity.Order:
+    def update_order(
+        self, order_id: str, status: status.OrderStatus
+    ) -> order_entity.Order:
         raise NotImplementedError
-    
+
     @abc.abstractmethod
-    def pay_order(self, order_id: str, payment_date: datetime, payment_transaction_id:str) -> order_entity.Order:
+    def pay_order(
+        self, order_id: str, payment_date: datetime, payment_transaction_id: str
+    ) -> order_entity.Order:
         raise NotImplementedError
 
     @abc.abstractmethod

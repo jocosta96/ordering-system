@@ -1,12 +1,19 @@
-import pytest
 from app.domain.ports.order_port import OrderPort
-from app.domain.entities.order_entity import Order
+
 
 class DummyOrderPort(OrderPort):
-    def create_order(self, order): return order
-    def read_order(self, order_id): return order_id
-    def update_order(self, order): return order
-    def delete_order(self, order_id): return order_id
+    def create_order(self, order):
+        return order
+
+    def read_order(self, order_id):
+        return order_id
+
+    def update_order(self, order):
+        return order
+
+    def delete_order(self, order_id):
+        return order_id
+
 
 def test_order_port_interface():
     port = DummyOrderPort()

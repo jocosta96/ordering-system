@@ -16,7 +16,7 @@ class Codebar(BaseModel):
         assert value.isdigit(), "Codebar must contain only numeric characters."
 
         assert len(value) == 13, "EAN-13 codebar must be exactly 13 digits."
-        
+
         digits = [int(d) for d in value]
         checksum = digits.pop()  # actual check digit
         total = sum(d if i % 2 == 0 else d * 3 for i, d in enumerate(digits))
@@ -25,7 +25,7 @@ class Codebar(BaseModel):
         assert calculated == checksum, "Invalid EAN-13 checksum."
 
         return value
-    
+
     def __str__(self) -> str:
         return self.code
 

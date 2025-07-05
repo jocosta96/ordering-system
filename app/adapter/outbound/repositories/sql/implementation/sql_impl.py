@@ -1,9 +1,11 @@
 from typing import Type
-from app.adapter.outbound.repositories.sql.implementation.factory.sql_repo import SQLRepository
+from app.adapter.outbound.repositories.sql.implementation.factory.sql_repo import (
+    SQLRepository,
+)
 from app.adapter.outbound.repositories.sql.orm import database
 
-class SQLRepoImpl(SQLRepository):
 
+class SQLRepoImpl(SQLRepository):
     def __init__(self) -> None:
         self._database = database.get_db()
 
@@ -15,13 +17,9 @@ class SQLRepoImpl(SQLRepository):
             raise e
 
     def get_one(self, entity: Type[database.Base], dict_filter: dict) -> database.Base:
-        sql_entity = self._database.query(
-            entity
-        ).filter_by(
-            **dict_filter
-        ).one()
+        sql_entity = self._database.query(entity).filter_by(**dict_filter).one()
         return sql_entity
-    
+
     def add_one(self, entity: Type[database.Base]) -> None:
         self._database.add(entity)
         self.try_commit()
@@ -33,12 +31,11 @@ class SQLRepoImpl(SQLRepository):
         for entity in entities:
             self._database.refresh(entity)
 
-
     def list_all(
-        self, 
-        entity: Type[database.Base], 
+        self,
+        entity: Type[database.Base],
         dict_filter: dict = None,
-        order_by_column = None
+        order_by_column=None,
     ) -> list[Type[database.Base]]:
         """Returns a list of all entities in the database."""
         query = self._database.query(entity)
@@ -49,30 +46,13 @@ class SQLRepoImpl(SQLRepository):
         return query.all()
 
     def update(
-        self, 
-        entity: Type[database.Base],
-        entity_dict: dict,
-        dict_filter: dict
+        self, entity: Type[database.Base], entity_dict: dict, dict_filter: dict
     ) -> None:
-        self._database.query(
-            entity
-        ).filter_by(
-            **dict_filter
-        ).update(
-            entity_dict
-        )
+        self._database.query(entity).filter_by(**dict_filter).update(entity_dict)
         self.try_commit()
 
-    def delete(
-        self,
-        entity: Type[database.Base],
-        dict_filter: dict
-    ) -> None:
-        self._database.query(
-            entity
-        ).filter_by(
-            **dict_filter
-        ).delete()
+    def delete(self, entity: Type[database.Base], dict_filter: dict) -> None:
+        self._database.query(entity).filter_by(**dict_filter).delete()
         self.try_commit()
 
     def list_order_items(
@@ -80,52 +60,61 @@ class SQLRepoImpl(SQLRepository):
         order_sql_entity: Type[database.Base],
         ingredient_sql_entity: Type[database.Base],
         order_id: str,
-        product_sql_entity: Type[database.Base]
+        product_sql_entity: Type[database.Base],
     ) -> list[Type[database.Base]]:
-        list_order_items = self._database.query(
-            order_sql_entity.OrderItem
-        ).filter(
-            order_sql_entity.OrderItem.order_id == order_id
-        ).join(
-            product_sql_entity.Product,
-            order_sql_entity.OrderItem.product_id == product_sql_entity.Product.id
-        ).join(
-            product_sql_entity.ProductReceipt,
-            product_sql_entity.Product.id == product_sql_entity.ProductReceipt.product_id
-        ).join(
-            ingredient_sql_entity.Ingredient,
-            product_sql_entity.ProductReceipt.ingredient_id == ingredient_sql_entity.Ingredient.id
-        ).all()
+        list_order_items = (
+            self._database.query(order_sql_entity.OrderItem)
+            .filter(order_sql_entity.OrderItem.order_id == order_id)
+            .join(
+                product_sql_entity.Product,
+                order_sql_entity.OrderItem.product_id == product_sql_entity.Product.id,
+            )
+            .join(
+                product_sql_entity.ProductReceipt,
+                product_sql_entity.Product.id
+                == product_sql_entity.ProductReceipt.product_id,
+            )
+            .join(
+                ingredient_sql_entity.Ingredient,
+                product_sql_entity.ProductReceipt.ingredient_id
+                == ingredient_sql_entity.Ingredient.id,
+            )
+            .all()
+        )
         return list_order_items
-    
+
     def list_order_item_receipts(
         self,
         order_sql_entity: Type[database.Base],
         ingredient_sql_entity: Type[database.Base],
-        order_id: str
+        order_id: str,
     ) -> list[Type[database.Base]]:
-        list_order_item_receipts = self._database.query(
-            order_sql_entity.OrderItemReceipt
-        ).filter(
-            order_sql_entity.OrderItemReceipt.order_id == order_id
-        ).join(
-            ingredient_sql_entity.Ingredient,
-            order_sql_entity.OrderItemReceipt.ingredient_id == ingredient_sql_entity.Ingredient.id
-        ).all()
+        list_order_item_receipts = (
+            self._database.query(order_sql_entity.OrderItemReceipt)
+            .filter(order_sql_entity.OrderItemReceipt.order_id == order_id)
+            .join(
+                ingredient_sql_entity.Ingredient,
+                order_sql_entity.OrderItemReceipt.ingredient_id
+                == ingredient_sql_entity.Ingredient.id,
+            )
+            .all()
+        )
         return list_order_item_receipts
 
     def list_product_receipts(
         self,
         product_sql_entity: Type[database.Base],
         ingredient_sql_entity: Type[database.Base],
-        product_id: str
+        product_id: str,
     ) -> list[Type[database.Base]]:
-        list_receipts = self._database.query(
-            product_sql_entity.ProductReceipt
-        ).filter(
-            product_sql_entity.ProductReceipt.product_id == product_id
-        ).join(
-            ingredient_sql_entity.Ingredient,
-            product_sql_entity.ProductReceipt.ingredient_id == ingredient_sql_entity.Ingredient.id
-        ).all()
+        list_receipts = (
+            self._database.query(product_sql_entity.ProductReceipt)
+            .filter(product_sql_entity.ProductReceipt.product_id == product_id)
+            .join(
+                ingredient_sql_entity.Ingredient,
+                product_sql_entity.ProductReceipt.ingredient_id
+                == ingredient_sql_entity.Ingredient.id,
+            )
+            .all()
+        )
         return list_receipts

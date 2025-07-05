@@ -1,4 +1,3 @@
-import pytest
 import uuid
 from app.domain.entities.product_entity import Product, ProductReceiptItem
 from app.domain.value_objects.name import Name
@@ -12,13 +11,20 @@ def test_product_receipt_item():
     assert item.ingredient_id == 1
     assert item.quantity == 2
 
+
 def test_product_creation():
     name = Name(name="X-Burger")
     price = Money(amount=12.50)
     category = ProductCategory(category="LANCHE")
     sku = SKU(sku="PROD-1234-XYZ")
     ingredients = [ProductReceiptItem(ingredient_id=1, quantity=2)]
-    product = Product(name=name, price=price, category=category, sku=sku, default_ingredient=ingredients)
+    product = Product(
+        name=name,
+        price=price,
+        category=category,
+        sku=sku,
+        default_ingredient=ingredients,
+    )
     assert product.name == name
     assert product.price == price
     assert product.category == category
