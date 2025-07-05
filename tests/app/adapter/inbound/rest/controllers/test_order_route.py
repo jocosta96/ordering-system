@@ -1,3 +1,11 @@
+import os
+
+os.environ["POSTGRES_HOST"] = "localhost"
+os.environ["POSTGRES_PORT"] = "5432"
+os.environ["POSTGRES_DB"] = "test_db"
+os.environ["POSTGRES_USER"] = "test_user"
+os.environ["POSTGRES_PASSWORD"] = "test_password"
+
 from fastapi.testclient import TestClient
 from app.main import app
 
