@@ -158,7 +158,7 @@ def _add_order(product_id):
     response.raise_for_status()
     # Return the order id from the response if available
     try:
-        return response.json().get("id", 1)  # fallback to 1 if not present
+        return response.json()
     except Exception:
         return 1
 
