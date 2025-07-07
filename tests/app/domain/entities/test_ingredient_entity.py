@@ -1,4 +1,3 @@
-import pytest
 from app.domain.entities.ingredient_entity import Ingredient
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.name import Name

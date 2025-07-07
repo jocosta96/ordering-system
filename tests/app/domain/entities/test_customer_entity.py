@@ -1,4 +1,3 @@
-import pytest
 from app.domain.entities.customer_entity import Customer
 from app.domain.value_objects.document import Document
 from app.domain.value_objects.email import Email

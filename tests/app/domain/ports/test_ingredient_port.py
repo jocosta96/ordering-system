@@ -1,4 +1,3 @@
-import pytest
 from app.domain.ports.ingredient_port import IngredientPort
 from app.domain.entities.ingredient_entity import Ingredient
 from app.domain.value_objects.name import Name
