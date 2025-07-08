@@ -1,6 +1,7 @@
 from http import HTTPStatus
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+from typing_extensions import Annotated
 
 from app.adapter.outbound.repositories.sql.implementation import order_impl
 from app.domain.use_cases import order_uc
@@ -9,7 +10,7 @@ from app.adapter.inbound.rest.entity import payment_rest
 from app.adapter.inbound.rest.mapper import order_rest_mapper
 from app.domain.value_objects import status as obj_status
 from app.domain.errors.custom_errors import NotFoundError
-
+from app.adapter.inbound.rest.controllers.security import check_credentials, raise_not_authorized
 
 repo_order = order_impl.OrderRepoImpl()
 uc_order_create = order_uc.OrderCreate(repo_order)
@@ -44,13 +45,21 @@ async def order_list_by_status(status) -> List[order_rest.SimpleOrderReader]:
 @order.get("/read/{order_id}")
 async def order_read(order_id: str) -> order_rest.Order:
     order = uc_order_read.read_order(order_id)
-    print("****" * 20, order.__dict__)
+    if order is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Order not found")
     order = order_rest_mapper.to_rest_entity(order)
     return order
 
 
 @order.post("")
-async def order_create(order_data: order_rest.Order) -> order_rest.SimpleOrderReader:
+async def order_create(
+    order_data: order_rest.Order,
+    login: Annotated['str', Depends(check_credentials)]
+) -> order_rest.SimpleOrderReader:
+    
+    if not login:
+        raise_not_authorized()    
+
     order = order_rest_mapper.to_domain_entity(order_data)
     order.set_start_date()
     order_entity = uc_order_create.create_order(order)
@@ -58,13 +67,29 @@ async def order_create(order_data: order_rest.Order) -> order_rest.SimpleOrderRe
 
 
 @order.patch("/update/{order_id}")
-async def order_update_status(order_id: str, status: str):
+async def order_update_status(
+    order_id: str,
+    status: str,
+    login: Annotated['str', Depends(check_credentials)]
+):
+    
+    if not login:
+        raise_not_authorized()       
+
     status = obj_status.OrderStatus(status=status)
     return uc_order_update.update_order(order_id, status)
 
 
 @order.patch("/pay/{order_id}")
-async def order_payment(payment: payment_rest.Payment, order_id):
+async def order_payment(
+    payment: payment_rest.Payment,
+    order_id,
+    login: Annotated['str', Depends(check_credentials)]
+):
+    
+    if not login:
+        raise_not_authorized()
+        
     order = uc_order_read.read_order(order_id)
     order.validate_duplicated_payment()
 

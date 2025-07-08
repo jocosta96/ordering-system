@@ -11,8 +11,10 @@ permissions:
 
 jobs:
   pytest:
-
     runs-on: ubuntu-latest
+    env:
+      API_USER: ${{ secrets.API_USER }}
+      API_PWD: ${{ secrets.API_PWD }}
 
     steps:
     - uses: actions/checkout@v4
