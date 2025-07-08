@@ -21,6 +21,8 @@ uc_ingredient_list = ingredient_uc.IngredientList(repo_ingredient)
 
 ingredient = APIRouter(tags=["ingredient"], prefix="/ingredient")
 
+NOT_FOUND_INGREDIENTS_MSG = "Not found ingredients"
+
 
 @ingredient.get("/list")
 async def list_ingredient(search_key, search_value) -> List[ingredient_rest.Ingredient]:
@@ -29,7 +31,7 @@ async def list_ingredient(search_key, search_value) -> List[ingredient_rest.Ingr
         return [ingredient_rest_mapper.to_rest_entity(ing) for ing in ingredients]
     except NotFoundError:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+            status_code=HTTPStatus.NOT_FOUND, detail=NOT_FOUND_INGREDIENTS_MSG
         )
 
 
@@ -42,7 +44,7 @@ async def ingredient_read(ingredient_id: int) -> ingredient_rest.Ingredient:
         return ingredient_rest_mapper.to_rest_entity(ingredient)
     except NotFoundError:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+            status_code=HTTPStatus.NOT_FOUND, detail=NOT_FOUND_INGREDIENTS_MSG
         )
 
 
@@ -84,7 +86,7 @@ async def ingredient_delete(
         return uc_ingredient_delete.delete_ingredient(ingredient_id)
     except NotFoundError:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+            status_code=HTTPStatus.NOT_FOUND, detail=NOT_FOUND_INGREDIENTS_MSG
         )
 
 
@@ -101,5 +103,5 @@ async def ingredient_restore_deleted(
         return uc_ingredient_restore.restore_deleted_ingredient(ingredient_id)
     except NotFoundError:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Not found ingredients"
+            status_code=HTTPStatus.NOT_FOUND, detail=NOT_FOUND_INGREDIENTS_MSG
         )

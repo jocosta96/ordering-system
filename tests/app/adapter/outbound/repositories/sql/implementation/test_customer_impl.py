@@ -7,6 +7,8 @@ from app.domain.value_objects.name import Name
 from app.domain.value_objects.email import Email
 from sqlalchemy.orm.exc import NoResultFound
 
+TEST_EMAIL = 'test@example.com'
+
 @pytest.fixture
 def mock_sql_impl():
     with patch('app.adapter.outbound.repositories.sql.implementation.customer_impl.sql_impl.SQLRepoImpl') as mock:
@@ -16,7 +18,7 @@ def mock_sql_impl():
 def customer_entity():
     return Customer(
         document=Document(document='52998224725'),
-        email=Email(email='test@example.com'),
+        email=Email(email=TEST_EMAIL),
         first_name=Name(name='First'),
         last_name=Name(name='Last'),
         id=1
@@ -26,7 +28,7 @@ def test_to_sql_entity(customer_entity):
     from app.adapter.outbound.repositories.sql.implementation.customer_impl import CustomerRepoImpl
     sql_customer = CustomerRepoImpl._to_sql_entity(customer_entity)
     assert sql_customer.document == '52998224725'
-    assert sql_customer.email == 'test@example.com'
+    assert sql_customer.email == TEST_EMAIL
     assert sql_customer.first_name == 'First'
     assert sql_customer.last_name == 'Last'
 
@@ -38,7 +40,7 @@ def test_get_anonymous_customer_found(mock_sql_impl):
     repo = CustomerRepoImpl()
     mock_customer = MagicMock()
     mock_customer.document = '52998224725'
-    mock_customer.email = 'test@example.com'
+    mock_customer.email = TEST_EMAIL
     mock_customer.first_name = 'First'
     mock_customer.last_name = 'Last'
     mock_customer.id = 1
@@ -51,7 +53,7 @@ def test_get_anonymous_customer_not_found(mock_sql_impl):
     repo = CustomerRepoImpl()
     repo._sql_impl.get_one.side_effect = NoResultFound()
     with patch('app.adapter.outbound.repositories.sql.implementation.customer_impl.customer_sql.Customer') as mock_sql_customer:
-        mock_sql_customer.return_value = MagicMock(document='52998224725', email='test@example.com', first_name='First', last_name='Last', id=1)
+        mock_sql_customer.return_value = MagicMock(document='52998224725', email=TEST_EMAIL, first_name='First', last_name='Last', id=1)
         repo._sql_impl.add_one = MagicMock()
         result = repo.get_anonymous_customer()
         assert result is not None
@@ -67,13 +69,13 @@ def test_to_domain_entity_valid():
     from app.adapter.outbound.repositories.sql.implementation.customer_impl import CustomerRepoImpl
     mock_customer = MagicMock()
     mock_customer.document = '52998224725'
-    mock_customer.email = 'test@example.com'
+    mock_customer.email = TEST_EMAIL
     mock_customer.first_name = 'First'
     mock_customer.last_name = 'Last'
     mock_customer.id = 1
     result = CustomerRepoImpl._to_domain_entity(mock_customer)
     assert result.document.value == '52998224725'
-    assert result.email.value == 'test@example.com'
+    assert result.email.value == TEST_EMAIL
     assert result.first_name.value == 'First'
     assert result.last_name.value == 'Last'
     assert result.id == 1

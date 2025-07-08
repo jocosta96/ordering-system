@@ -8,13 +8,15 @@ from app.domain.value_objects.document import Document
 from app.domain.value_objects.email import Email
 from app.domain.value_objects.name import Name
 
+JOHN_EMAIL = "john@example.com"
+
 @pytest.fixture
 def mock_port():
     return MagicMock()
 
 def test_create_customer(mock_port):
     use_case = CustomerCreate(mock_port)
-    customer = Customer(id=1, document=Document(document="52998224725"), email=Email(email="john@example.com"), first_name=Name(name="John"), last_name=Name(name="Doe"))
+    customer = Customer(id=1, document=Document(document="52998224725"), email=Email(email=JOHN_EMAIL), first_name=Name(name="John"), last_name=Name(name="Doe"))
     mock_port.create_customer.return_value = 42
     result = use_case.create_customer(customer)
     mock_port.create_customer.assert_called_once_with(customer)
@@ -29,7 +31,7 @@ def test_delete_customer(mock_port):
 
 def test_read_customer(mock_port):
     use_case = CustomerRead(mock_port)
-    customer = Customer(id=1, document=Document(document="52998224725"), email=Email(email="john@example.com"), first_name=Name(name="John"), last_name=Name(name="Doe"))
+    customer = Customer(id=1, document=Document(document="52998224725"), email=Email(email=JOHN_EMAIL), first_name=Name(name="John"), last_name=Name(name="Doe"))
     mock_port.read_customer.return_value = customer
     result = use_case.read_customer(1)
     mock_port.read_customer.assert_called_once_with(1)
@@ -37,7 +39,7 @@ def test_read_customer(mock_port):
 
 def test_update_customer(mock_port):
     use_case = CustomerUpdate(mock_port)
-    customer = Customer(id=1, document=Document(document="52998224725"), email=Email(email="john@example.com"), first_name=Name(name="John"), last_name=Name(name="Doe"))
+    customer = Customer(id=1, document=Document(document="52998224725"), email=Email(email=JOHN_EMAIL), first_name=Name(name="John"), last_name=Name(name="Doe"))
     mock_port.update_customer.return_value = 1
     result = use_case.update_customer(customer)
     mock_port.update_customer.assert_called_once_with(customer)

@@ -30,9 +30,11 @@ class DummyPort:
 
 def test_product_use_cases():
     port = DummyPort()
-    assert ProductCreate(port).create_product(None) == 1
-    assert ProductDelete(port).delete_product(None) == 2
-    assert ProductRead(port).read_product(1) == 3
-    assert ProductUpdate(port).update_product(None) == 4
-    assert ProductRestoreDeleted(port).restore_deleted_product(None) == 5
+    dummy_product = {}
+    dummy_product_id = 1
+    assert ProductCreate(port).create_product(dummy_product) == 1
+    assert ProductDelete(port).delete_product(dummy_product) == 2
+    assert ProductRead(port).read_product(dummy_product_id) == 3
+    assert ProductUpdate(port).update_product(dummy_product) == 4
+    assert ProductRestoreDeleted(port).restore_deleted_product(dummy_product) == 5
     assert ProductList(port).list_product() == [6]

@@ -8,6 +8,8 @@ from app.domain.errors.custom_errors import NotFoundError
 
 from app.adapter.outbound.repositories.sql.implementation import sql_impl
 
+PRODUCT_NOT_FOUND_MSG = "Product not found"
+
 
 class ProductRepoImpl(product_port.ProductPort):
     def __init__(self) -> None:
@@ -122,7 +124,7 @@ class ProductRepoImpl(product_port.ProductPort):
             )
 
             if not product:
-                raise NotFoundError("Product not found")
+                raise NotFoundError(PRODUCT_NOT_FOUND_MSG)
 
             receipt = self._sql_impl.list_product_receipts(
                 product_sql_entity=product_sql.ProductReceipt,
@@ -138,7 +140,7 @@ class ProductRepoImpl(product_port.ProductPort):
             return result
 
         except NoResultFound:
-            raise NotFoundError("Product not found")
+            raise NotFoundError(PRODUCT_NOT_FOUND_MSG)
 
     def list_product(
         self, search_key=None, search_value=None
@@ -169,4 +171,4 @@ class ProductRepoImpl(product_port.ProductPort):
             return result
 
         except NoResultFound:
-            raise NotFoundError("Product not found")
+            raise NotFoundError(PRODUCT_NOT_FOUND_MSG)

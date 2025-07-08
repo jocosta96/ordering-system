@@ -23,9 +23,15 @@ class DummyPort:
 
 def test_order_use_cases():
     port = DummyPort()
-    assert OrderCreate(port).create_order(None) == 1
-    assert OrderRead(port).read_order(None) == 3
-    assert OrderUpdate(port).update_order(None, None) == 4
-    assert OrderPay(port).pay_order(None, None, None) == 5
+    # Provide appropriate argument types (e.g., int for IDs, dict or object for order data)
+    dummy_order = {}
+    dummy_order_id = 1
+    dummy_status = "PENDING"
+    dummy_payment_date = "2025-07-08"
+    dummy_payment_transaction_id = "txn_123"
+    assert OrderCreate(port).create_order(dummy_order) == 1
+    assert OrderRead(port).read_order(dummy_order_id) == 3
+    assert OrderUpdate(port).update_order(dummy_order_id, dummy_status) == 4
+    assert OrderPay(port).pay_order(dummy_order_id, dummy_payment_date, dummy_payment_transaction_id) == 5
     assert OrderList(port).list_order() == [6]
-    assert OrderDelete(port).delete_order(None) == 7
+    assert OrderDelete(port).delete_order(dummy_order_id) == 7
