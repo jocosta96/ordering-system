@@ -1,4 +1,3 @@
-import pytest
 from app.domain.use_cases.product_uc import BaseProductUseCase, ProductCreate, ProductDelete, ProductRead, ProductUpdate, ProductRestoreDeleted, ProductList
 from app.domain.use_cases.order_uc import BaseOrderUseCase, OrderCreate, OrderRead, OrderUpdate, OrderPay, OrderList, OrderDelete
 from app.domain.use_cases.customer_uc import BaseCustomerUseCase, CustomerCreate, CustomerDelete, CustomerRead, CustomerUpdate, CustomerList, CustomerAnonymous

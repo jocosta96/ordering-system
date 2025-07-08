@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from app.adapter.outbound.repositories.sql.implementation.order_impl import OrderRepoImpl
-from app.domain.entities.order_entity import Order
 
 @pytest.fixture
 def mock_sql_impl():

@@ -1,4 +1,3 @@
-import pytest
 from app.domain.value_objects.status import OrderStatusType, PaymentStatusType
 from app.domain.value_objects.category import ProductCategoryType
 

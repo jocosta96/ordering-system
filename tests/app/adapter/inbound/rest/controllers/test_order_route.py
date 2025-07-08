@@ -99,7 +99,6 @@ def test_order_read_route_found(monkeypatch):
 
 def test_order_update_status_route(monkeypatch):
     from app.domain.use_cases.order_uc import OrderUpdate
-    from app.domain.value_objects import status as obj_status
 
     def mock_update_order(self, order_id, status):
         # status is an OrderStatus object
@@ -116,7 +115,6 @@ def test_order_update_status_route(monkeypatch):
 def test_order_update_status_route_invalid_status(monkeypatch):
     import pytest
     from app.domain.use_cases.order_uc import OrderUpdate
-    from app.domain.value_objects import status as obj_status
 
     def mock_update_order(self, order_id, status):
         return {"id": order_id, "status": status.status}

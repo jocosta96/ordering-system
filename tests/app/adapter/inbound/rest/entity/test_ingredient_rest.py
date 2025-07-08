@@ -1,4 +1,3 @@
-import pytest
 from app.adapter.inbound.rest.entity.ingredient_rest import Ingredient
 from app.domain.value_objects.money import Money
 from app.domain.value_objects.category import ProductCategory
