@@ -1,6 +1,6 @@
 import requests
 
-BASE_URL = "http://192.168.49.2:30080/"
+BASE_URL = "http://0.0.0.0:30080/"
 
 
 def _add_customer():
@@ -167,7 +167,7 @@ def _payment_webhook(order_id):
     """
     Simulate a payment by calling the payment webhook endpoint with a valid payload.
     """
-    url = "http://192.168.49.2:30000/webhook/mercadopago"  # Adjust port if needed
+    url = "http://0.0.0.0:30000/webhook/mercadopago"  # Adjust port if needed
     body = {
         "payment_date": "2019-08-24T14:15:22Z",
         "payment_transaction_id": order_id,
