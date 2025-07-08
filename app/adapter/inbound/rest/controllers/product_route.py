@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from http import HTTPStatus
+from typing_extensions import Annotated
 
 from app.adapter.outbound.repositories.sql.implementation import product_impl
 from app.domain.use_cases import product_uc
 from app.adapter.inbound.rest.entity import product_rest
 from app.adapter.inbound.rest.mapper import product_rest_mapper
 from app.domain.errors.custom_errors import NotFoundError
-
+from app.adapter.inbound.rest.controllers.security import check_credentials, raise_not_authorized
 
 repo_product = product_impl.ProductRepoImpl()
 uc_product_create = product_uc.ProductCreate(repo_product)
@@ -40,13 +41,27 @@ async def product_read(product_id) -> product_rest.Product:
 
 
 @product.post("")
-async def product_create(product_data: product_rest.Product):
+async def product_create(
+    product_data: product_rest.Product,
+    login: Annotated['str', Depends(check_credentials)]
+    ):
+
+    if not login:
+        raise_not_authorized()
+
     product = product_rest_mapper.to_domain_entity(product_data)
     return uc_product_create.create_product(product)
 
 
 @product.put("")
-async def product_update(product_data: product_rest.Product):
+async def product_update(
+    product_data: product_rest.Product,
+    login: Annotated['str', Depends(check_credentials)]
+):
+    
+    if not login:
+        raise_not_authorized()
+
     try:
         product = product_rest_mapper.to_domain_entity(product_data)
         return uc_product_update.update_product(product)
@@ -55,7 +70,14 @@ async def product_update(product_data: product_rest.Product):
 
 
 @product.delete("/{product_id}")
-async def product_delete(product_id: str):
+async def product_delete(
+    product_id: str,
+    login: Annotated['str', Depends(check_credentials)]
+):
+    
+    if not login:
+        raise_not_authorized()
+
     try:
         return uc_product_delete.delete_product(product_id)
     except NotFoundError as e:
@@ -63,7 +85,14 @@ async def product_delete(product_id: str):
 
 
 @product.patch("/restore/{product_id}")
-async def product_restore_deleted(product_id: str):
+async def product_restore_deleted(
+    product_id: str,
+    login: Annotated['str', Depends(check_credentials)]
+):
+
+    if not login:
+        raise_not_authorized()    
+
     try:
         return uc_product_restore.restore_deleted_product(product_id)
     except NotFoundError as e:

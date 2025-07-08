@@ -143,13 +143,14 @@ class SQLRepoImpl(SQLRepository):
                 status_order.asc(),
                 order_sql_entity.Order.internal_id.asc()
             ).all()
-
-        orders = self._database.query(
-           order_sql_entity.Order
-        ).filter_by(
-            **dict_filter if dict_filter else {}
-        ).order_by(
-            status_order.asc(),
-            order_sql_entity.Order.internal_id.asc()
-        ).all()
+        else:
+            orders = self._database.query(
+                order_sql_entity.Order
+            ).filter_by(
+                **dict_filter if dict_filter else {}
+            ).order_by(
+                status_order.asc(),
+                order_sql_entity.Order.internal_id.asc()
+            ).all()
         return orders
+

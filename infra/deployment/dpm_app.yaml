@@ -31,6 +31,16 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 60
           env:
+            - name: API_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: sec-app
+                  key: API_PWD
+            - name: API_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sec-app
+                  key: API_USER
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:

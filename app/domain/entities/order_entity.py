@@ -15,7 +15,7 @@ class OrderItem:
         product: Product,
         additional_ingredient: list[Ingredient],
         remove_ingredient: list[Ingredient],
-        item_receipt: list[ProductReceiptItem] = [],
+        item_receipt: list[ProductReceiptItem] = None,
         price: Money = Money(amount=0.0),
         id: str = None,
     ):
@@ -24,7 +24,7 @@ class OrderItem:
         self.product = product
         self.additional_ingredient = additional_ingredient
         self.remove_ingredient = remove_ingredient
-        self.item_receipt = item_receipt
+        self.item_receipt = item_receipt if item_receipt is not None else []
         self.price = price
 
         self._check_or_create_uuid()
@@ -82,7 +82,7 @@ class OrderItem:
         return self.item_receipt
 
     def _calculate_price(self):
-        if not self.price.amount == Money(amount=0.0).amount:
+        if self.price.amount != Money(amount=0.0).amount:
             return
 
         total_price = self.product.price
