@@ -93,6 +93,7 @@ class OrderRepoImpl(OrderPort):
                 "payment_date": payment_date,
                 "payment_transaction_id": payment_transaction_id,
                 "has_payment_verified": True,
+                "status": "EM_PREPARACAO"
             },
             dict_filter={"id": order_id},
         )

@@ -1,4 +1,6 @@
+import os
 import httpx
+import base64
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -17,14 +19,19 @@ class MercadoPagoNotification(BaseModel):
 def check() -> dict:
     return {"status": "ok"}
 
-
 @webhook.post("/webhook/mercadopago", status_code=status.HTTP_200_OK)
 async def mercadopago_webhook(notification: MercadoPagoNotification):
-    # Example: Forward notification to order service or process as needed
     url = f"http://localhost:8080/order/pay/{notification.order_id}"
+    username = os.environ["API_USER"]
+    password = os.environ["API_PWD"]
+    credentials = f"{username}:{password}"
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+    headers = {
+        "Authorization": f"Basic {encoded_credentials}"
+    }
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.patch(url, json=dict(notification))
+            response = await client.patch(url, json=dict(notification), headers=headers)
             response.raise_for_status()
         return {"message": "Notification received and processed."}
     except httpx.RequestError as e:

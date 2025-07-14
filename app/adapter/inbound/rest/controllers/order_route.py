@@ -63,6 +63,7 @@ async def order_create(
     order = order_rest_mapper.to_domain_entity(order_data)
     order.set_start_date()
     order_entity = uc_order_create.create_order(order)
+    
     return order_rest_mapper.to_simple_reader(order_entity)
 
 
