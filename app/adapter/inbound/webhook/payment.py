@@ -37,8 +37,6 @@ async def mercadopago_webhook(notification: MercadoPagoNotification):
 
 async def process_payment_async(notification: MercadoPagoNotification):
     """Process payment asynchronously"""
-    import httpx
-    import base64
     
     url = f"http://127.0.0.1:8080/order/pay/{notification.order_id}"
     username = os.environ["API_USER"]

@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from app.domain.entities import order_entity
 from app.domain.ports import order_port

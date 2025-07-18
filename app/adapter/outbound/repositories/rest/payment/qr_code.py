@@ -1,6 +1,5 @@
 import random
 import uuid
-from http import HTTPStatus
 from datetime import datetime
 import requests
 
