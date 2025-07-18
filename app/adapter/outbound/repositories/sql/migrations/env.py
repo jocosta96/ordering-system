@@ -8,6 +8,11 @@ from dotenv import load_dotenv
 
 from app.adapter.outbound.repositories.sql.orm.database import Base
 
+from app.adapter.outbound.repositories.sql.entities.customer_sql import Customer
+from app.adapter.outbound.repositories.sql.entities.ingredient_sql import Ingredient
+from app.adapter.outbound.repositories.sql.entities.order_sql import Order, OrderItem, OrderItemReceipt
+from app.adapter.outbound.repositories.sql.entities.product_sql import ProductReceipt, Product
+
 load_dotenv()
 
 # this is the Alembic Config object, which provides
@@ -31,6 +36,11 @@ connection_string = f"{driver}://{user}:{password}@{host}/{database}"
 config.set_main_option("sqlalchemy.url", connection_string)
 
 target_metadata = Base.metadata
+
+
+def count_entities():
+    entity_list = [Customer, Ingredient, Order, OrderItem, OrderItemReceipt, ProductReceipt, Product]
+    print(len(entity_list), 'tables found')
 
 
 def run_migrations_offline():

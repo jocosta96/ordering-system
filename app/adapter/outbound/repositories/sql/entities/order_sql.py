@@ -30,6 +30,7 @@ class Order(database.Base):
     value = Column(DECIMAL(5, 2))
     payment_date = Column(DateTime)
     payment_transaction_id = Column(String)
+    payment_message = Column(String)
     has_payment_verified = Column(Boolean)
     customer = relationship("Customer", back_populates="orders")
     order_items = relationship("OrderItem", back_populates="order")

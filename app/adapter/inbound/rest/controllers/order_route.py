@@ -1,10 +1,12 @@
 from http import HTTPStatus
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List
 from typing_extensions import Annotated
+from fastapi.responses import JSONResponse
 
 from app.adapter.outbound.repositories.sql.implementation import order_impl
-from app.domain.use_cases import order_uc
+from app.adapter.outbound.repositories.rest.payment import qr_code
+from app.domain.use_cases import order_uc, payment_uc
 from app.adapter.inbound.rest.entity import order_rest
 from app.adapter.inbound.rest.entity import payment_rest
 from app.adapter.inbound.rest.mapper import order_rest_mapper
@@ -12,12 +14,14 @@ from app.domain.value_objects import status as obj_status
 from app.domain.errors.custom_errors import NotFoundError
 from app.adapter.inbound.rest.controllers.security import check_credentials, raise_not_authorized
 
-repo_order = order_impl.OrderRepoImpl()
-uc_order_create = order_uc.OrderCreate(repo_order)
-uc_order_read = order_uc.OrderRead(repo_order)
-uc_order_update = order_uc.OrderUpdate(repo_order)
-uc_order_payment = order_uc.OrderPay(repo_order)
-uc_order_list = order_uc.OrderList(repo_order)
+repo_rest_payment = qr_code.QRPayment()
+repo_sql_order = order_impl.OrderRepoImpl()
+uc_order_create = order_uc.OrderCreate(repo_sql_order)
+uc_order_read = order_uc.OrderRead(repo_sql_order)
+uc_order_update = order_uc.OrderUpdate(repo_sql_order)
+uc_order_payment = order_uc.OrderPay(repo_sql_order)
+uc_order_list = order_uc.OrderList(repo_sql_order)
+uc_payment = payment_uc.RequestPayment(repo_rest_payment)
 
 order = APIRouter(tags=["order"], prefix="/order")
 
@@ -81,6 +85,20 @@ async def order_update_status(
     return uc_order_update.update_order(order_id, status)
 
 
+@order.post("/payment_request/{order_id}")
+async def request_order_payment(
+    order_id,
+    login: Annotated['str', Depends(check_credentials)]
+):
+    
+    if not login:
+        raise_not_authorized()
+        
+    order = uc_order_read.read_order(order_id)
+
+    return uc_payment.request_payment(order.id, order.value)
+
+
 @order.patch("/pay/{order_id}")
 async def order_payment(
     payment: payment_rest.Payment,
@@ -92,10 +110,15 @@ async def order_payment(
         raise_not_authorized()
         
     order = uc_order_read.read_order(order_id)
-    order.validate_duplicated_payment()
 
-    return uc_order_payment.pay_order(
-        payment.order_id,
-        payment.payment_date,
-        payment.payment_transaction_id,
+    order.process_payment(
+        dict(payment)
+    )
+
+    uc_order_payment.pay_order(
+        order
+    )
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK, content={"message": payment.message}
     )

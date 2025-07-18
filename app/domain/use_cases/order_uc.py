@@ -27,10 +27,10 @@ class OrderUpdate(BaseOrderUseCase):
 
 class OrderPay(BaseOrderUseCase):
     def pay_order(
-        self, order_id: str, payment_date: datetime, payment_transaction_id: str
+        self, order: order_entity.Order
     ) -> int:
-        return self.port.pay_order(order_id, payment_date, payment_transaction_id)
-
+        return self.port.pay_order(order)
+    
 
 class OrderList(BaseOrderUseCase):
     def list_order(self, search_key=None, search_value=None):

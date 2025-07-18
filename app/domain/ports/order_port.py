@@ -22,10 +22,11 @@ class OrderPort(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def pay_order(
-        self, order_id: str, payment_date: datetime, payment_transaction_id: str
+        self, payment: dict
     ) -> order_entity.Order:
         raise NotImplementedError
 
     @abc.abstractmethod
     def list_order(self, search_key=None, search_value=None) -> list[order_entity.Order]:
         raise NotImplementedError
+
