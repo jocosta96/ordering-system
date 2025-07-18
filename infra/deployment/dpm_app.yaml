@@ -78,11 +78,11 @@ spec:
                   key: DRIVER_NAME
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "250m"
-            limits:
               memory: "256Mi"
               cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1500m"
           command: ["sh", "-c"]
           args:
             - |

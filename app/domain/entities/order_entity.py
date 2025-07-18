@@ -103,6 +103,7 @@ class Order:
         has_payment_verified=False,
         payment_date: datetime = None,
         payment_transaction_id: str = "",
+        payment_message: str = "",
         id: str = None,
         internal_id: int = None,
     ):
@@ -111,6 +112,7 @@ class Order:
         self.order_items = order_items
         self.payment_date = payment_date
         self.payment_transaction_id = payment_transaction_id
+        self.payment_message = payment_message
 
         self.start_date = start_date
         self.end_date = end_date
@@ -166,8 +168,29 @@ class Order:
 
         self.value = total_value
 
-    def execute_payment(self, payment_date: datetime, payment_transaction_id: str):
-        self.validate_duplicated_payment()
-        self.payment_date = payment_date
-        self.payment_transaction_id = payment_transaction_id
-        self.has_payment_verified = True
+    def process_payment(self, payment: dict):
+
+        self.payment_transaction_id = payment['transaction_id']
+        self.payment_date = payment['date']
+        self.payment_message = payment['message']
+
+        if payment['approval_status']:
+            self.validate_duplicated_payment()
+            self.has_payment_verified = True
+            self.status = OrderStatus(status=OrderStatusType.EM_PREPARACAO)
+
+        else:
+            self.has_payment_verified = False
+            self.status = OrderStatus(status=OrderStatusType.CANCELADO)
+
+    @property
+    def payment_as_dict(self):
+        return {
+            "payment_date": self.payment_date.isoformat() if self.payment_date else None,
+            "payment_transaction_id": self.payment_transaction_id,
+            "payment_message": self.payment_message,
+            "has_payment_verified": self.has_payment_verified,
+            "value": self.value.amount if hasattr(self.value, 'amount') else self.value,
+            "status": str(self.status)
+        }
+

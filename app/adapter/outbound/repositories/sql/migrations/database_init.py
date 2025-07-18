@@ -7,7 +7,6 @@ from app.adapter.outbound.repositories.sql.orm.database import get_db
 db_name = os.environ["POSTGRES_DB"]
 usr_pwd = os.environ["POSTGRES_PASSWORD"]
 
-
 with get_db() as session:
     try:
         alembic = session.execute(

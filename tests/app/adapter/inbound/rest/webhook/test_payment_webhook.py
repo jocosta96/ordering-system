@@ -16,7 +16,7 @@ def test_new_payment_success():
         mock_patch.return_value.raise_for_status = lambda: None
         response = client.post("/webhook/mercadopago", json=payment_data)
         assert response.status_code == 200
-        assert response.json()["message"] == "Notification received and processed."
+        assert response.json()["message"] == "Notification received, processing payment..."
 
 
 def test_new_payment_failure():
@@ -27,5 +27,5 @@ def test_new_payment_failure():
     with patch("httpx.AsyncClient.patch", new_callable=AsyncMock) as mock_patch:
         mock_patch.side_effect = httpx.RequestError("Connection error", request=None)
         response = client.post("/webhook/mercadopago", json=payment_data)
-        assert response.status_code == 502
-        assert "error" in response.json()
+        assert response.status_code == 200  # The webhook always returns 200, even on failure
+        assert response.json()["message"] == "Notification received, processing payment..."

@@ -7,6 +7,7 @@ class OrderStatusType(str, Enum):
     EM_PREPARACAO = "EM_PREPARACAO"
     PRONTO = "PRONTO"
     FINALIZADO = "FINALIZADO"
+    CANCELADO = "CANCELADO"
 
 
 class OrderStatus(BaseModel):

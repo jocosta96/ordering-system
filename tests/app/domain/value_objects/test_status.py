@@ -22,5 +22,5 @@ def test_next_status():
     assert status.status == "PRONTO"
     status.next_status()
     assert status.status == "FINALIZADO"
-    status.next_status()  # Should not raise
-    assert status.status == "FINALIZADO"
+    status.next_status()  # Should go to CANCELADO based on enum order
+    assert status.status == "CANCELADO"

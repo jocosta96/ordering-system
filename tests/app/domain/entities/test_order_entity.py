@@ -66,8 +66,19 @@ def test_order_creation():
     assert isinstance(order.start_date, datetime)
     order.set_end_date()
     assert isinstance(order.end_date, datetime)
-    order.execute_payment(datetime.now(), "txid123")
+    
+    # Test payment processing
+    payment_data = {
+        'transaction_id': 'txid123',
+        'date': datetime.now(),
+        'message': 'Payment successful',
+        'approval_status': True
+    }
+    order.process_payment(payment_data)
     assert order.has_payment_verified
     assert order.payment_transaction_id == "txid123"
-    order.next_status()
+    # After payment processing, status should be EM_PREPARACAO
     assert order.status.status == "EM_PREPARACAO"
+    order.next_status()
+    # After next_status, status should be PRONTO
+    assert order.status.status == "PRONTO"
