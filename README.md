@@ -247,7 +247,7 @@ Para demonstrar o funcionamento do HPA (Horizontal Pod Autoscaler) e comprovar a
 ### 🚀 **Teste de Estresse com Python (Recomendado)**
 
 #### Pré-requisitos
-`ip install -rdev/dev_requirements.txt`
+`pip install -r dev/dev_requirements.txt`
 
 **💡 Nota:** Se estiver usando **minikube**, o argumento `--api-url` é **opcional** - o script detecta automaticamente o IP do minikube.
 
