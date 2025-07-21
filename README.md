@@ -143,10 +143,6 @@ DELETE /fastfood/api/customer/{customer_id}
 Authorization: Basic <credentials>
 ```
 
-## 📋 Collection do Postman
-
-[Download da Collection do Postman](https://github.com/seu-usuario/ordering-system/blob/main/postman_collection.json)
-
 ### Swagger/OpenAPI
 - **Swagger UI**: `http://localhost:8080/docs`
 - **ReDoc**: `http://localhost:8080/redoc`
