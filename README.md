@@ -164,26 +164,13 @@ Authorization: Basic <credentials>
 - Kubernetes (Minikube ou Kind)
 - kubectl configurado
 
-### **1. Execução Local com Docker**
+### **1. Use o script de inicalização**
 
 ```bash
-# Clone o repositório
-git clone <repo-url>
-cd ordering-system
-
-# Configure as variáveis de ambiente
-cp .env.example .env
-# Edite o arquivo .env com suas configurações
-
-# Execute com Docker Compose
-docker compose up --build
-
-# Acesse a aplicação
-# API: http://localhost:8080
-# Swagger: http://localhost:8080/docs
+sh scripts/k8s-deploy.sh
 ```
 
-### **2. Execução no Kubernetes**
+### **2. Ou Inicie manualmente todos os serviços**
 
 ```bash
 # Inicie o cluster (Minikube)
@@ -235,9 +222,6 @@ pytest
 
 # Testes com coverage
 pytest --cov=app
-
-# Testes end-to-end
-pytest tests/end_to_end.py
 ```
 
 ## 🔥 Stress Test - Demonstração do HPA
