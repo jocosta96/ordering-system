@@ -11,7 +11,7 @@ import json
 import subprocess
 import sys
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict
 import argparse
 
 class Colors:
@@ -62,7 +62,7 @@ class StressTest:
     
     def show_current_status(self):
         """Mostra status atual do sistema"""
-        self.print_status("📊 Status Atual do Sistema", Colors.BLUE)
+        self.print_status("Status Atual do Sistema", Colors.BLUE)
         print("=" * 50)
         
         status = self.get_k8s_status()
@@ -115,7 +115,7 @@ class StressTest:
     
     async def stress_test(self, duration: int, concurrency: int, endpoint: str = "/health"):
         """Executa stress test"""
-        self.print_status(f"🔥 Iniciando Stress Test", Colors.YELLOW)
+        self.print_status("Iniciando Stress Test", Colors.YELLOW)
         self.print_status(f"  Duração: {duration}s")
         self.print_status(f"  Concorrência: {concurrency}")
         self.print_status(f"  Endpoint: {endpoint}")
@@ -165,7 +165,7 @@ class StressTest:
     
     def print_results(self):
         """Imprime resultados do stress test"""
-        self.print_status("📋 Resultados do Stress Test", Colors.GREEN)
+        self.print_status("Resultados do Stress Test", Colors.GREEN)
         print("=" * 50)
         
         metrics = self.calculate_metrics()
@@ -188,7 +188,7 @@ class StressTest:
     
     async def run_scenario(self, name: str, duration: int, concurrency: int, endpoint: str = "/health"):
         """Executa um cenário de teste"""
-        self.print_status(f"🧪 Executando Cenário: {name}", Colors.PURPLE)
+        self.print_status(f"Executando Cenário: {name}", Colors.PURPLE)
         print("-" * 40)
         
         # Mostrar status antes
@@ -201,7 +201,7 @@ class StressTest:
         self.print_results()
         
         # Aguardar um pouco para o HPA reagir
-        self.print_status("⏳ Aguardando HPA reagir...", Colors.YELLOW)
+        self.print_status("Aguardando HPA reagir...", Colors.YELLOW)
         await asyncio.sleep(10)
         
         # Mostrar status depois
@@ -215,7 +215,7 @@ async def main():
     try:
         subprocess.run(["kubectl", "version", "--client"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print(f"{Colors.RED}❌ kubectl não está instalado ou não está no PATH{Colors.NC}")
+        print(f"{Colors.RED}kubectl não está instalado ou não está no PATH{Colors.NC}")
         sys.exit(1)
     
     # Verificar se Minikube está rodando e obter IP
@@ -243,10 +243,10 @@ async def main():
     
     stress_test = StressTest(args.api_url)
     
-    print(f"{Colors.BLUE}🚀 Stress Test - Sistema de Autoatendimento de Fast Food{Colors.NC}")
+    print(f"{Colors.BLUE}Stress Test - Sistema de Autoatendimento de Fast Food{Colors.NC}")
     print(f"{Colors.BLUE}===================================================={Colors.NC}")
     print()
-    print(f"{Colors.GREEN}✅ API URL: {args.api_url}{Colors.NC}")
+    print(f"{Colors.GREEN}API URL: {args.api_url}{Colors.NC}")
     print()
     
     if args.scenario == "quick":
@@ -275,9 +275,9 @@ async def main():
     for name, duration, concurrency, endpoint in scenarios:
         await stress_test.run_scenario(name, duration, concurrency, endpoint)
     
-    print(f"{Colors.GREEN}🎉 Stress Test Concluído!{Colors.NC}")
+    print(f"{Colors.GREEN}Stress Test Concluído!{Colors.NC}")
     print()
-    print(f"{Colors.BLUE}💡 Dicas para análise:{Colors.NC}")
+    print(f"{Colors.BLUE}Dicas para análise:{Colors.NC}")
     print("1. Verifique se o HPA escalou: kubectl get hpa")
     print("2. Monitore os pods: kubectl get pods -l app=dpm-app")
     print("3. Veja as métricas: kubectl top pods -l app=dpm-app")
