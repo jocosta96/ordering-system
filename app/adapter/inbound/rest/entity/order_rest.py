@@ -36,6 +36,7 @@ class Order(BaseModel):
     payment_date: Optional[datetime] = None
     payment_transaction_id: Optional[str] = None
     has_payment_verified: bool = False
+    payment_message: Optional[str] = ""
     order_items: list[OrderItem]
 
     model_config = {

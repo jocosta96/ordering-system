@@ -144,7 +144,7 @@ def test_order_create_route_missing_fields(monkeypatch):
     headers = get_basic_auth_header()
     # Missing required fields
     data = {"status": "NEW"}
-    response = client.post("/order", json=data, headers=headers)
+    response = client.post("/order/checkout", json=data, headers=headers)
     assert response.status_code == 422
 
 
