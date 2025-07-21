@@ -55,7 +55,27 @@ async def order_read(order_id: str) -> order_rest.Order:
     return order
 
 
-@order.post("")
+@order.get("/payment_status/{order_id}")
+async def get_payment_status(order_id: str) -> payment_rest.PaymentStatus:
+    """
+    Consultar status de pagamento do pedido
+    """
+    order = uc_order_read.read_order(order_id)
+    if order is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Order not found")
+    
+    return payment_rest.PaymentStatus(
+        order_id=str(order.id),
+        has_payment_verified=order.has_payment_verified,
+        payment_date=order.payment_date,
+        payment_transaction_id=str(order.payment_transaction_id),
+        payment_message=order.payment_message,
+        order_status=str(order.status),
+        order_value=order.value.amount if hasattr(order.value, 'amount') else order.value
+    )
+
+
+@order.post("/checkout")
 async def order_create(
     order_data: order_rest.Order,
     login: Annotated['str', Depends(check_credentials)]
@@ -99,7 +119,10 @@ async def request_order_payment(
     return uc_payment.request_payment(order.id, order.value)
 
 
-@order.patch("/pay/{order_id}")
+@order.patch(
+    "/pay/{order_id}",
+    include_in_schema=False  # acessible via webhook only
+)
 async def order_payment(
     payment: payment_rest.Payment,
     order_id,
