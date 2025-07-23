@@ -4,4 +4,7 @@ metadata:
   name: cfm-database
 data:
   POSTGRES_HOST: svc-database-clusterip
+  POSTGRES_PORT: "5432"
   DRIVER_NAME: postgresql
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"

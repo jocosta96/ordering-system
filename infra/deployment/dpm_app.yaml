@@ -19,7 +19,7 @@ spec:
             - containerPort: 8080
           readinessProbe:
             httpGet:
-              path: /customer/anonymous
+              path: /health/db
               port: 8080
             initialDelaySeconds: 60
             failureThreshold: 3
@@ -71,11 +71,26 @@ spec:
                 configMapKeyRef:
                   name: cfm-database
                   key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: POSTGRES_PORT
             - name: DRIVER_NAME
               valueFrom:
                 configMapKeyRef:
                   name: cfm-database
                   key: DRIVER_NAME
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: DEBUG
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: LOG_LEVEL
           resources:
             requests:
               memory: "256Mi"
@@ -86,6 +101,5 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              PYTHONPATH=/code python app/adapter/outbound/repositories/sql/migrations/database_init.py
-              uvicorn app.adapter.inbound.webhook.payment:webhook --host 0.0.0.0 --port 8000 &
-              uvicorn app.main:app --host 0.0.0.0 --port 8080
+              cd /code/src
+              uvicorn main:app --host 0.0.0.0 --port 8080

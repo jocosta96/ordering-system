@@ -8,11 +8,35 @@ minikube start
 
 echo "Aplicando manifests do Kubernetes..."
 
-kubectl apply -f infra/deployment/
+# Apply all manifests except the app deployment first
+echo "Aplicando ConfigMaps, Secrets, Volumes e Database..."
+kubectl apply -f infra/deployment/cfm_database.yaml
+kubectl apply -f infra/deployment/sec_database.yaml
+kubectl apply -f infra/deployment/sec_app.yaml
+kubectl apply -f infra/deployment/pv_database.yaml
+kubectl apply -f infra/deployment/pvc_database.yaml
+kubectl apply -f infra/deployment/dpm_database.yaml
+kubectl apply -f infra/deployment/svc_database.yaml
 
-echo "Aguardando pods ficarem prontos..."
-kubectl wait --for=condition=ready pod -l app=dpm-app --timeout=300s
+echo "Aguardando database ficar pronto..."
 kubectl wait --for=condition=ready pod -l app=dpm-database --timeout=300s
+
+echo "Executando job de inicialização do banco..."
+kubectl apply -f infra/deployment/job_db_init.yaml
+
+echo "Aguardando job de inicialização completar..."
+kubectl wait --for=condition=complete job/db-init-job --timeout=300s
+
+echo "Deployando aplicação (agora que o banco está pronto)..."
+kubectl apply -f infra/deployment/dpm_app.yaml
+
+echo "Aplicando serviços da aplicação..."
+kubectl apply -f infra/deployment/svc_app.yaml
+kubectl apply -f infra/deployment/hpa_app.yaml
+kubectl apply -f infra/deployment/metrics.yaml
+
+echo "Aguardando aplicação ficar pronta..."
+kubectl wait --for=condition=ready pod -l app=dpm-app --timeout=300s
 
 echo "Verificando status dos pods..."
 kubectl get pods

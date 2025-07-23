@@ -3,13 +3,8 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app_logs import configure_logging, LogLevels
 
-from src.adapter.inbound.rest.controllers import (
-    customer_route,
-    product_route,
-    order_route,
-    ingredient_route,
-    health,
-)
+from src.adapters.routes.customer_routes import customer_router
+from src.adapters.routes.health_routes import health_router
 
 
 configure_logging(LogLevels.info)
@@ -26,11 +21,8 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.include_router(router=health.healthcheck)
-    app.include_router(router=customer_route.customer)
-    app.include_router(router=product_route.product)
-    app.include_router(router=order_route.order)
-    app.include_router(router=ingredient_route.ingredient)
+    app.include_router(router=health_router)
+    app.include_router(router=customer_router)
 
     return app
 

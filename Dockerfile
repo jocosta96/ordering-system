@@ -16,5 +16,19 @@ WORKDIR /code
 COPY --from=builder /code/requirements.lock /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
+# Copy configuration files
 COPY ./alembic.ini /code/alembic.ini
-COPY ./app /code/app
+
+# Copy the Clean Architecture source code
+COPY ./src /code/src
+
+# Set environment variables for Clean Architecture
+ENV PYTHONPATH=/code
+ENV PYTHONUNBUFFERED=1
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
