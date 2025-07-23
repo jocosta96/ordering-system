@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from app_logs import configure_logging, LogLevels
+
 from src.adapter.inbound.rest.controllers import (
     customer_route,
     product_route,
@@ -8,6 +10,9 @@ from src.adapter.inbound.rest.controllers import (
     ingredient_route,
     health,
 )
+
+
+configure_logging(LogLevels.info)
 
 
 def create_application() -> FastAPI:
