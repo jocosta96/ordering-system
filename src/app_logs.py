@@ -1,27 +1,91 @@
 import logging
-from enum import StrEnum
+import json
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
+
+from src.config.app_config import app_config
 
 
-LOG_FORMAT_DEBUG = "%(levelname)s:%(message)s:%(pathname)s:%(funcName)s:%(lineno)d"
-
-
-class LogLevels(StrEnum):
+class LogLevels(str, Enum):
     info = "INFO"
     warn = "WARN"
     error = "ERROR"
     debug = "DEBUG"
 
 
-def configure_logging(log_level: str = LogLevels.error):
+class StructuredLogger:
+    """
+    Structured logger for the application.
+
+    In Clean Architecture:
+    - This is part of the Frameworks & Drivers layer
+    - It provides structured logging capabilities
+    - It formats logs in JSON for better parsing
+    """
+
+    def __init__(self, name: str):
+        self.logger = logging.getLogger(name)
+        self.name = name
+
+    def _format_log(self, level: str, message: str, **kwargs) -> str:
+        """Format log message as structured JSON"""
+        log_entry = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": level,
+            "logger": self.name,
+            "message": message,
+            **kwargs,
+        }
+        return json.dumps(log_entry)
+
+    def info(self, message: str, **kwargs):
+        """Log info message with structured data"""
+        self.logger.info(self._format_log("INFO", message, **kwargs))
+
+    def warning(self, message: str, **kwargs):
+        """Log warning message with structured data"""
+        self.logger.warning(self._format_log("WARNING", message, **kwargs))
+
+    def error(self, message: str, **kwargs):
+        """Log error message with structured data"""
+        self.logger.error(self._format_log("ERROR", message, **kwargs))
+
+    def debug(self, message: str, **kwargs):
+        """Log debug message with structured data"""
+        self.logger.debug(self._format_log("DEBUG", message, **kwargs))
+
+    def exception(self, message: str, exc_info: Optional[Exception] = None, **kwargs):
+        """Log exception with structured data"""
+        if exc_info:
+            kwargs["exception_type"] = type(exc_info).__name__
+            kwargs["exception_message"] = str(exc_info)
+        self.logger.error(self._format_log("ERROR", message, **kwargs))
+
+
+def configure_logging(log_level: str = None):
+    """Configure logging for the application"""
+    if log_level is None:
+        log_level = app_config.log_level
+
+    # Convert enum to string if needed
+    if isinstance(log_level, LogLevels):
+        log_level = log_level.value
+
     log_level = str(log_level).upper()
     log_levels = [level.value for level in LogLevels]
 
     if log_level not in log_levels:
-        logging.basicConfig(level=LogLevels.error)
+        logging.basicConfig(level=LogLevels.error.value)
         return
 
-    if log_level == LogLevels.debug:
-        logging.basicConfig(level=log_level, format=LOG_FORMAT_DEBUG)
+    if log_level == LogLevels.debug.value:
+        logging.basicConfig(level=log_level, format=app_config.log_format)
         return
 
     logging.basicConfig(level=log_level)
+
+
+def get_logger(name: str) -> StructuredLogger:
+    """Get a structured logger instance"""
+    return StructuredLogger(name)

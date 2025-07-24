@@ -17,6 +17,13 @@ from src.application.dto.customer_dto import (
     CustomerListResponse,
 )
 from src.application.repositories.customer_repository import CustomerRepository
+from src.application.exceptions import (
+    CustomerNotFoundException,
+    CustomerAlreadyExistsException,
+    CustomerBusinessRuleException,
+    CustomerValidationException,
+    AuthenticationException,
+)
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
 
 
@@ -48,15 +55,20 @@ class CustomerController:
         try:
             customer = self.anonymous_use_case.execute()
             return self.presenter.present(customer)
-        except ValueError as e:
+        except CustomerNotFoundException as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
+        except CustomerBusinessRuleException as e:
+            error_response = self.presenter.present_error(e)
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST, detail=error_response
+            )
 
     def get_customer(self, customer_id: int, login: str) -> dict:
         """Get customer by ID endpoint"""
         if not login:
             error_response = self.presenter.present_error(
-                ValueError("Authentication required")
+                AuthenticationException("Authentication required")
             )
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
@@ -65,7 +77,7 @@ class CustomerController:
         try:
             customer = self.read_use_case.execute(customer_id)
             return self.presenter.present(customer)
-        except ValueError as e:
+        except CustomerNotFoundException as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
 
@@ -73,7 +85,7 @@ class CustomerController:
         """Create customer endpoint"""
         if not login:
             error_response = self.presenter.present_error(
-                ValueError("Authentication required")
+                AuthenticationException("Authentication required")
             )
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
@@ -88,7 +100,11 @@ class CustomerController:
             )
             customer = self.create_use_case.execute(request)
             return self.presenter.present(customer)
-        except ValueError as e:
+        except (
+            CustomerAlreadyExistsException,
+            CustomerBusinessRuleException,
+            CustomerValidationException,
+        ) as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
@@ -98,7 +114,7 @@ class CustomerController:
         """Update customer endpoint"""
         if not login:
             error_response = self.presenter.present_error(
-                ValueError("Authentication required")
+                AuthenticationException("Authentication required")
             )
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
@@ -114,7 +130,12 @@ class CustomerController:
             )
             customer = self.update_use_case.execute(request)
             return self.presenter.present(customer)
-        except ValueError as e:
+        except (
+            CustomerNotFoundException,
+            CustomerAlreadyExistsException,
+            CustomerBusinessRuleException,
+            CustomerValidationException,
+        ) as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
@@ -124,7 +145,7 @@ class CustomerController:
         """Delete customer endpoint"""
         if not login:
             error_response = self.presenter.present_error(
-                ValueError("Authentication required")
+                AuthenticationException("Authentication required")
             )
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
@@ -135,7 +156,7 @@ class CustomerController:
             return self.presenter.present(
                 {"success": success, "message": "Customer deleted successfully"}
             )
-        except ValueError as e:
+        except (CustomerNotFoundException, CustomerBusinessRuleException) as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
 
@@ -143,7 +164,7 @@ class CustomerController:
         """List all customers endpoint"""
         if not login:
             error_response = self.presenter.present_error(
-                ValueError("Authentication required")
+                AuthenticationException("Authentication required")
             )
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail=error_response

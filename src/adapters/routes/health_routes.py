@@ -19,10 +19,6 @@ def database_health_check():
         repository = container.customer_repository
         # Try to get anonymous customer as a simple DB test
         anonymous_customer = repository.get_anonymous_customer()
-        return {
-            "status": "healthy",
-            "database": "connected",
-            "anonymous_customer_id": anonymous_customer.id,
-        }
+        return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}

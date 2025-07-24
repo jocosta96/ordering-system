@@ -29,10 +29,12 @@ class Customer:
 
     def _validate_business_rules(self):
         """Validate domain business rules"""
+        from src.config.app_config import app_config
+
         # Rule: Anonymous customers (empty document) must have anonymous email
         if (
             self.document.is_empty
-            and not self.email.value == "anonymous@fastfood.local"
+            and not self.email.value == app_config.anonymous_email
         ):
             raise ValueError("Anonymous customers must have anonymous email")
 
@@ -79,10 +81,12 @@ class Customer:
     @classmethod
     def create_anonymous(cls) -> "Customer":
         """Factory method to create an anonymous customer"""
+        from src.config.app_config import app_config
+
         return cls(
             first_name=Name.create("Anonymous"),
             last_name=Name.create("Customer"),
-            email=Email.create("anonymous@fastfood.local"),
+            email=Email.create(app_config.anonymous_email),
             document=Document.create(""),
         )
 

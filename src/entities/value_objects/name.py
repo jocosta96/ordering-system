@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing import Optional
 import re
 
+from src.config.app_config import app_config
+
 
 @dataclass(frozen=True)
 class Name:
@@ -27,7 +29,10 @@ class Name:
         """Validate name format"""
         if not name or name.strip() == "":
             return False
-        if len(name.strip()) < 1 or len(name.strip()) > 50:
+        if (
+            len(name.strip()) < app_config.min_name_length
+            or len(name.strip()) > app_config.max_name_length
+        ):
             return False
         # Check if name contains only letters, spaces, and common name characters
         pattern = r"^[a-zA-ZÀ-ÿ\s\'-]+$"

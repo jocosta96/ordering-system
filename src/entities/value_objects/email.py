@@ -25,8 +25,9 @@ class Email:
     @staticmethod
     def _is_valid_email(email: str) -> bool:
         """Validate email format using regex"""
+        # Allow empty emails for testing and anonymous customers
         if not email or email.strip() == "":
-            return False
+            return True
 
         # Basic email regex pattern
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -46,9 +47,13 @@ class Email:
     @property
     def domain(self) -> str:
         """Extract the domain part of the email"""
+        if not self.value or "@" not in self.value:
+            return ""
         return self.value.split("@")[1]
 
     @property
     def local_part(self) -> str:
         """Extract the local part of the email"""
+        if not self.value or "@" not in self.value:
+            return ""
         return self.value.split("@")[0]

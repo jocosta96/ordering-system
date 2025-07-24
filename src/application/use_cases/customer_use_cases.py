@@ -7,6 +7,13 @@ from src.application.dto.customer_dto import (
     CustomerResponse,
     CustomerListResponse,
 )
+from src.application.exceptions import (
+    CustomerNotFoundException,
+    CustomerAlreadyExistsException,
+    CustomerBusinessRuleException,
+    CustomerValidationException,
+)
+from src.app_logs import get_logger
 
 
 class CustomerCreateUseCase:
@@ -22,9 +29,14 @@ class CustomerCreateUseCase:
 
     def __init__(self, customer_repository: CustomerRepository):
         self.customer_repository = customer_repository
+        self.logger = get_logger("CustomerCreateUseCase")
 
     def execute(self, request: CustomerCreateRequest) -> CustomerResponse:
         """Execute the create customer use case"""
+        self.logger.info(
+            "Creating new customer", first_name=request.first_name, email=request.email
+        )
+
         # Create customer entity from DTO
         customer = Customer.create_registered(
             first_name=request.first_name,
@@ -36,23 +48,40 @@ class CustomerCreateUseCase:
         # Business rule: Check if customer with same document already exists
         if not customer.document.is_empty:
             if self.customer_repository.exists_by_document(customer.document.value):
-                raise ValueError(
+                self.logger.warning(
+                    "Customer creation failed - document already exists",
+                    document=customer.document.value,
+                )
+                raise CustomerAlreadyExistsException(
                     f"Customer with document {customer.document.value} already exists"
                 )
 
         # Business rule: Check if customer with same email already exists
         if not customer.email.value == "":
             if self.customer_repository.exists_by_email(customer.email.value):
-                raise ValueError(
+                self.logger.warning(
+                    "Customer creation failed - email already exists",
+                    email=customer.email.value,
+                )
+                raise CustomerAlreadyExistsException(
                     f"Customer with email {customer.email.value} already exists"
                 )
 
         # Business rule: Customer must be able to place orders
         if not customer.can_place_order():
-            raise ValueError("Customer does not meet requirements to place orders")
+            self.logger.warning("Customer creation failed - business rules not met")
+            raise CustomerBusinessRuleException(
+                "Customer does not meet requirements to place orders"
+            )
 
         # Save the customer
         saved_customer = self.customer_repository.save(customer)
+
+        self.logger.info(
+            "Customer created successfully",
+            customer_id=saved_customer.id,
+            full_name=saved_customer.full_name,
+        )
 
         # Return DTO
         return CustomerResponse.from_entity(saved_customer)
@@ -68,7 +97,7 @@ class CustomerReadUseCase:
         """Execute the read customer use case"""
         customer = self.customer_repository.find_by_id(customer_id)
         if not customer:
-            raise ValueError(f"Customer with ID {customer_id} not found")
+            raise CustomerNotFoundException(f"Customer with ID {customer_id} not found")
         return CustomerResponse.from_entity(customer)
 
 
@@ -92,7 +121,7 @@ class CustomerUpdateUseCase:
         # Business rule: Customer must exist
         existing_customer = self.customer_repository.find_by_id(customer.id)
         if not existing_customer:
-            raise ValueError(f"Customer with ID {customer.id} not found")
+            raise CustomerNotFoundException(f"Customer with ID {customer.id} not found")
 
         # Business rule: Check if new document conflicts with existing customer
         if not customer.document.is_empty:
@@ -100,7 +129,7 @@ class CustomerUpdateUseCase:
                 customer.document.value
             )
             if existing_by_doc and existing_by_doc.id != customer.id:
-                raise ValueError(
+                raise CustomerAlreadyExistsException(
                     f"Document {customer.document.value} is already used by another customer"
                 )
 
@@ -110,13 +139,15 @@ class CustomerUpdateUseCase:
                 customer.email.value
             )
             if existing_by_email and existing_by_email.id != customer.id:
-                raise ValueError(
+                raise CustomerAlreadyExistsException(
                     f"Email {customer.email.value} is already used by another customer"
                 )
 
         # Business rule: Customer must be able to place orders
         if not customer.can_place_order():
-            raise ValueError("Customer does not meet requirements to place orders")
+            raise CustomerBusinessRuleException(
+                "Customer does not meet requirements to place orders"
+            )
 
         # Save the updated customer
         saved_customer = self.customer_repository.save(customer)
@@ -136,11 +167,11 @@ class CustomerDeleteUseCase:
         # Business rule: Customer must exist
         existing_customer = self.customer_repository.find_by_id(customer_id)
         if not existing_customer:
-            raise ValueError(f"Customer with ID {customer_id} not found")
+            raise CustomerNotFoundException(f"Customer with ID {customer_id} not found")
 
         # Business rule: Cannot delete anonymous customer
         if existing_customer.is_anonymous:
-            raise ValueError("Cannot delete anonymous customer")
+            raise CustomerBusinessRuleException("Cannot delete anonymous customer")
 
         # Delete the customer
         return self.customer_repository.delete(customer_id)

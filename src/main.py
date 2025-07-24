@@ -1,26 +1,24 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from app_logs import configure_logging, LogLevels
-
+from src.app_logs import configure_logging, LogLevels
+from src.config.app_config import app_config
 from src.adapters.routes.customer_routes import customer_router
 from src.adapters.routes.health_routes import health_router
 
 
-configure_logging(LogLevels.info)
+configure_logging(LogLevels.info.value)
 
 
 def create_application() -> FastAPI:
-    app = FastAPI(prefix="/fastfood/api")
-    origins = ["*"]
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+    app = FastAPI(
+        title=app_config.api_title,
+        version=app_config.api_version,
+        description=app_config.api_description,
+        prefix=app_config.api_prefix,
     )
+
+    app.add_middleware(CORSMiddleware, **app_config.cors_config)
     app.include_router(router=health_router)
     app.include_router(router=customer_router)
 
