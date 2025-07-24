@@ -1,33 +1,31 @@
-#!/bin/bash
+Write-Output "Deploy do Sistema Kubernetes no Minikube"
+Write-Output "=================================="
 
-echo "Deploy do Sistema Kubernetes no Minikube"
-echo "=================================="
-
-echo "Iniciando Minikube..."
+Write-Output "Iniciando Minikube..."
 minikube start
 
-echo "Aplicando manifests do Kubernetes..."
+Write-Output "Aplicando manifests do Kubernetes..."
 
 kubectl apply -f infra/deployment/
 
-echo "Aguardando pods ficarem prontos..."
+Write-Output "Aguardando pods ficarem prontos..."
 kubectl wait --for=condition=ready pod -l app=dpm-app --timeout=300s
 kubectl wait --for=condition=ready pod -l app=dpm-database --timeout=300s
 
-echo "Verificando status dos pods..."
+Write-Output "Verificando status dos pods..."
 kubectl get pods
 
-echo ""
-echo "Deploy concluído!"
-echo ""
-echo "URLs importantes:"
-echo "   Minikube IP: $(minikube ip)"
-echo "   API: http://$(minikube ip):30080"
-echo "   Swagger UI: http://$(minikube ip):30080/docs"
-echo "   Redoc UI: http://$(minikube ip):30080/redoc"
-echo ""
-echo "Para ver logs:"
-echo "   kubectl logs -f deployment/dpm-app"
-echo ""
-echo "Para verificar HPA:"
-echo "   kubectl get hpa" 
+Write-Output ""
+Write-Output "Deploy concluído!"
+Write-Output ""
+Write-Output "URLs importantes:"
+Write-Output "   Minikube IP: $(minikube ip)"
+Write-Output "   API: http://$(minikube ip):30080"
+Write-Output "   Swagger UI: http://$(minikube ip):30080/docs"
+Write-Output "   Redoc UI: http://$(minikube ip):30080/redoc"
+Write-Output ""
+Write-Output "Para ver logs:"
+Write-Output "   kubectl logs -f deployment/dpm-app"
+Write-Output ""
+Write-Output "Para verificar HPA:"
+Write-Output "   kubectl get hpa" 

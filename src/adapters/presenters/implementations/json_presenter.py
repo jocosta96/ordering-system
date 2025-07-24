@@ -74,15 +74,9 @@ class JSONPresenter(PresenterInterface):
     def _present_customer(self, customer: CustomerResponse) -> dict:
         """Present customer data in JSON format"""
         return {
-            "id": customer.id,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
             "email": customer.email,
             "document": customer.document,
-            "full_name": customer.full_name,
-            "is_anonymous": customer.is_anonymous,
-            "is_registered": customer.is_registered,
-            "created_at": self._get_timestamp(),
+            "full_name": customer.full_name
         }
 
     def _present_customer_list(self, customer_list: CustomerListResponse) -> dict:

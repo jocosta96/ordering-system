@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from src.adapters.controllers.customer_controller import CustomerController
 from src.application.repositories.customer_repository import CustomerRepository
+from src.security.http_auth import check_credentials
 
 
 # Pydantic models for request/response validation
@@ -23,15 +24,9 @@ class CustomerUpdateModel(BaseModel):
 
 
 class CustomerResponseModel(BaseModel):
-    id: int | None
-    first_name: str
-    last_name: str
     email: str
     document: str
     full_name: str
-    is_anonymous: bool
-    is_registered: bool
-    created_at: str
 
 
 class CustomerListResponseModel(BaseModel):
@@ -49,20 +44,13 @@ def get_customer_controller() -> CustomerController:
     return CustomerController(container.customer_repository, JSONPresenter())
 
 
-# Authentication dependency (simplified for now)
-def check_credentials() -> str:
-    """Check user credentials - simplified for demonstration"""
-    # In a real application, this would validate JWT tokens, etc.
-    return "authenticated_user"
-
-
 # Create router
 customer_router = APIRouter(tags=["customer"], prefix="/customer")
 
 
 @customer_router.get("/anonymous", response_model=CustomerResponseModel)
 def get_anonymous_customer(
-    controller: Annotated[CustomerController, Depends(get_customer_controller)],
+    controller: Annotated[CustomerController, Depends(get_customer_controller)]
 ):
     """Get anonymous customer endpoint"""
     return controller.get_anonymous_customer()
