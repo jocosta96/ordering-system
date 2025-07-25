@@ -22,6 +22,9 @@ COPY ./alembic.ini /code/alembic.ini
 # Copy the Clean Architecture source code
 COPY ./src /code/src
 
+# Copy the webhook directory
+COPY ./webhook /code/webhook
+
 # Set environment variables for Clean Architecture
 ENV PYTHONPATH=/code
 ENV PYTHONUNBUFFERED=1
