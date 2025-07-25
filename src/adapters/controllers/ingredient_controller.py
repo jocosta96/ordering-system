@@ -10,7 +10,7 @@ from src.application.use_cases.ingredient_use_cases import (
     IngredientListByTypeUseCase,
     IngredientListByAppliesToUseCase,
 )
-from src.application.dto.ingredient_dto import (
+from src.application.dto import (
     IngredientCreateRequest,
     IngredientUpdateRequest,
 )

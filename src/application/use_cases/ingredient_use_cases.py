@@ -1,6 +1,6 @@
 from src.entities.ingredient import Ingredient, IngredientType
 from src.application.repositories.ingredient_repository import IngredientRepository
-from src.application.dto.ingredient_dto import (
+from src.application.dto import (
     IngredientCreateRequest,
     IngredientUpdateRequest,
     IngredientResponse,

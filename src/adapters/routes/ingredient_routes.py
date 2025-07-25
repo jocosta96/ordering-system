@@ -66,6 +66,35 @@ def create_ingredient(
     return controller.create_ingredient(ingredient.dict(), login)
 
 
+@ingredient_router.get("/applies-to", response_model=IngredientListResponseModel)
+def list_ingredients_by_applies_to(
+    login: Annotated[str, Depends(check_credentials)],
+    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+    applies_to_burger: bool=False,
+    applies_to_side: bool=False,
+    applies_to_drink: bool=False,
+    applies_to_dessert: bool=False,
+) -> dict:
+    """List ingredients by applies to"""
+    return controller.list_ingredients_by_applies_to(
+        applies_to_burger,
+        applies_to_side,
+        applies_to_drink,
+        applies_to_dessert,
+        login,
+    )
+
+
+@ingredient_router.get("/type/{type}", response_model=IngredientListResponseModel)
+def list_ingredients_by_type(
+    type: IngredientType,
+    login: Annotated[str, Depends(check_credentials)],
+    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+) -> dict:
+    """List ingredients by type"""
+    return controller.list_ingredients_by_type(type, login)
+
+
 @ingredient_router.get("/{ingredient_id}", response_model=IngredientResponseModel)
 def get_ingredient(
     ingredient_id: int,
@@ -103,32 +132,3 @@ def list_ingredients(
 ) -> dict:
     """List all ingredients"""
     return controller.list_ingredients(login)
-
-
-@ingredient_router.get("/type/{type}", response_model=IngredientListResponseModel)
-def list_ingredients_by_type(
-    type: IngredientType,
-    login: Annotated[str, Depends(check_credentials)],
-    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
-) -> dict:
-    """List ingredients by type"""
-    return controller.list_ingredients_by_type(type, login)
-
-
-@ingredient_router.get("/applies-to", response_model=IngredientListResponseModel)
-def list_ingredients_by_applies_to(
-    applies_to_burger: bool,
-    applies_to_side: bool,
-    applies_to_drink: bool,
-    applies_to_dessert: bool,
-    login: Annotated[str, Depends(check_credentials)],
-    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
-) -> dict:
-    """List ingredients by applies to"""
-    return controller.list_ingredients_by_applies_to(
-        applies_to_burger,
-        applies_to_side,
-        applies_to_drink,
-        applies_to_dessert,
-        login,
-    )

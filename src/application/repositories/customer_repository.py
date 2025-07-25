@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from ...entities.customer import Customer
+from src.entities.customer import Customer
 
 
 class CustomerRepository(ABC):

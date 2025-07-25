@@ -13,8 +13,7 @@ from unittest.mock import Mock
 
 from src.adapters.controllers.customer_controller import CustomerController
 from src.adapters.controllers.ingredient_controller import IngredientController
-from src.application.dto.customer_dto import CustomerResponse, CustomerListResponse
-from src.application.dto.ingredient_dto import IngredientResponse, IngredientListResponse
+from src.application.dto import CustomerResponse, CustomerListResponse, IngredientResponse, IngredientListResponse
 from src.application.exceptions import (
     CustomerNotFoundException,
     CustomerAlreadyExistsException,

@@ -36,13 +36,11 @@ from src.application.use_cases.ingredient_use_cases import (
     IngredientListByTypeUseCase,
     IngredientListByAppliesToUseCase,
 )
-from src.application.dto.customer_dto import (
+from src.application.dto import (
     CustomerCreateRequest,
     CustomerUpdateRequest,
     CustomerResponse,
     CustomerListResponse,
-)
-from src.application.dto.ingredient_dto import (
     IngredientCreateRequest,
     IngredientUpdateRequest,
     IngredientResponse,

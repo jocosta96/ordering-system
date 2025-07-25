@@ -1,7 +1,7 @@
 # Application Business Rules Layer
 # This layer contains use cases and interfaces that orchestrate the domain
 
-from .use_cases.customer_use_cases import (
+from src.application.use_cases.customer_use_cases import (
     CustomerCreateUseCase,
     CustomerReadUseCase,
     CustomerUpdateUseCase,
@@ -9,8 +9,8 @@ from .use_cases.customer_use_cases import (
     CustomerListUseCase,
     CustomerGetAnonymousUseCase,
 )
-from .repositories.customer_repository import CustomerRepository
-from .dto.customer_dto import (
+from src.application.repositories.customer_repository import CustomerRepository
+from src.application.dto import (
     CustomerCreateRequest,
     CustomerUpdateRequest,
     CustomerResponse,

@@ -17,8 +17,7 @@ from src.entities.value_objects.name import Name
 from src.entities.value_objects.email import Email
 from src.entities.value_objects.document import Document
 from src.entities.value_objects.money import Money
-from src.application.dto.customer_dto import CustomerResponse
-from src.application.dto.ingredient_dto import IngredientResponse
+from src.application.dto import CustomerResponse, IngredientResponse
 
 
 class TestCustomerEntity:

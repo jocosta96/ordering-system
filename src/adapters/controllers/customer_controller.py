@@ -9,7 +9,7 @@ from src.application.use_cases.customer_use_cases import (
     CustomerListUseCase,
     CustomerGetAnonymousUseCase,
 )
-from src.application.dto.customer_dto import (
+from src.application.dto import (
     CustomerCreateRequest,
     CustomerUpdateRequest,
 )

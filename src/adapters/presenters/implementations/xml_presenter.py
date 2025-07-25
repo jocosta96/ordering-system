@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Any
 from http import HTTPStatus
 
-from ..interfaces.presenter_interface import PresenterInterface
-from ...application.dto.customer_dto import CustomerResponse, CustomerListResponse
+from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
+from src.application.dto import CustomerResponse, CustomerListResponse
 
 
 class XMLPresenter(PresenterInterface):

@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional
-
+from typing import Optional, Any
+from src.application.dto.interfaces.request_interface import RequestInterface
+from src.application.dto.interfaces.response_interface import ResponseInterface
 
 @dataclass
-class CustomerCreateRequest:
+class CustomerCreateRequest(RequestInterface):
     """DTO for customer creation request"""
 
     first_name: str
@@ -11,9 +12,16 @@ class CustomerCreateRequest:
     email: str
     document: str
 
+    def to_dict(self):
+        return {
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "document": self.document,
+        }
 
 @dataclass
-class CustomerUpdateRequest:
+class CustomerUpdateRequest(RequestInterface):
     """DTO for customer update request"""
 
     id: int
@@ -22,9 +30,19 @@ class CustomerUpdateRequest:
     email: str
     document: str
 
+    def to_dict(self):
+
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "document": self.document,
+        }
+
 
 @dataclass
-class CustomerResponse:
+class CustomerResponse(ResponseInterface):
     """DTO for customer response"""
 
     id: Optional[int]
@@ -35,7 +53,7 @@ class CustomerResponse:
     full_name: str
     is_anonymous: bool
     is_registered: bool
-
+    
     @classmethod
     def from_entity(cls, customer):
         """Create DTO from Customer entity"""
@@ -59,7 +77,7 @@ class CustomerResponse:
 
 
 @dataclass
-class CustomerListResponse:
+class CustomerListResponse(ResponseInterface):
     """DTO for customer list response"""
 
     customers: list[CustomerResponse]
@@ -72,3 +90,10 @@ class CustomerListResponse:
             "total_count": self.total_count,
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
+
+    def from_entity(cls, entity: Any) -> "CustomerListResponse":
+        """Create DTO from entity"""
+        return cls(
+            customers=[CustomerResponse.from_entity(customer) for customer in entity.customers],
+            total_count=entity.total_count,
+        )
