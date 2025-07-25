@@ -3,22 +3,30 @@ Integration tests for controllers.
 
 Tests cover:
 - CustomerController integration with use cases
+- IngredientController integration with use cases
 - Error handling and presentation
 - Authentication handling
 """
 
 import pytest
 from unittest.mock import Mock, patch
+from decimal import Decimal
 
 from src.adapters.controllers.customer_controller import CustomerController
-from src.application.dto.customer_dto import CustomerResponse
+from src.adapters.controllers.ingredient_controller import IngredientController
+from src.application.dto.customer_dto import CustomerResponse, CustomerListResponse
+from src.application.dto.ingredient_dto import IngredientResponse, IngredientListResponse
 from src.application.exceptions import (
     CustomerNotFoundException,
     CustomerAlreadyExistsException,
     CustomerBusinessRuleException,
     AuthenticationException,
+    IngredientNotFoundException,
+    IngredientAlreadyExistsException,
+    IngredientValidationException,
+    IngredientBusinessRuleException,
 )
-from src.application.dto.customer_dto import CustomerListResponse
+from src.entities.ingredient import IngredientType
 
 
 class TestCustomerController:
@@ -98,7 +106,7 @@ class TestCustomerController:
             controller.get_customer(1, "")
 
     def test_get_customer_not_found(self, mock_customer_repository, mock_presenter):
-        """Test customer retrieval when customer not found"""
+        """Test customer retrieval fails when customer not found"""
         # Arrange
         controller = CustomerController(mock_customer_repository, mock_presenter)
         mock_presenter.present_error.return_value = {"error": "Customer not found"}
@@ -170,7 +178,7 @@ class TestCustomerController:
         """Test successful customer update"""
         # Arrange
         controller = CustomerController(mock_customer_repository, mock_presenter)
-        mock_presenter.present.return_value = {"id": 1, "first_name": "Jane"}
+        mock_presenter.present.return_value = {"id": 1, "first_name": "John"}
 
         # Mock the use case instance directly
         controller.update_use_case.execute = Mock(
@@ -179,17 +187,17 @@ class TestCustomerController:
 
         customer_data = {
             "id": 1,
-            "first_name": "Jane",
-            "last_name": "Smith",
-            "email": "jane.smith@example.com",
-            "document": "12345678909",  # Valid Brazilian CPF
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "john.doe@example.com",
+            "document": "52998224725",  # Valid Brazilian CPF
         }
 
         # Act
         result = controller.update_customer(customer_data, "authenticated_user")
 
         # Assert
-        assert result == {"id": 1, "first_name": "Jane"}
+        assert result == {"id": 1, "first_name": "John"}
         controller.update_use_case.execute.assert_called_once()
         mock_presenter.present.assert_called_once()
 
@@ -197,10 +205,7 @@ class TestCustomerController:
         """Test successful customer deletion"""
         # Arrange
         controller = CustomerController(mock_customer_repository, mock_presenter)
-        mock_presenter.present.return_value = {
-            "success": True,
-            "message": "Customer deleted successfully",
-        }
+        mock_presenter.present.return_value = {"success": True, "message": "Customer deleted successfully"}
 
         # Mock the use case instance directly
         controller.delete_use_case.execute = Mock(return_value=True)
@@ -217,7 +222,7 @@ class TestCustomerController:
         """Test successful customer listing"""
         # Arrange
         controller = CustomerController(mock_customer_repository, mock_presenter)
-        mock_presenter.present.return_value = {"data": [], "total_count": 0}
+        mock_presenter.present.return_value = {"customers": [], "total_count": 0}
 
         # Mock the use case instance directly
         controller.list_use_case.execute = Mock(
@@ -228,6 +233,376 @@ class TestCustomerController:
         result = controller.list_customers("authenticated_user")
 
         # Assert
-        assert result == {"data": [], "total_count": 0}
+        assert result == {"customers": [], "total_count": 0}
         controller.list_use_case.execute.assert_called_once()
         mock_presenter.present.assert_called_once()
+
+
+class TestIngredientController:
+    """Test cases for IngredientController"""
+
+    def test_create_ingredient_success(
+        self, mock_ingredient_repository, mock_presenter, sample_ingredient
+    ):
+        """Test successful ingredient creation"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"id": 1, "name": "Tomato"}
+
+        # Mock the use case instance directly
+        controller.create_use_case.execute = Mock(
+            return_value=IngredientResponse.from_entity(sample_ingredient)
+        )
+
+        ingredient_data = {
+            "name": "Tomato",
+            "price": 2.50,
+            "is_active": True,
+            "type": IngredientType.VEGETABLE,
+            "applies_to_burger": True,
+            "applies_to_side": False,
+            "applies_to_drink": False,
+            "applies_to_dessert": False,
+        }
+
+        # Act
+        result = controller.create_ingredient(ingredient_data, "authenticated_user")
+
+        # Assert
+        assert result == {"id": 1, "name": "Tomato"}
+        controller.create_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_create_ingredient_authentication_required(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient creation fails without authentication"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        ingredient_data = {
+            "name": "Tomato",
+            "price": 2.50,
+            "is_active": True,
+            "type": IngredientType.VEGETABLE,
+            "applies_to_burger": True,
+            "applies_to_side": False,
+            "applies_to_drink": False,
+            "applies_to_dessert": False,
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.create_ingredient(ingredient_data, "")
+
+    def test_create_ingredient_already_exists(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient creation fails when ingredient already exists"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Ingredient already exists"}
+
+        # Mock the use case to raise exception
+        controller.create_use_case.execute = Mock(
+            side_effect=IngredientAlreadyExistsException("Ingredient already exists")
+        )
+
+        ingredient_data = {
+            "name": "Tomato",
+            "price": 2.50,
+            "is_active": True,
+            "type": IngredientType.VEGETABLE,
+            "applies_to_burger": True,
+            "applies_to_side": False,
+            "applies_to_drink": False,
+            "applies_to_dessert": False,
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.create_ingredient(ingredient_data, "authenticated_user")
+
+    def test_get_ingredient_success(
+        self, mock_ingredient_repository, mock_presenter, sample_ingredient
+    ):
+        """Test successful ingredient retrieval"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"id": 1, "name": "Tomato"}
+
+        # Mock the use case instance directly
+        controller.read_use_case.execute = Mock(
+            return_value=IngredientResponse.from_entity(sample_ingredient)
+        )
+
+        # Act
+        result = controller.get_ingredient(1, "authenticated_user")
+
+        # Assert
+        assert result == {"id": 1, "name": "Tomato"}
+        controller.read_use_case.execute.assert_called_once_with(1)
+        mock_presenter.present.assert_called_once()
+
+    def test_get_ingredient_authentication_required(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient retrieval fails without authentication"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.get_ingredient(1, "")
+
+    def test_get_ingredient_not_found(self, mock_ingredient_repository, mock_presenter):
+        """Test ingredient retrieval fails when ingredient not found"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Ingredient not found"}
+
+        # Mock the use case to raise exception
+        controller.read_use_case.execute = Mock(
+            side_effect=IngredientNotFoundException("Ingredient not found")
+        )
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.get_ingredient(1, "authenticated_user")
+
+    def test_update_ingredient_success(
+        self, mock_ingredient_repository, mock_presenter, sample_ingredient
+    ):
+        """Test successful ingredient update"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"id": 1, "name": "Tomato"}
+
+        # Mock the use case instance directly
+        controller.update_use_case.execute = Mock(
+            return_value=IngredientResponse.from_entity(sample_ingredient)
+        )
+
+        ingredient_data = {
+            "id": 1,
+            "name": "Tomato",
+            "price": 2.50,
+            "is_active": True,
+            "type": IngredientType.VEGETABLE,
+            "applies_to_burger": True,
+            "applies_to_side": False,
+            "applies_to_drink": False,
+            "applies_to_dessert": False,
+        }
+
+        # Act
+        result = controller.update_ingredient(ingredient_data, "authenticated_user")
+
+        # Assert
+        assert result == {"id": 1, "name": "Tomato"}
+        controller.update_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_update_ingredient_authentication_required(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient update fails without authentication"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        ingredient_data = {
+            "id": 1,
+            "name": "Tomato",
+            "price": 2.50,
+            "is_active": True,
+            "type": IngredientType.VEGETABLE,
+            "applies_to_burger": True,
+            "applies_to_side": False,
+            "applies_to_drink": False,
+            "applies_to_dessert": False,
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.update_ingredient(ingredient_data, "")
+
+    def test_update_ingredient_not_found(self, mock_ingredient_repository, mock_presenter):
+        """Test ingredient update fails when ingredient not found"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Ingredient not found"}
+
+        # Mock the use case to raise exception
+        controller.update_use_case.execute = Mock(
+            side_effect=IngredientNotFoundException("Ingredient not found")
+        )
+
+        ingredient_data = {
+            "id": 1,
+            "name": "Tomato",
+            "price": 2.50,
+            "is_active": True,
+            "type": IngredientType.VEGETABLE,
+            "applies_to_burger": True,
+            "applies_to_side": False,
+            "applies_to_drink": False,
+            "applies_to_dessert": False,
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.update_ingredient(ingredient_data, "authenticated_user")
+
+    def test_delete_ingredient_success(self, mock_ingredient_repository, mock_presenter):
+        """Test successful ingredient deletion"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"success": True, "message": "Ingredient deleted successfully"}
+
+        # Mock the use case instance directly
+        controller.delete_use_case.execute = Mock(return_value=True)
+
+        # Act
+        result = controller.delete_ingredient(1, "authenticated_user")
+
+        # Assert
+        assert result == {"success": True, "message": "Ingredient deleted successfully"}
+        controller.delete_use_case.execute.assert_called_once_with(1)
+        mock_presenter.present.assert_called_once()
+
+    def test_delete_ingredient_authentication_required(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient deletion fails without authentication"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.delete_ingredient(1, "")
+
+    def test_delete_ingredient_not_found(self, mock_ingredient_repository, mock_presenter):
+        """Test ingredient deletion fails when ingredient not found"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Ingredient not found"}
+
+        # Mock the use case to raise exception
+        controller.delete_use_case.execute = Mock(
+            side_effect=IngredientNotFoundException("Ingredient not found")
+        )
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.delete_ingredient(1, "authenticated_user")
+
+    def test_list_ingredients_success(self, mock_ingredient_repository, mock_presenter):
+        """Test successful ingredient listing"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"ingredients": [], "total_count": 0}
+
+        # Mock the use case instance directly
+        controller.list_use_case.execute = Mock(
+            return_value=IngredientListResponse(ingredients=[], total_count=0)
+        )
+
+        # Act
+        result = controller.list_ingredients("authenticated_user")
+
+        # Assert
+        assert result == {"ingredients": [], "total_count": 0}
+        controller.list_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_list_ingredients_authentication_required(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient listing fails without authentication"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.list_ingredients("")
+
+    def test_list_ingredients_by_type_success(self, mock_ingredient_repository, mock_presenter):
+        """Test successful ingredient listing by type"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"ingredients": [], "total_count": 0}
+
+        # Mock the use case instance directly
+        controller.list_by_type_use_case.execute = Mock(
+            return_value=IngredientListResponse(ingredients=[], total_count=0)
+        )
+
+        # Act
+        result = controller.list_ingredients_by_type(IngredientType.VEGETABLE, "authenticated_user")
+
+        # Assert
+        assert result == {"ingredients": [], "total_count": 0}
+        controller.list_by_type_use_case.execute.assert_called_once_with(IngredientType.VEGETABLE)
+        mock_presenter.present.assert_called_once()
+
+    def test_list_ingredients_by_type_authentication_required(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient listing by type fails without authentication"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.list_ingredients_by_type(IngredientType.VEGETABLE, "")
+
+    def test_list_ingredients_by_applies_to_success(self, mock_ingredient_repository, mock_presenter):
+        """Test successful ingredient listing by applies to"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"ingredients": [], "total_count": 0}
+
+        # Mock the use case instance directly
+        controller.list_by_applies_to_use_case.execute = Mock(
+            return_value=IngredientListResponse(ingredients=[], total_count=0)
+        )
+
+        # Act
+        result = controller.list_ingredients_by_applies_to(
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False,
+            login="authenticated_user"
+        )
+
+        # Assert
+        assert result == {"ingredients": [], "total_count": 0}
+        controller.list_by_applies_to_use_case.execute.assert_called_once_with(
+            True, False, False, False
+        )
+        mock_presenter.present.assert_called_once()
+
+    def test_list_ingredients_by_applies_to_authentication_required(
+        self, mock_ingredient_repository, mock_presenter
+    ):
+        """Test ingredient listing by applies to fails without authentication"""
+        # Arrange
+        controller = IngredientController(mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.list_ingredients_by_applies_to(
+                applies_to_burger=True,
+                applies_to_side=False,
+                applies_to_drink=False,
+                applies_to_dessert=False,
+                login=""
+            )

@@ -60,3 +60,24 @@ class DatabaseException(ApplicationException):
     """Raised when database operations fail"""
 
     pass
+
+class IngredientNotFoundException(ApplicationException):
+    """Raised when a ingredient is not found"""
+
+    pass
+
+
+class IngredientAlreadyExistsException(ApplicationException):
+    """Raised when a ingredient already exists"""
+
+    pass
+
+class IngredientValidationException(ApplicationException):
+    """Raised when a ingredient validation fails"""
+
+    pass
+
+class IngredientBusinessRuleException(ApplicationException):
+    """Raised when a ingredient business rule is violated"""
+
+    pass

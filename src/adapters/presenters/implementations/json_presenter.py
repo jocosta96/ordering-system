@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 from http import HTTPStatus
 
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
-from src.application.dto.customer_dto import CustomerResponse, CustomerListResponse
 
 
 class JSONPresenter(PresenterInterface):
@@ -19,12 +18,7 @@ class JSONPresenter(PresenterInterface):
 
     def present(self, data: Any) -> dict:
         """Present single data item as JSON"""
-        if isinstance(data, CustomerResponse):
-            return self._present_customer(data)
-        elif isinstance(data, CustomerListResponse):
-            return self._present_customer_list(data)
-        else:
-            return self._present_generic(data)
+        return self._present_generic(data)
 
     def present_list(self, data_list: list) -> dict:
         """Present list of data as JSON"""
@@ -32,14 +26,7 @@ class JSONPresenter(PresenterInterface):
             return {"data": [], "total_count": 0, "timestamp": self._get_timestamp()}
 
         # Handle different types of lists
-        if all(isinstance(item, CustomerResponse) for item in data_list):
-            return {
-                "data": [self._present_customer(item) for item in data_list],
-                "total_count": len(data_list),
-                "timestamp": self._get_timestamp(),
-            }
-        else:
-            return {
+        return {
                 "data": [self._present_generic(item) for item in data_list],
                 "total_count": len(data_list),
                 "timestamp": self._get_timestamp(),
@@ -71,28 +58,12 @@ class JSONPresenter(PresenterInterface):
 
         return error_response
 
-    def _present_customer(self, customer: CustomerResponse) -> dict:
-        """Present customer data in JSON format"""
-        return {
-            "email": customer.email,
-            "document": customer.document,
-            "full_name": customer.full_name
-        }
-
-    def _present_customer_list(self, customer_list: CustomerListResponse) -> dict:
-        """Present customer list data in JSON format"""
-        return {
-            "data": [
-                self._present_customer(customer) for customer in customer_list.customers
-            ],
-            "total_count": customer_list.total_count,
-            "timestamp": self._get_timestamp(),
-        }
-
     def _present_generic(self, data: Any) -> dict:
         """Present generic data in JSON format"""
-        if hasattr(data, "__dict__"):
-            return {"data": data.__dict__, "timestamp": self._get_timestamp()}
+        if hasattr(data, "to_dict"):
+            return data.to_dict()
+        elif hasattr(data, "__dict__"):
+            return data.__dict__
         else:
             return {"data": str(data), "timestamp": self._get_timestamp()}
 

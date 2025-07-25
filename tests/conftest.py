@@ -10,13 +10,17 @@ This file provides:
 import pytest
 from unittest.mock import Mock, MagicMock
 from typing import Generator
+from decimal import Decimal
 
 from src.application.repositories.customer_repository import CustomerRepository
+from src.application.repositories.ingredient_repository import IngredientRepository
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
 from src.entities.customer import Customer
+from src.entities.ingredient import Ingredient, IngredientType
 from src.entities.value_objects.name import Name
 from src.entities.value_objects.email import Email
 from src.entities.value_objects.document import Document
+from src.entities.value_objects.money import Money
 
 
 @pytest.fixture
@@ -33,6 +37,25 @@ def mock_customer_repository() -> Mock:
     mock_repo.delete.return_value = False
     mock_repo.exists_by_document.return_value = False
     mock_repo.exists_by_email.return_value = False
+
+    return mock_repo
+
+
+@pytest.fixture
+def mock_ingredient_repository() -> Mock:
+    """Mock ingredient repository for testing"""
+    mock_repo = Mock(spec=IngredientRepository)
+
+    # Setup default mock behaviors
+    mock_repo.save.return_value = None
+    mock_repo.find_by_id.return_value = None
+    mock_repo.find_by_name.return_value = None
+    mock_repo.find_by_type.return_value = []
+    mock_repo.find_by_applies_usage.return_value = []
+    mock_repo.find_all.return_value = []
+    mock_repo.delete.return_value = False
+    mock_repo.exists_by_name.return_value = False
+    mock_repo.exists_by_type.return_value = False
 
     return mock_repo
 
@@ -91,6 +114,62 @@ def sample_customers() -> list[Customer]:
 
 
 @pytest.fixture
+def sample_ingredient() -> Ingredient:
+    """Sample ingredient entity for testing"""
+    return Ingredient.create(
+        name="Tomato",
+        price=Money(amount=Decimal("2.50")),
+        is_active=True,
+        type=IngredientType.VEGETABLE,
+        applies_to_burger=True,
+        applies_to_side=False,
+        applies_to_drink=False,
+        applies_to_dessert=False,
+        ingredient_id=1,
+    )
+
+
+@pytest.fixture
+def sample_ingredients() -> list[Ingredient]:
+    """Sample list of ingredients for testing"""
+    return [
+        Ingredient.create(
+            name="Tomato",
+            price=Money(amount=Decimal("2.50")),
+            is_active=True,
+            type=IngredientType.VEGETABLE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False,
+            ingredient_id=1,
+        ),
+        Ingredient.create(
+            name="Lettuce",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SALAD,
+            applies_to_burger=True,
+            applies_to_side=True,
+            applies_to_drink=False,
+            applies_to_dessert=False,
+            ingredient_id=2,
+        ),
+        Ingredient.create(
+            name="Cheese",
+            price=Money(amount=Decimal("3.00")),
+            is_active=True,
+            type=IngredientType.CHEESE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False,
+            ingredient_id=3,
+        ),
+    ]
+
+
+@pytest.fixture
 def valid_name() -> Name:
     """Valid name value object for testing"""
     return Name.create("John")
@@ -106,6 +185,12 @@ def valid_email() -> Email:
 def valid_document() -> Document:
     """Valid document value object for testing"""
     return Document.create("52998224725")  # Valid Brazilian CPF
+
+
+@pytest.fixture
+def valid_money() -> Money:
+    """Valid money value object for testing"""
+    return Money(amount=Decimal("10.00"))
 
 
 @pytest.fixture(autouse=True)

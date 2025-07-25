@@ -50,6 +50,13 @@ class CustomerResponse:
             is_registered=customer.is_registered,
         )
 
+    def to_dict(self):
+        return {
+            "email": self.email,
+            "document": self.document,
+            "full_name": self.full_name,
+        }
+
 
 @dataclass
 class CustomerListResponse:
@@ -57,3 +64,11 @@ class CustomerListResponse:
 
     customers: list[CustomerResponse]
     total_count: int
+
+    def to_dict(self):
+        from datetime import datetime
+        return {
+            "data": [customer.to_dict() for customer in self.customers],
+            "total_count": self.total_count,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }

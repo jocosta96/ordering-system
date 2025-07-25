@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import HTTPException
 from http import HTTPStatus
-from typing_extensions import Annotated
 
 from src.application.use_cases.customer_use_cases import (
     CustomerCreateUseCase,
@@ -13,8 +12,6 @@ from src.application.use_cases.customer_use_cases import (
 from src.application.dto.customer_dto import (
     CustomerCreateRequest,
     CustomerUpdateRequest,
-    CustomerResponse,
-    CustomerListResponse,
 )
 from src.application.repositories.customer_repository import CustomerRepository
 from src.application.exceptions import (

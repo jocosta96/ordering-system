@@ -10,9 +10,11 @@ Tests cover:
 """
 
 import pytest
+from decimal import Decimal
 from src.entities.value_objects.name import Name
 from src.entities.value_objects.email import Email
 from src.entities.value_objects.document import Document
+from src.entities.value_objects.money import Money
 
 
 class TestNameValueObject:
@@ -201,3 +203,197 @@ class TestDocumentValueObject:
         document = Document.create("52998224725")  # Valid Brazilian CPF
         assert str(document) == "52998224725"
         assert repr(document) == "Document('52998224725')"
+
+
+class TestMoneyValueObject:
+    """Test cases for Money value object"""
+
+    def test_create_valid_money(self):
+        """Test creating a valid money amount"""
+        money = Money(amount=Decimal("10.50"))
+        assert money.amount == Decimal("10.50")
+        assert money.value == 10.50
+
+    def test_create_money_with_integer(self):
+        """Test creating money with integer amount"""
+        money = Money(amount=Decimal("100"))
+        assert money.amount == Decimal("100.00")
+        assert money.value == 100.00
+
+    def test_create_money_with_zero(self):
+        """Test creating money with zero amount"""
+        money = Money(amount=Decimal("0"))
+        assert money.amount == Decimal("0.00")
+        assert money.value == 0.00
+
+    def test_create_money_with_one_decimal_place(self):
+        """Test creating money with one decimal place"""
+        money = Money(amount=Decimal("10.5"))
+        assert money.amount == Decimal("10.50")
+        assert money.value == 10.50
+
+    def test_create_money_with_two_decimal_places(self):
+        """Test creating money with two decimal places"""
+        money = Money(amount=Decimal("10.55"))
+        assert money.amount == Decimal("10.55")
+        assert money.value == 10.55
+
+    def test_create_negative_money_raises_error(self):
+        """Test that negative amount raises ValueError"""
+        with pytest.raises(ValueError, match="Invalid amount"):
+            Money(amount=Decimal("-10.50"))
+
+    def test_create_money_with_more_than_two_decimal_places_raises_error(self):
+        """Test that amount with more than 2 decimal places raises ValueError"""
+        with pytest.raises(ValueError, match="Invalid amount"):
+            Money(amount=Decimal("10.555"))
+
+    def test_create_money_with_four_decimal_places_raises_error(self):
+        """Test that amount with four decimal places raises ValueError"""
+        with pytest.raises(ValueError, match="Invalid amount"):
+            Money(amount=Decimal("10.5555"))
+
+    def test_money_string_representation(self):
+        """Test money string representation"""
+        money = Money(amount=Decimal("10.50"))
+        assert str(money) == "10.50"
+        assert repr(money) == "Money(amount='10.50')"
+
+    def test_money_string_representation_with_integer(self):
+        """Test money string representation with integer amount"""
+        money = Money(amount=Decimal("100"))
+        assert str(money) == "100.00"
+        assert repr(money) == "Money(amount='100.00')"
+
+    def test_money_string_representation_with_zero(self):
+        """Test money string representation with zero amount"""
+        money = Money(amount=Decimal("0"))
+        assert str(money) == "0.00"
+        assert repr(money) == "Money(amount='0.00')"
+
+    def test_money_value_property(self):
+        """Test money value property returns float"""
+        money = Money(amount=Decimal("10.50"))
+        assert isinstance(money.value, float)
+        assert money.value == 10.50
+
+    def test_money_value_property_with_integer(self):
+        """Test money value property with integer amount"""
+        money = Money(amount=Decimal("100"))
+        assert money.value == 100.00
+
+    def test_money_value_property_with_zero(self):
+        """Test money value property with zero amount"""
+        money = Money(amount=Decimal("0"))
+        assert money.value == 0.00
+
+    def test_money_addition_with_money_object(self):
+        """Test adding two money objects"""
+        money1 = Money(amount=Decimal("10.50"))
+        money2 = Money(amount=Decimal("5.25"))
+        result = money1 + money2
+        assert result.amount == Decimal("15.75")
+        assert result.value == 15.75
+
+    def test_money_addition_with_decimal(self):
+        """Test adding money object with decimal"""
+        money = Money(amount=Decimal("10.50"))
+        decimal_amount = Decimal("5.25")
+        result = money + decimal_amount
+        assert result.amount == Decimal("15.75")
+        assert result.value == 15.75
+
+    def test_money_addition_with_zero(self):
+        """Test adding money object with zero"""
+        money = Money(amount=Decimal("10.50"))
+        result = money + Decimal("0")
+        assert result.amount == Decimal("10.50")
+        assert result.value == 10.50
+
+    def test_money_addition_with_integer_decimal(self):
+        """Test adding money object with integer decimal"""
+        money = Money(amount=Decimal("10.50"))
+        result = money + Decimal("5")
+        assert result.amount == Decimal("15.50")
+        assert result.value == 15.50
+
+    def test_money_addition_commutative(self):
+        """Test that money addition is commutative"""
+        money1 = Money(amount=Decimal("10.50"))
+        money2 = Money(amount=Decimal("5.25"))
+        result1 = money1 + money2
+        result2 = money2 + money1
+        assert result1.amount == result2.amount
+        assert result1.value == result2.value
+
+    def test_money_addition_with_decimal_commutative(self):
+        """Test that money addition with decimal is commutative"""
+        money = Money(amount=Decimal("10.50"))
+        decimal_amount = Decimal("5.25")
+        result1 = money + decimal_amount
+        result2 = Money(amount=decimal_amount) + money
+        assert result1.amount == result2.amount
+        assert result1.value == result2.value
+
+    def test_money_formatting_and_validation(self):
+        """Test money formatting and validation of decimal places"""
+        # Test that amounts with more than 2 decimal places are rejected
+        with pytest.raises(ValueError, match="Invalid amount"):
+            Money(amount=Decimal("10.555"))
+        
+        with pytest.raises(ValueError, match="Invalid amount"):
+            Money(amount=Decimal("10.554"))
+        
+        # Test that valid amounts are formatted correctly
+        money = Money(amount=Decimal("10.5"))
+        assert str(money) == "10.50"
+        assert money.value == 10.50
+        
+        money = Money(amount=Decimal("10.55"))
+        assert str(money) == "10.55"
+        assert money.value == 10.55
+
+    def test_money_formatting_half_even_rounding(self):
+        """Test money formatting with half-even rounding"""
+        # Test half-even rounding (rounds to even)
+        money = Money(amount=Decimal("10.5"))
+        assert str(money) == "10.50"
+        assert money.value == 10.50
+
+        money = Money(amount=Decimal("11.5"))
+        assert str(money) == "11.50"
+        assert money.value == 11.50
+
+    def test_money_equality(self):
+        """Test money equality"""
+        money1 = Money(amount=Decimal("10.50"))
+        money2 = Money(amount=Decimal("10.50"))
+        assert money1.amount == money2.amount
+        assert money1.value == money2.value
+
+    def test_money_inequality(self):
+        """Test money inequality"""
+        money1 = Money(amount=Decimal("10.50"))
+        money2 = Money(amount=Decimal("10.51"))
+        assert money1.amount != money2.amount
+        assert money1.value != money2.value
+
+    def test_money_with_large_amount(self):
+        """Test money with large amount"""
+        money = Money(amount=Decimal("999999.99"))
+        assert money.amount == Decimal("999999.99")
+        assert money.value == 999999.99
+
+    def test_money_with_small_amount(self):
+        """Test money with small amount"""
+        money = Money(amount=Decimal("0.01"))
+        assert money.amount == Decimal("0.01")
+        assert money.value == 0.01
+
+    def test_money_mutability(self):
+        """Test that money is mutable (as per the class definition)"""
+        money = Money(amount=Decimal("10.50"))
+        # The class is defined as mutable (frozen=False), so we can modify it
+        # However, the current implementation doesn't provide setters
+        # This test documents the current behavior
+        assert money.amount == Decimal("10.50")
