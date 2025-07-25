@@ -1,4 +1,4 @@
-from typing import List, Optional, TypeVar, Any
+from typing import List, Optional, TypeVar
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError

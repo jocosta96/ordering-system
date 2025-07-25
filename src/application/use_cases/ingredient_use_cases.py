@@ -1,4 +1,3 @@
-from typing import List, Optional
 from src.entities.ingredient import Ingredient, IngredientType
 from src.application.repositories.ingredient_repository import IngredientRepository
 from src.application.dto.ingredient_dto import (
@@ -9,9 +8,7 @@ from src.application.dto.ingredient_dto import (
 )
 from src.application.exceptions import (
     IngredientNotFoundException,
-    IngredientAlreadyExistsException,
-    IngredientValidationException,
-    IngredientBusinessRuleException
+    IngredientAlreadyExistsException
 )
 from src.app_logs import get_logger
 from src.entities.value_objects.money import Money

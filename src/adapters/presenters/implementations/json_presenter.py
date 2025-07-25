@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 from http import HTTPStatus
 
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface

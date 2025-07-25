@@ -4,7 +4,6 @@ from src.adapters.gateways.sql_customer_repository import SQLCustomerRepository
 from src.adapters.gateways.sql_ingredient_repository import SQLIngredientRepository
 from src.adapters.gateways.implementations.sqlalchemy_database import SQLAlchemyDatabase
 from src.adapters.gateways.interfaces.database_interface import DatabaseInterface
-from src.config.database import db_config
 
 
 class Container:

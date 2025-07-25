@@ -1,4 +1,3 @@
-from typing import List, Optional
 from src.entities.customer import Customer
 from src.application.repositories.customer_repository import CustomerRepository
 from src.application.dto.customer_dto import (
@@ -11,7 +10,6 @@ from src.application.exceptions import (
     CustomerNotFoundException,
     CustomerAlreadyExistsException,
     CustomerBusinessRuleException,
-    CustomerValidationException,
 )
 from src.app_logs import get_logger
 

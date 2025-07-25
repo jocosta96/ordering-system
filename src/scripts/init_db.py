@@ -4,7 +4,6 @@ Database initialization script for Clean Architecture.
 This script creates the database tables and initializes with sample data.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -12,11 +11,12 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent
 sys.path.insert(0, str(src_path))
 
-from src.config.database import db_config
-from src.adapters.di.container import container
-from src.entities.customer import Customer
-from src.entities.ingredient import Ingredient, IngredientType
-from src.entities.value_objects.money import Money
+# Import after path setup to avoid E402 errors
+from src.config.database import db_config  # noqa: E402
+from src.adapters.di.container import container  # noqa: E402
+from src.entities.customer import Customer  # noqa: E402
+from src.entities.ingredient import Ingredient, IngredientType  # noqa: E402
+from src.entities.value_objects.money import Money  # noqa: E402
 
 
 def init_database():

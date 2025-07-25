@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, TypeVar, Generic
+from typing import List, Optional, TypeVar
 from sqlalchemy.orm import Session
 
 T = TypeVar("T")

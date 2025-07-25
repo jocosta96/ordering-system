@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from typing_extensions import Annotated
 from pydantic import BaseModel
 
 from src.adapters.controllers.customer_controller import CustomerController
-from src.application.repositories.customer_repository import CustomerRepository
 from src.security.http_auth import check_credentials
 
 

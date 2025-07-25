@@ -8,8 +8,7 @@ This file provides:
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
-from typing import Generator
+from unittest.mock import Mock
 from decimal import Decimal
 
 from src.application.repositories.customer_repository import CustomerRepository

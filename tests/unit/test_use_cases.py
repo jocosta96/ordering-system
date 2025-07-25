@@ -18,8 +18,6 @@ Tests cover:
 """
 
 import pytest
-from unittest.mock import Mock
-from decimal import Decimal
 
 from src.application.use_cases.customer_use_cases import (
     CustomerCreateUseCase,
@@ -56,12 +54,9 @@ from src.application.exceptions import (
     CustomerBusinessRuleException,
     IngredientNotFoundException,
     IngredientAlreadyExistsException,
-    IngredientValidationException,
-    IngredientBusinessRuleException,
 )
 from src.entities.customer import Customer
-from src.entities.ingredient import Ingredient, IngredientType
-from src.entities.value_objects.money import Money
+from src.entities.ingredient import IngredientType
 
 
 class TestCustomerCreateUseCase:

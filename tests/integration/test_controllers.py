@@ -9,8 +9,7 @@ Tests cover:
 """
 
 import pytest
-from unittest.mock import Mock, patch
-from decimal import Decimal
+from unittest.mock import Mock
 
 from src.adapters.controllers.customer_controller import CustomerController
 from src.adapters.controllers.ingredient_controller import IngredientController
@@ -19,12 +18,8 @@ from src.application.dto.ingredient_dto import IngredientResponse, IngredientLis
 from src.application.exceptions import (
     CustomerNotFoundException,
     CustomerAlreadyExistsException,
-    CustomerBusinessRuleException,
-    AuthenticationException,
     IngredientNotFoundException,
     IngredientAlreadyExistsException,
-    IngredientValidationException,
-    IngredientBusinessRuleException,
 )
 from src.entities.ingredient import IngredientType
 
