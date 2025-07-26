@@ -126,36 +126,57 @@ class SQLIngredientRepository(IngredientRepository):
         finally:
             self.database.close_session(session)
 
-    def find_by_id(self, ingredient_id: uuid.UUID) -> Optional[Ingredient]:
+    def find_by_id(self, ingredient_id: uuid.UUID, include_inactive: bool = False) -> Optional[Ingredient]:
         """Find an ingredient by ID"""
         session = self._get_session()
         try:
             db_ingredient = self.database.find_by_field(session, IngredientModel, "id", str(ingredient_id))
-            return self._to_entity(db_ingredient) if db_ingredient else None
+            if not db_ingredient:
+                return None
+                
+            # Filter by active status if not including inactive
+            if not include_inactive and not db_ingredient.is_active:
+                return None
+                
+            return self._to_entity(db_ingredient)
         finally:
             self.database.close_session(session)
 
-    def find_by_name(self, name: str) -> Optional[Ingredient]:
+    def find_by_name(self, name: str, include_inactive: bool = False) -> Optional[Ingredient]:
         """Find an ingredient by name"""
         session = self._get_session()
         try:
             db_ingredient = self.database.find_by_field(session, IngredientModel, "name", name)
-            return self._to_entity(db_ingredient) if db_ingredient else None
+            if not db_ingredient:
+                return None
+                
+            # Filter by active status if not including inactive
+            if not include_inactive and not db_ingredient.is_active:
+                return None
+                
+            return self._to_entity(db_ingredient)
         finally:
             self.database.close_session(session)
 
-    def find_by_type(self, type: IngredientType) -> List[Ingredient]:
+    def find_by_type(self, type: IngredientType, include_inactive: bool = False) -> List[Ingredient]:
         """Find ingredients by type"""
         session = self._get_session()
         try:
             db_ingredients = self.database.find_all_by_field(session, IngredientModel, "type", type.value)
-            return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
+            ingredients = [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
+            
+            # Filter by active status if not including inactive
+            if not include_inactive:
+                ingredients = [ingredient for ingredient in ingredients if ingredient.is_active]
+                
+            return ingredients
         finally:
             self.database.close_session(session)
 
     def find_by_applies_usage(
         self,
-        category: ProductCategory
+        category: ProductCategory,
+        include_inactive: bool = False
     ) -> List[Ingredient]:
         """Find ingredients by applies to usage"""
         session = self._get_session()
@@ -183,28 +204,40 @@ class SQLIngredientRepository(IngredientRepository):
                 "applies_to_dessert": applies_to_dessert,
             }
             db_ingredients = self.database.find_all_by_multiple_fields(session, IngredientModel, field_values)
-            return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
+            ingredients = [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
+            
+            # Filter by active status if not including inactive
+            if not include_inactive:
+                ingredients = [ingredient for ingredient in ingredients if ingredient.is_active]
+                
+            return ingredients
         finally:
             self.database.close_session(session)
 
-    def find_all(self) -> List[Ingredient]:
+    def find_all(self, include_inactive: bool = False) -> List[Ingredient]:
         """Find all ingredients"""
         session = self._get_session()
         try:
-            db_ingredients = self.database.find_all(session, IngredientModel)
+            if include_inactive:
+                db_ingredients = self.database.find_all(session, IngredientModel)
+            else:
+                # Filter only active ingredients
+                db_ingredients = self.database.find_all_by_boolean_field(session, IngredientModel, "is_active", True)
             return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
         finally:
             self.database.close_session(session)
 
     def delete(self, ingredient_id: uuid.UUID) -> bool:
-        """Delete an ingredient by ID, return True if deleted"""
+        """Soft delete an ingredient by ID (set is_active to False), return True if deleted"""
         session = self._get_session()
         try:
             db_ingredient = self.database.find_by_field(session, IngredientModel, "id", str(ingredient_id))
             if not db_ingredient:
                 return False
 
-            self.database.delete(session, db_ingredient)
+            # Soft delete - set is_active to False
+            db_ingredient.is_active = False
+            self.database.update(session, db_ingredient)
             self.database.commit(session)
             return True
         except Exception as e:
@@ -213,27 +246,34 @@ class SQLIngredientRepository(IngredientRepository):
         finally:
             self.database.close_session(session)
 
-    def exists_by_name(self, name: str) -> bool:
+    def exists_by_name(self, name: str, include_inactive: bool = False) -> bool:
         """Check if an ingredient exists with the given name"""
         session = self._get_session()
         try:
-            return self.database.exists_by_field(session, IngredientModel, "name", name)
+            db_ingredient = self.database.find_by_field(session, IngredientModel, "name", name)
+            if not db_ingredient:
+                return False
+                
+            # Check active status if not including inactive
+            if not include_inactive and not db_ingredient.is_active:
+                return False
+                
+            return True
         finally:
             self.database.close_session(session)
 
-    def exists_by_type(self, type: IngredientType) -> bool:
+    def exists_by_type(self, type: IngredientType, include_inactive: bool = False) -> bool:
         """Check if an ingredient exists with the given type"""
         session = self._get_session()
         try:
-            return self.database.exists_by_field(session, IngredientModel, "type", type.value)
-        finally:
-            self.database.close_session(session)
-
-    def find_all_active(self) -> List[Ingredient]:
-        """Find all active ingredients"""
-        session = self._get_session()
-        try:
-            db_ingredients = self.database.find_all_by_boolean_field(session, IngredientModel, "is_active", True)
-            return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
+            db_ingredients = self.database.find_all_by_field(session, IngredientModel, "type", type.value)
+            if not db_ingredients:
+                return False
+                
+            # Check if any ingredient of this type is active (if not including inactive)
+            if not include_inactive:
+                return any(ingredient.is_active for ingredient in db_ingredients)
+                
+            return True
         finally:
             self.database.close_session(session)

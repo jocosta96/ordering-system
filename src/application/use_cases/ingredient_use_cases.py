@@ -14,6 +14,7 @@ from src.app_logs import get_logger
 from src.entities.value_objects.money import Money
 from decimal import Decimal
 from src.entities.product import ProductCategory
+import uuid
 
 
 class IngredientCreateUseCase:
@@ -67,9 +68,9 @@ class IngredientReadUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientReadUseCase")
 
-    def execute(self, ingredient_id: int) -> IngredientResponse:
+    def execute(self, ingredient_id: uuid.UUID, include_inactive: bool = False) -> IngredientResponse:
         """Execute the read ingredient use case"""
-        ingredient = self.ingredient_repository.find_by_id(ingredient_id)
+        ingredient = self.ingredient_repository.find_by_id(ingredient_id, include_inactive=include_inactive)
         if not ingredient:
             raise IngredientNotFoundException(
                 f"Ingredient with ID {ingredient_id} not found"
@@ -105,14 +106,14 @@ class IngredientUpdateUseCase:
             ingredient_id=request.id,
         )
 
-        existing_ingredient = self.ingredient_repository.find_by_id(ingredient.id)
+        existing_ingredient = self.ingredient_repository.find_by_id(ingredient.id, include_inactive=True)
         if not existing_ingredient:
             raise IngredientNotFoundException(
                 f"Ingredient with ID {ingredient.id} not found"
             )
 
         if existing_ingredient.name.value != ingredient.name.value:
-            if self.ingredient_repository.exists_by_name(ingredient.name.value):
+            if self.ingredient_repository.exists_by_name(ingredient.name.value, include_inactive=True):
                 raise IngredientAlreadyExistsException(
                     f"Ingredient with name {ingredient.name.value} already exists"
                 )
@@ -134,15 +135,16 @@ class IngredientDeleteUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientDeleteUseCase")
 
-    def execute(self, ingredient_id: int) -> bool:
+    def execute(self, ingredient_id: uuid.UUID) -> bool:
         """Execute the delete ingredient use case"""
 
-        existing_ingredient = self.ingredient_repository.find_by_id(ingredient_id)
+        existing_ingredient = self.ingredient_repository.find_by_id(ingredient_id, include_inactive=True)
         if not existing_ingredient:
             raise IngredientNotFoundException(
                 f"Ingredient with ID {ingredient_id} not found"
             )
 
+        # Soft delete the ingredient
         return self.ingredient_repository.delete(ingredient_id)
 
 
@@ -153,9 +155,9 @@ class IngredientListUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientListUseCase")
 
-    def execute(self) -> IngredientListResponse:
+    def execute(self, include_inactive: bool = False) -> IngredientListResponse:
         """Execute the list ingredients use case"""
-        ingredients = self.ingredient_repository.find_all()
+        ingredients = self.ingredient_repository.find_all(include_inactive=include_inactive)
         ingredient_responses = [
             IngredientResponse.from_entity(ingredient) for ingredient in ingredients
         ]
@@ -170,9 +172,9 @@ class IngredientListByTypeUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientListByTypeUseCase")
 
-    def execute(self, type: IngredientType) -> IngredientListResponse:
+    def execute(self, type: IngredientType, include_inactive: bool = False) -> IngredientListResponse:
         """Execute the get ingredient by type use case"""
-        ingredients = self.ingredient_repository.find_by_type(type)
+        ingredients = self.ingredient_repository.find_by_type(type, include_inactive=include_inactive)
         ingredient_responses = [
             IngredientResponse.from_entity(ingredient) for ingredient in ingredients
         ]
@@ -187,28 +189,11 @@ class IngredientListByAppliesToUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientListByAppliesToUseCase")
 
-    def execute(self, category: ProductCategory) -> IngredientListResponse:
+    def execute(self, category: ProductCategory, include_inactive: bool = False) -> IngredientListResponse:
         """Execute the get ingredient by applies to use case"""
         ingredients = self.ingredient_repository.find_by_applies_usage(
-            category
+            category, include_inactive=include_inactive
         )
-        ingredient_responses = [
-            IngredientResponse.from_entity(ingredient) for ingredient in ingredients
-        ]
-        return IngredientListResponse(
-            ingredients=ingredient_responses, total_count=len(ingredient_responses)
-        )
-
-class IngredientGetActiveUseCase:
-    """Use case for getting active ingredients"""
-
-    def __init__(self, ingredient_repository: IngredientRepository):
-        self.ingredient_repository = ingredient_repository
-        self.logger = get_logger("IngredientGetActiveUseCase")
-
-    def execute(self) -> IngredientListResponse:
-        """Execute the get active ingredients use case"""
-        ingredients = self.ingredient_repository.find_all_active()
         ingredient_responses = [
             IngredientResponse.from_entity(ingredient) for ingredient in ingredients
         ]

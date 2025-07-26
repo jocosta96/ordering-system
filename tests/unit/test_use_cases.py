@@ -20,10 +20,8 @@ Tests cover:
 - ProductUpdateUseCase
 - ProductDeleteUseCase
 - ProductListUseCase
-- ProductGetActiveUseCase
 - ProductReadBySkuUseCase
 - ProductListByCategoryUseCase
-- ProductListByActiveStatusUseCase
 """
 
 import pytest
@@ -51,10 +49,8 @@ from src.application.use_cases.product_use_cases import (
     ProductUpdateUseCase,
     ProductDeleteUseCase,
     ProductListUseCase,
-    ProductGetActiveUseCase,
     ProductReadBySkuUseCase,
     ProductListByCategoryUseCase,
-    ProductListByActiveStatusUseCase,
 )
 from src.application.dto import (
     CustomerCreateRequest,
@@ -171,17 +167,18 @@ class TestCustomerReadUseCase:
         uuid.UUID(result.id)
         assert result.id == str(sample_customer.id)
         assert result.first_name == "John"
-        mock_customer_repository.find_by_id.assert_called_once_with(sample_customer.id)
+        mock_customer_repository.find_by_id.assert_called_once_with(sample_customer.id, include_inactive=False)
 
     def test_read_customer_not_found(self, mock_customer_repository):
         """Test customer retrieval fails when customer not found"""
         # Arrange
         mock_customer_repository.find_by_id.return_value = None
         use_case = CustomerReadUseCase(mock_customer_repository)
+        customer_id = uuid.uuid4()
 
         # Act & Assert
         with pytest.raises(CustomerNotFoundException, match="not found"):
-            use_case.execute(1)
+            use_case.execute(customer_id)
 
 
 class TestCustomerUpdateUseCase:
@@ -265,7 +262,6 @@ class TestCustomerDeleteUseCase:
     def test_delete_customer_success(self, mock_customer_repository, sample_customer):
         """Test successful customer deletion"""
         # Arrange
-        mock_customer_repository.find_by_id.return_value = sample_customer
         mock_customer_repository.delete.return_value = True
         use_case = CustomerDeleteUseCase(mock_customer_repository)
 
@@ -279,24 +275,27 @@ class TestCustomerDeleteUseCase:
     def test_delete_customer_not_found(self, mock_customer_repository):
         """Test customer deletion fails when customer not found"""
         # Arrange
-        mock_customer_repository.find_by_id.return_value = None
+        mock_customer_repository.delete.return_value = False
         use_case = CustomerDeleteUseCase(mock_customer_repository)
+        customer_id = uuid.uuid4()
 
         # Act & Assert
         with pytest.raises(CustomerNotFoundException, match="not found"):
-            use_case.execute(1)
+            use_case.execute(customer_id)
 
     def test_delete_anonymous_customer_fails(
         self, mock_customer_repository, sample_anonymous_customer
     ):
         """Test that deleting anonymous customer fails"""
         # Arrange
-        mock_customer_repository.find_by_id.return_value = sample_anonymous_customer
+        # The delete method will raise ValueError when trying to delete anonymous customer
+        mock_customer_repository.delete.side_effect = ValueError("Cannot delete anonymous customer")
         use_case = CustomerDeleteUseCase(mock_customer_repository)
+        customer_id = uuid.uuid4()
 
         # Act & Assert
-        with pytest.raises(CustomerBusinessRuleException, match="Cannot delete anonymous customer"):
-            use_case.execute(1)
+        with pytest.raises(ValueError, match="Cannot delete anonymous customer"):
+            use_case.execute(customer_id)
 
 
 class TestCustomerListUseCase:
@@ -422,7 +421,7 @@ class TestIngredientReadUseCase:
         assert isinstance(result.id, str)
         uuid.UUID(result.id)
         assert result.name == "Tomato"
-        mock_ingredient_repository.find_by_id.assert_called_once_with(sample_ingredient.id)
+        mock_ingredient_repository.find_by_id.assert_called_once_with(sample_ingredient.id, include_inactive=False)
 
     def test_read_ingredient_not_found(self, mock_ingredient_repository):
         """Test ingredient retrieval fails when ingredient not found"""
@@ -591,7 +590,7 @@ class TestIngredientListByTypeUseCase:
         assert isinstance(result, IngredientListResponse)
         assert len(result.ingredients) == 3
         assert result.total_count == 3
-        mock_ingredient_repository.find_by_type.assert_called_once_with(IngredientType.VEGETABLE)
+        mock_ingredient_repository.find_by_type.assert_called_once_with(IngredientType.VEGETABLE, include_inactive=False)
 
     def test_list_ingredients_by_type_empty(self, mock_ingredient_repository):
         """Test ingredient listing by type when no ingredients exist"""
@@ -624,7 +623,7 @@ class TestIngredientListByAppliesToUseCase:
         assert isinstance(result, IngredientListResponse)
         assert len(result.ingredients) == 3
         assert result.total_count == 3
-        mock_ingredient_repository.find_by_applies_usage.assert_called_once_with(ProductCategory.BURGER)
+        mock_ingredient_repository.find_by_applies_usage.assert_called_once_with(ProductCategory.BURGER, include_inactive=False)
 
     def test_list_ingredients_by_applies_to_empty(self, mock_ingredient_repository):
         """Test ingredient listing by applies to when no ingredients exist"""
@@ -708,7 +707,7 @@ class TestProductReadUseCase:
         assert isinstance(result.id, str)
         uuid.UUID(result.id)
         assert result.name == sample_product.name.value
-        mock_product_repository.find_by_id.assert_called_once_with(sample_product.id)
+        mock_product_repository.find_by_id.assert_called_once_with(sample_product.id, include_inactive=False)
 
     def test_read_product_not_found(self, mock_product_repository):
         """Test product retrieval fails when product not found"""
@@ -753,7 +752,7 @@ class TestProductUpdateUseCase:
         assert isinstance(result, ProductResponse)
         assert result.name == "Updated Burger"
         assert result.price == 15.99
-        mock_product_repository.find_by_id.assert_called_once_with(sample_product.id)
+        mock_product_repository.find_by_id.assert_called_once_with(sample_product.id, include_inactive=True)
         mock_product_repository.save.assert_called_once()
 
     def test_update_product_not_found(self, mock_product_repository):
@@ -822,7 +821,7 @@ class TestProductDeleteUseCase:
 
         # Assert
         assert result is True
-        mock_product_repository.find_by_id.assert_called_once_with(product_id)
+        mock_product_repository.find_by_id.assert_called_once_with(product_id, include_inactive=True)
         mock_product_repository.delete.assert_called_once_with(product_id)
 
     def test_delete_product_not_found(self, mock_product_repository):
@@ -855,7 +854,7 @@ class TestProductListUseCase:
         assert isinstance(result, ProductListResponse)
         assert len(result.products) == 4
         assert result.total_count == 4
-        mock_product_repository.find_all.assert_called_once()
+        mock_product_repository.find_all.assert_called_once_with(include_inactive=False)
 
     def test_list_products_empty(self, mock_product_repository):
         """Test product listing returns empty list"""
@@ -870,39 +869,10 @@ class TestProductListUseCase:
         assert isinstance(result, ProductListResponse)
         assert len(result.products) == 0
         assert result.total_count == 0
+        mock_product_repository.find_all.assert_called_once_with(include_inactive=False)
 
 
-class TestProductGetActiveUseCase:
-    """Test cases for ProductGetActiveUseCase"""
 
-    def test_get_active_products_success(self, mock_product_repository, sample_products):
-        """Test successful active products retrieval"""
-        # Arrange
-        mock_product_repository.find_all_active.return_value = sample_products
-        use_case = ProductGetActiveUseCase(mock_product_repository)
-
-        # Act
-        result = use_case.execute()
-
-        # Assert
-        assert isinstance(result, ProductListResponse)
-        assert len(result.products) == 4
-        assert result.total_count == 4
-        mock_product_repository.find_all_active.assert_called_once()
-
-    def test_get_active_products_empty(self, mock_product_repository):
-        """Test active products retrieval returns empty list"""
-        # Arrange
-        mock_product_repository.find_all_active.return_value = []
-        use_case = ProductGetActiveUseCase(mock_product_repository)
-
-        # Act
-        result = use_case.execute()
-
-        # Assert
-        assert isinstance(result, ProductListResponse)
-        assert len(result.products) == 0
-        assert result.total_count == 0
 
 
 class TestProductReadBySkuUseCase:
@@ -917,7 +887,7 @@ class TestProductReadBySkuUseCase:
         assert isinstance(result.id, str)
         uuid.UUID(result.id)
         assert result.sku == sample_product.sku.value
-        mock_product_repository.find_by_sku.assert_called_once()
+        mock_product_repository.find_by_sku.assert_called_once_with(sample_product.sku, include_inactive=False)
 
     def test_read_product_by_sku_not_found(self, mock_product_repository):
         """Test product retrieval by SKU fails when product not found"""
@@ -951,7 +921,7 @@ class TestProductListByCategoryUseCase:
         assert len(result.products) == 1
         assert result.total_count == 1
         assert all(p.category == "burger" for p in result.products)
-        mock_product_repository.find_all.assert_called_once()
+        mock_product_repository.find_all.assert_called_once_with(include_inactive=False)
 
     def test_list_products_by_category_empty(self, mock_product_repository):
         """Test product listing by category returns empty list"""
@@ -965,36 +935,4 @@ class TestProductListByCategoryUseCase:
             use_case.execute(category)
 
 
-class TestProductListByActiveStatusUseCase:
-    """Test cases for ProductListByActiveStatusUseCase"""
 
-    def test_list_products_by_active_status_success(self, mock_product_repository, sample_products):
-        """Test successful product listing by active status"""
-        # Arrange
-        mock_product_repository.find_all_active.return_value = sample_products
-        use_case = ProductListByActiveStatusUseCase(mock_product_repository)
-        is_active = True
-
-        # Act
-        result = use_case.execute(is_active)
-
-        # Assert
-        assert isinstance(result, ProductListResponse)
-        assert len(result.products) == 4
-        assert result.total_count == 4
-        mock_product_repository.find_all_active.assert_called_once()
-
-    def test_list_products_by_active_status_empty(self, mock_product_repository):
-        """Test product listing by active status returns empty list"""
-        # Arrange
-        mock_product_repository.find_all.return_value = []
-        use_case = ProductListByActiveStatusUseCase(mock_product_repository)
-        is_active = False
-
-        # Act
-        result = use_case.execute(is_active)
-
-        # Assert
-        assert isinstance(result, ProductListResponse)
-        assert len(result.products) == 0
-        assert result.total_count == 0

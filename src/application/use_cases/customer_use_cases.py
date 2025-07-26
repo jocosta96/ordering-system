@@ -1,17 +1,9 @@
-from src.entities.customer import Customer
 from src.application.repositories.customer_repository import CustomerRepository
-from src.application.dto import (
-    CustomerCreateRequest,
-    CustomerUpdateRequest,
-    CustomerResponse,
-    CustomerListResponse,
-)
-from src.application.exceptions import (
-    CustomerNotFoundException,
-    CustomerAlreadyExistsException,
-    CustomerBusinessRuleException,
-)
+from src.application.dto.implementation.customer_dto import CustomerCreateRequest, CustomerUpdateRequest, CustomerListResponse, CustomerResponse
+from src.application.exceptions import CustomerNotFoundException, CustomerAlreadyExistsException, CustomerBusinessRuleException, CustomerValidationException
+from src.entities.customer import Customer
 from src.app_logs import get_logger
+import uuid
 
 
 class CustomerCreateUseCase:
@@ -91,9 +83,9 @@ class CustomerReadUseCase:
     def __init__(self, customer_repository: CustomerRepository):
         self.customer_repository = customer_repository
 
-    def execute(self, customer_id: int) -> CustomerResponse:
+    def execute(self, customer_id: uuid.UUID, include_inactive: bool = False) -> CustomerResponse:
         """Execute the read customer use case"""
-        customer = self.customer_repository.find_by_id(customer_id)
+        customer = self.customer_repository.find_by_id(customer_id, include_inactive=include_inactive)
         if not customer:
             raise CustomerNotFoundException(f"Customer with ID {customer_id} not found")
         return CustomerResponse.from_entity(customer)
@@ -117,14 +109,14 @@ class CustomerUpdateUseCase:
         )
 
         # Business rule: Customer must exist
-        existing_customer = self.customer_repository.find_by_id(customer.id)
+        existing_customer = self.customer_repository.find_by_id(customer.id, include_inactive=True)
         if not existing_customer:
             raise CustomerNotFoundException(f"Customer with ID {customer.id} not found")
 
         # Business rule: Check if new document conflicts with existing customer
         if not customer.document.is_empty:
             existing_by_doc = self.customer_repository.find_by_document(
-                customer.document.value
+                customer.document.value, include_inactive=True
             )
             if existing_by_doc and existing_by_doc.id != customer.id:
                 raise CustomerAlreadyExistsException(
@@ -134,7 +126,7 @@ class CustomerUpdateUseCase:
         # Business rule: Check if new email conflicts with existing customer
         if not customer.email.value == "":
             existing_by_email = self.customer_repository.find_by_email(
-                customer.email.value
+                customer.email.value, include_inactive=True
             )
             if existing_by_email and existing_by_email.id != customer.id:
                 raise CustomerAlreadyExistsException(
@@ -160,19 +152,16 @@ class CustomerDeleteUseCase:
     def __init__(self, customer_repository: CustomerRepository):
         self.customer_repository = customer_repository
 
-    def execute(self, customer_id: int) -> bool:
+    def execute(self, customer_id: uuid.UUID) -> bool:
         """Execute the delete customer use case"""
-        # Business rule: Customer must exist
-        existing_customer = self.customer_repository.find_by_id(customer_id)
-        if not existing_customer:
+        # Use the repository's dedicated delete method which handles soft deletion properly
+        # This method avoids validation issues by updating the database directly
+        success = self.customer_repository.delete(customer_id)
+        
+        if not success:
             raise CustomerNotFoundException(f"Customer with ID {customer_id} not found")
-
-        # Business rule: Cannot delete anonymous customer
-        if existing_customer.is_anonymous:
-            raise CustomerBusinessRuleException("Cannot delete anonymous customer")
-
-        # Delete the customer
-        return self.customer_repository.delete(customer_id)
+        
+        return True
 
 
 class CustomerListUseCase:
@@ -181,9 +170,9 @@ class CustomerListUseCase:
     def __init__(self, customer_repository: CustomerRepository):
         self.customer_repository = customer_repository
 
-    def execute(self) -> CustomerListResponse:
+    def execute(self, include_inactive: bool = False) -> CustomerListResponse:
         """Execute the list customers use case"""
-        customers = self.customer_repository.find_all()
+        customers = self.customer_repository.find_all(include_inactive=include_inactive)
         customer_responses = [
             CustomerResponse.from_entity(customer) for customer in customers
         ]

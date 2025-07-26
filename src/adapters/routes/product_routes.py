@@ -76,18 +76,10 @@ def create_product(
 def list_products(
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[ProductController, Depends(get_product_controller)],
+    include_inactive: bool = False,
 ) -> dict:
     """List all products"""
-    return controller.list_products(login)
-
-
-@product_router.get("/list/active", response_model=ProductListResponseModel)
-def list_active_products(
-    login: Annotated[str, Depends(check_credentials)],
-    controller: Annotated[ProductController, Depends(get_product_controller)],
-) -> dict:
-    """List all active products"""
-    return controller.get_active_products()
+    return controller.list_products(login, include_inactive=include_inactive)
 
 
 @product_router.get("/list/category/{category}", response_model=ProductListResponseModel)
@@ -95,19 +87,10 @@ def list_products_by_category(
     category: ProductCategory,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[ProductController, Depends(get_product_controller)],
+    include_inactive: bool = False,
 ) -> dict:
     """List products by category"""
-    return controller.list_products_by_category(category.value, login)
-
-
-@product_router.get("/list/status/{is_active}", response_model=ProductListResponseModel)
-def list_products_by_status(
-    is_active: bool,
-    login: Annotated[str, Depends(check_credentials)],
-    controller: Annotated[ProductController, Depends(get_product_controller)],
-) -> dict:
-    """List products by active status"""
-    return controller.list_products_by_is_active(is_active, login)
+    return controller.list_products_by_category(category.value, login, include_inactive=include_inactive)
 
 
 @product_router.get("/by-id/{product_id}", response_model=ProductResponseModel)
@@ -115,9 +98,10 @@ def get_product(
     product_id: str,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[ProductController, Depends(get_product_controller)],
+    include_inactive: bool = False,
 ) -> dict:
     """Get a product by ID"""
-    return controller.get_product(product_id, login)
+    return controller.get_product(product_id, login, include_inactive=include_inactive)
 
 
 @product_router.get("/by-sku/{sku}", response_model=ProductResponseModel)
@@ -125,9 +109,10 @@ def get_product_by_sku(
     sku: str,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[ProductController, Depends(get_product_controller)],
+    include_inactive: bool = False,
 ) -> dict:
     """Get a product by SKU"""
-    return controller.get_product_by_sku(sku, login)
+    return controller.get_product_by_sku(sku, login, include_inactive=include_inactive)
 
 
 @product_router.put("/update", response_model=ProductResponseModel)

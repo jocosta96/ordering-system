@@ -13,10 +13,18 @@ from .product_use_cases import (
     ProductUpdateUseCase,
     ProductDeleteUseCase,
     ProductListUseCase,
-    ProductGetActiveUseCase,
     ProductReadBySkuUseCase,
     ProductListByCategoryUseCase,
-    ProductListByActiveStatusUseCase,
+)
+
+from .ingredient_use_cases import (
+    IngredientCreateUseCase,
+    IngredientReadUseCase,
+    IngredientUpdateUseCase,
+    IngredientDeleteUseCase,
+    IngredientListUseCase,
+    IngredientListByTypeUseCase,
+    IngredientListByAppliesToUseCase,
 )
 
 __all__ = [
@@ -31,8 +39,13 @@ __all__ = [
     "ProductUpdateUseCase",
     "ProductDeleteUseCase",
     "ProductListUseCase",
-    "ProductGetActiveUseCase",
     "ProductReadBySkuUseCase",
     "ProductListByCategoryUseCase",
-    "ProductListByActiveStatusUseCase",
+    "IngredientCreateUseCase",
+    "IngredientReadUseCase",
+    "IngredientUpdateUseCase",
+    "IngredientDeleteUseCase",
+    "IngredientListUseCase",
+    "IngredientListByTypeUseCase",
+    "IngredientListByAppliesToUseCase",
 ]

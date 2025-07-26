@@ -58,12 +58,12 @@ class ProductReadUseCase:
         self.product_repository = product_repository
         self.logger = get_logger("ProductReadUseCase")
 
-    def execute(self, product_id: uuid.UUID) -> ProductResponse:
+    def execute(self, product_id: uuid.UUID, include_inactive: bool = False) -> ProductResponse:
         """Execute the read product use case"""
         self.logger.info("Reading product", product_id=product_id)
 
         # Find product by ID
-        product = self.product_repository.find_by_id(product_id)
+        product = self.product_repository.find_by_id(product_id, include_inactive=include_inactive)
 
         if not product:
             self.logger.warning("Product not found", product_id=product_id)
@@ -92,8 +92,8 @@ class ProductUpdateUseCase:
         except ValueError:
             raise ProductValidationException("Invalid product ID format. Product ID must be a valid UUID.")
 
-        # Find product by ID
-        product = self.product_repository.find_by_id(product_uuid)
+        # Find product by ID (include inactive for updates)
+        product = self.product_repository.find_by_id(product_uuid, include_inactive=True)
 
         if not product:
             self.logger.warning("Product not found", product_id=request.id)
@@ -109,8 +109,8 @@ class ProductUpdateUseCase:
             default_ingredient=request.default_ingredient,
         )
 
-        # Business rule: Check if product with same SKU already exists
-        if self.product_repository.exists_by_sku(product.sku):
+        # Business rule: Check if product with same SKU already exists (include inactive for conflict checking)
+        if self.product_repository.exists_by_sku(product.sku, include_inactive=True):
             self.logger.warning(
                 "Product update failed - SKU already exists", sku=product.sku)
             raise ProductAlreadyExistsException(
@@ -135,15 +135,15 @@ class ProductDeleteUseCase:
         """Execute the delete product use case"""
         self.logger.info("Deleting product", product_id=product_id)
 
-        # Find product by ID
-        product = self.product_repository.find_by_id(product_id)
+        # Find product by ID (include inactive for deletion)
+        product = self.product_repository.find_by_id(product_id, include_inactive=True)
 
         if not product:
             self.logger.warning("Product not found", product_id=product_id)
             raise ProductNotFoundException(
                 f"Product with ID {product_id} not found")
 
-        # Delete product from repository
+        # Soft delete product from repository
         self.product_repository.delete(product_id)
 
         return True
@@ -157,31 +157,12 @@ class ProductListUseCase:
         self.product_repository = product_repository
         self.logger = get_logger("ProductListUseCase")
 
-    def execute(self) -> ProductListResponse:
+    def execute(self, include_inactive: bool = False) -> ProductListResponse:
         """Execute the list product use case"""
-        self.logger.info("Listing products")
+        self.logger.info("Listing products", include_inactive=include_inactive)
 
         # Find all products
-        products = self.product_repository.find_all()
-
-        # Return product list response
-        return ProductListResponse.from_entity(products)
-
-class ProductGetActiveUseCase:
-    """
-    Use case for getting active products.
-    """
-
-    def __init__(self, product_repository: ProductRepository):
-        self.product_repository = product_repository
-        self.logger = get_logger("ProductGetActiveUseCase")
-
-    def execute(self) -> ProductListResponse:
-        """Execute the get active products use case"""
-        self.logger.info("Getting active products")
-
-        # Find all active products
-        products = self.product_repository.find_all_active()
+        products = self.product_repository.find_all(include_inactive=include_inactive)
 
         # Return product list response
         return ProductListResponse.from_entity(products)
@@ -195,7 +176,7 @@ class ProductReadBySkuUseCase:
         self.product_repository = product_repository
         self.logger = get_logger("ProductReadBySkuUseCase")
 
-    def execute(self, sku: str) -> ProductResponse:
+    def execute(self, sku: str, include_inactive: bool = False) -> ProductResponse:
         """Execute the read product by SKU use case"""
         self.logger.info("Reading product by SKU", sku=sku)
 
@@ -203,7 +184,7 @@ class ProductReadBySkuUseCase:
         sku_obj = SKU(sku)
 
         # Find product by SKU
-        product = self.product_repository.find_by_sku(sku_obj)
+        product = self.product_repository.find_by_sku(sku_obj, include_inactive=include_inactive)
 
         if not product:
             self.logger.warning("Product not found", sku=sku)
@@ -222,7 +203,7 @@ class ProductListByCategoryUseCase:
         self.product_repository = product_repository
         self.logger = get_logger("ProductListByCategoryUseCase")
 
-    def execute(self, category: str) -> ProductListResponse:
+    def execute(self, category: str, include_inactive: bool = False) -> ProductListResponse:
         """Execute the list products by category use case"""
         self.logger.info("Listing products by category", category=category)
 
@@ -233,32 +214,8 @@ class ProductListByCategoryUseCase:
             raise ProductValidationException(f"Invalid category: {category}")
 
         # Find all products and filter by category
-        all_products = self.product_repository.find_all()
+        all_products = self.product_repository.find_all(include_inactive=include_inactive)
         filtered_products = [p for p in all_products if p.category == product_category]
 
         # Return product list response
         return ProductListResponse.from_entity(filtered_products)
-
-class ProductListByActiveStatusUseCase:
-    """
-    Use case for listing products by active status.
-    """
-
-    def __init__(self, product_repository: ProductRepository):
-        self.product_repository = product_repository
-        self.logger = get_logger("ProductListByActiveStatusUseCase")
-
-    def execute(self, is_active: bool) -> ProductListResponse:
-        """Execute the list products by active status use case"""
-        self.logger.info("Listing products by active status", is_active=is_active)
-
-        if is_active:
-            # Find all active products
-            products = self.product_repository.find_all_active()
-        else:
-            # Find all products and filter inactive ones
-            all_products = self.product_repository.find_all()
-            products = [p for p in all_products if not p.is_active]
-
-        # Return product list response
-        return ProductListResponse.from_entity(products)

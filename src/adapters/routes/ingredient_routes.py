@@ -71,18 +71,10 @@ def create_ingredient(
 def list_ingredients(
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+    include_inactive: bool = False,
 ) -> dict:
     """List all ingredients"""
-    return controller.list_ingredients(login)
-
-
-@ingredient_router.get("/list/active", response_model=IngredientListResponseModel)
-def list_active_ingredients(
-    login: Annotated[str, Depends(check_credentials)],
-    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
-) -> dict:
-    """List all active ingredients"""
-    return controller.list_active_ingredients(login)
+    return controller.list_ingredients(login, include_inactive=include_inactive)
 
 
 @ingredient_router.get("/list/type/{type}", response_model=IngredientListResponseModel)
@@ -90,9 +82,10 @@ def list_ingredients_by_type(
     type: IngredientType,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+    include_inactive: bool = False,
 ) -> dict:
     """List ingredients by type"""
-    return controller.list_ingredients_by_type(type, login)
+    return controller.list_ingredients_by_type(type, login, include_inactive=include_inactive)
 
 
 @ingredient_router.get("/list/applies-to", response_model=IngredientListResponseModel)
@@ -100,22 +93,25 @@ def list_ingredients_by_applies_to(
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
     category: ProductCategory,
+    include_inactive: bool = False,
 ) -> dict:
     """List ingredients by applies to"""
     return controller.list_ingredients_by_applies_to(
         category,
         login,
+        include_inactive=include_inactive,
     )
 
 
 @ingredient_router.get("/by-id/{ingredient_id}", response_model=IngredientResponseModel)
 def get_ingredient(
-    ingredient_id: int,
+    ingredient_id: str,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+    include_inactive: bool = False,
 ) -> dict:
     """Get an ingredient by ID"""
-    return controller.get_ingredient(ingredient_id, login)
+    return controller.get_ingredient(ingredient_id, login, include_inactive=include_inactive)
 
 
 @ingredient_router.put("/update", response_model=IngredientResponseModel)
@@ -130,7 +126,7 @@ def update_ingredient(
 
 @ingredient_router.delete("/delete/{ingredient_id}")
 def delete_ingredient(
-    ingredient_id: int,
+    ingredient_id: str,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
 ) -> dict:

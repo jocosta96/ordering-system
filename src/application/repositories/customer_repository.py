@@ -21,28 +21,28 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, customer_id: uuid.UUID) -> Optional[Customer]:
+    def find_by_id(self, customer_id: uuid.UUID, include_inactive: bool = False) -> Optional[Customer]:
         """Find a customer by ID"""
         pass
 
     @abstractmethod
-    def find_by_document(self, document: str) -> Optional[Customer]:
+    def find_by_document(self, document: str, include_inactive: bool = False) -> Optional[Customer]:
         """Find a customer by document number"""
         pass
 
     @abstractmethod
-    def find_by_email(self, email: str) -> Optional[Customer]:
+    def find_by_email(self, email: str, include_inactive: bool = False) -> Optional[Customer]:
         """Find a customer by email"""
         pass
 
     @abstractmethod
-    def find_all(self) -> List[Customer]:
+    def find_all(self, include_inactive: bool = False) -> List[Customer]:
         """Find all customers"""
         pass
 
     @abstractmethod
     def delete(self, customer_id: uuid.UUID) -> bool:
-        """Delete a customer by ID, return True if deleted"""
+        """Soft delete a customer by ID (set is_active to False), return True if deleted"""
         pass
 
     @abstractmethod
@@ -51,11 +51,11 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    def exists_by_document(self, document: str) -> bool:
+    def exists_by_document(self, document: str, include_inactive: bool = False) -> bool:
         """Check if a customer exists with the given document"""
         pass
 
     @abstractmethod
-    def exists_by_email(self, email: str) -> bool:
+    def exists_by_email(self, email: str, include_inactive: bool = False) -> bool:
         """Check if a customer exists with the given email"""
         pass

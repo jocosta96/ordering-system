@@ -7,10 +7,8 @@ from src.application.use_cases.product_use_cases import (
     ProductUpdateUseCase,
     ProductDeleteUseCase,
     ProductListUseCase,
-    ProductGetActiveUseCase,
     ProductReadBySkuUseCase,
     ProductListByCategoryUseCase,
-    ProductListByActiveStatusUseCase,
 )
 from src.application.dto import (
     ProductCreateRequest,
@@ -51,10 +49,8 @@ class ProductController:
         self.update_use_case = ProductUpdateUseCase(product_repository)
         self.delete_use_case = ProductDeleteUseCase(product_repository)
         self.list_use_case = ProductListUseCase(product_repository)
-        self.active_use_case = ProductGetActiveUseCase(product_repository)
         self.read_by_sku_use_case = ProductReadBySkuUseCase(product_repository)
         self.list_by_category_use_case = ProductListByCategoryUseCase(product_repository)
-        self.list_by_active_status_use_case = ProductListByActiveStatusUseCase(product_repository)
 
     def _check_authentication(self, login: str) -> None:
         """Helper method to check authentication"""
@@ -66,27 +62,13 @@ class ProductController:
                 status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
             )
 
-    def get_active_products(self) -> dict:
-        """Get active products endpoint"""
-        try:
-            products = self.active_use_case.execute()
-            return self.presenter.present(products)
-        except ProductNotFoundException as e:
-            error_response = self.presenter.present_error(e)
-            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
-        except ProductBusinessRuleException as e:
-            error_response = self.presenter.present_error(e)
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST, detail=error_response
-            )
-
-    def get_product(self, product_id: str, login: str) -> dict:
+    def get_product(self, product_id: str, login: str, include_inactive: bool = False) -> dict:
         """Get product by ID endpoint"""
         self._check_authentication(login)
 
         try:
             product_uuid = uuid.UUID(product_id)
-            product = self.read_use_case.execute(product_uuid)
+            product = self.read_use_case.execute(product_uuid, include_inactive=include_inactive)
             return self.presenter.present(product)
         except ValueError:
             error_response = self.presenter.present_error(
@@ -205,7 +187,7 @@ class ProductController:
             product_uuid = uuid.UUID(product_id)
             success = self.delete_use_case.execute(product_uuid)
             return self.presenter.present(
-                {"success": success, "message": "Product deleted successfully"}
+                {"success": success, "message": "Product soft deleted successfully"}
             )
         except ValueError:
             error_response = self.presenter.present_error(
@@ -216,12 +198,12 @@ class ProductController:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
 
-    def list_products(self, login: str) -> dict:
+    def list_products(self, login: str, include_inactive: bool = False) -> dict:
         """List all products endpoint"""
         self._check_authentication(login)
 
         try:
-            product_list = self.list_use_case.execute()
+            product_list = self.list_use_case.execute(include_inactive=include_inactive)
             return self.presenter.present(product_list)
         except Exception as e:
             error_response = self.presenter.present_error(e)
@@ -229,14 +211,14 @@ class ProductController:
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_response
             )
     
-    def get_product_by_name(self, name: str, login: str) -> dict:
+    def get_product_by_name(self, name: str, login: str, include_inactive: bool = False) -> dict:
         """Get product by name endpoint"""
         self._check_authentication(login)
         
         try:
             # Note: This would need a ProductReadByNameUseCase to be implemented
             # For now, we'll use the list use case and filter by name
-            products = self.list_use_case.execute()
+            products = self.list_use_case.execute(include_inactive=include_inactive)
             product_list = products.products if hasattr(products, 'products') else products
             product = next((p for p in product_list if p.name == name), None)
             
@@ -251,12 +233,12 @@ class ProductController:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
     
-    def get_product_by_category(self, category: str, login: str) -> dict:
+    def get_product_by_category(self, category: str, login: str, include_inactive: bool = False) -> dict:
         """Get product by category endpoint"""
         self._check_authentication(login)
         
         try:
-            products = self.list_by_category_use_case.execute(category)
+            products = self.list_by_category_use_case.execute(category, include_inactive=include_inactive)
             return self.presenter.present(products)
         except ProductNotFoundException as e:
             error_response = self.presenter.present_error(e)
@@ -265,12 +247,12 @@ class ProductController:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
 
-    def get_product_by_sku(self, sku: str, login: str) -> dict:
+    def get_product_by_sku(self, sku: str, login: str, include_inactive: bool = False) -> dict:
         """Get product by sku endpoint"""
         self._check_authentication(login)
         
         try:
-            product = self.read_by_sku_use_case.execute(sku)
+            product = self.read_by_sku_use_case.execute(sku, include_inactive=include_inactive)
             return self.presenter.present(product)
         except ProductNotFoundException as e:
             error_response = self.presenter.present_error(e)
@@ -279,26 +261,12 @@ class ProductController:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
 
-    def list_products_by_is_active(self, is_active: bool, login: str) -> dict:
-        """List products by is active endpoint"""
-        self._check_authentication(login)
-        
-        try:
-            product_list = self.list_by_active_status_use_case.execute(is_active)
-            return self.presenter.present(product_list)
-        except ProductNotFoundException as e:
-            error_response = self.presenter.present_error(e)
-            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
-        except ProductBusinessRuleException as e:
-            error_response = self.presenter.present_error(e)
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
-
-    def list_products_by_category(self, category: str, login: str) -> dict:
+    def list_products_by_category(self, category: str, login: str, include_inactive: bool = False) -> dict:
         """List products by category endpoint"""
         self._check_authentication(login)
         
         try:
-            product_list = self.list_by_category_use_case.execute(category)
+            product_list = self.list_by_category_use_case.execute(category, include_inactive=include_inactive)
             return self.presenter.present(product_list)
         except ProductNotFoundException as e:
             error_response = self.presenter.present_error(e)

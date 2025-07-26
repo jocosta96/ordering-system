@@ -199,12 +199,13 @@ class SQLProductRepository(ProductRepository):
         finally:
             self.database.close_session(session)
 
-    def find_by_id(self, product_id: uuid.UUID) -> Optional[Product]:
+    def find_by_id(self, product_id: uuid.UUID, include_inactive: bool = False) -> Optional[Product]:
         """
         Find a product by ID.
         
         Args:
             product_id: The product ID to search for
+            include_inactive: Whether to include inactive products
             
         Returns:
             Product entity if found, None otherwise
@@ -214,6 +215,11 @@ class SQLProductRepository(ProductRepository):
             db_product = self.database.find_by_field(session, ProductModel, "id", str(product_id))
             if not db_product:
                 return None
+                
+            # Filter by active status if not including inactive
+            if not include_inactive and not db_product.is_active:
+                return None
+                
             try:
                 return self._to_entity(db_product)
             except ValueError as e:
@@ -222,12 +228,13 @@ class SQLProductRepository(ProductRepository):
         finally:
             self.database.close_session(session)
 
-    def find_by_sku(self, sku: SKU) -> Optional[Product]:
+    def find_by_sku(self, sku: SKU, include_inactive: bool = False) -> Optional[Product]:
         """
         Find a product by SKU.
         
         Args:
             sku: The SKU object to search for
+            include_inactive: Whether to include inactive products
             
         Returns:
             Product entity if found, None otherwise
@@ -237,6 +244,11 @@ class SQLProductRepository(ProductRepository):
             db_product = self.database.find_by_field(session, ProductModel, "sku", sku.value)
             if not db_product:
                 return None
+                
+            # Filter by active status if not including inactive
+            if not include_inactive and not db_product.is_active:
+                return None
+                
             try:
                 return self._to_entity(db_product)
             except ValueError as e:
@@ -245,16 +257,24 @@ class SQLProductRepository(ProductRepository):
         finally:
             self.database.close_session(session)
 
-    def find_all(self) -> List[Product]:
+    def find_all(self, include_inactive: bool = False) -> List[Product]:
         """
         Find all products.
         
+        Args:
+            include_inactive: Whether to include inactive products
+            
         Returns:
             List of all product entities
         """
         session = self._get_session()
         try:
-            db_products = self.database.find_all(session, ProductModel)
+            if include_inactive:
+                db_products = self.database.find_all(session, ProductModel)
+            else:
+                # Filter only active products
+                db_products = self.database.find_all_by_boolean_field(session, ProductModel, "is_active", True)
+                
             products = []
             for db_product in db_products:
                 try:
@@ -270,7 +290,7 @@ class SQLProductRepository(ProductRepository):
 
     def delete(self, product_id: uuid.UUID) -> bool:
         """
-        Delete a product by ID.
+        Soft delete a product by ID (set is_active to False).
         
         Args:
             product_id: The product ID to delete
@@ -284,7 +304,9 @@ class SQLProductRepository(ProductRepository):
             if not db_product:
                 return False
                 
-            self.database.delete(session, db_product)
+            # Soft delete - set is_active to False
+            db_product.is_active = False
+            self.database.update(session, db_product)
             self.database.commit(session)
             return True
         except Exception as e:
@@ -293,28 +315,38 @@ class SQLProductRepository(ProductRepository):
         finally:
             self.database.close_session(session)
 
-    def exists_by_sku(self, sku: SKU) -> bool:
+    def exists_by_sku(self, sku: SKU, include_inactive: bool = False) -> bool:
         """
         Check if a product exists by SKU.
         
         Args:
             sku: The SKU object to check
+            include_inactive: Whether to include inactive products
             
         Returns:
             True if exists, False otherwise
         """
         session = self._get_session()
         try:
-            return self.database.exists_by_field(session, ProductModel, "sku", sku.value)
+            db_product = self.database.find_by_field(session, ProductModel, "sku", sku.value)
+            if not db_product:
+                return False
+                
+            # Check active status if not including inactive
+            if not include_inactive and not db_product.is_active:
+                return False
+                
+            return True
         finally:
             self.database.close_session(session)
 
-    def exists_by_id(self, product_id: uuid.UUID) -> bool:
+    def exists_by_id(self, product_id: uuid.UUID, include_inactive: bool = False) -> bool:
         """
         Check if a product exists by ID.
         
         Args:
             product_id: The product ID to check
+            include_inactive: Whether to include inactive products
             
         Returns:
             True if exists, False otherwise
@@ -322,64 +354,68 @@ class SQLProductRepository(ProductRepository):
         session = self._get_session()
         try:
             db_product = self.database.find_by_field(session, ProductModel, "id", str(product_id))
-            return db_product is not None
+            if not db_product:
+                return False
+                
+            # Check active status if not including inactive
+            if not include_inactive and not db_product.is_active:
+                return False
+                
+            return True
         finally:
             self.database.close_session(session)
 
-    def exists_by_name(self, name: str) -> bool:
+    def exists_by_name(self, name: str, include_inactive: bool = False) -> bool:
         """
         Check if a product exists by name.
         
         Args:
             name: The product name to check
+            include_inactive: Whether to include inactive products
             
         Returns:
             True if exists, False otherwise
         """
         session = self._get_session()
         try:
-            return self.database.exists_by_field(session, ProductModel, "name", name)
+            db_product = self.database.find_by_field(session, ProductModel, "name", name)
+            if not db_product:
+                return False
+                
+            # Check active status if not including inactive
+            if not include_inactive and not db_product.is_active:
+                return False
+                
+            return True
         finally:
             self.database.close_session(session)
 
-    def exists_by_category(self, category: ProductCategory) -> bool:
+    def exists_by_category(self, category: ProductCategory, include_inactive: bool = False) -> bool:
         """
         Check if a product exists by category.
         
         Args:
             category: The product category to check
+            include_inactive: Whether to include inactive products
             
         Returns:
             True if exists, False otherwise
         """
         session = self._get_session()
         try:
-            return self.database.exists_by_field(session, ProductModel, "category", category.value)
+            db_products = self.database.find_all_by_field(session, ProductModel, "category", category.value)
+            if not db_products:
+                return False
+                
+            # Check if any product in the category is active (if not including inactive)
+            if not include_inactive:
+                return any(product.is_active for product in db_products)
+                
+            return True
         finally:
             self.database.close_session(session)
 
-    def find_all_active(self) -> List[Product]:
-        """
-        Find all active products.
-        
-        Returns:
-            List of all active product entities
-        """
-        session = self._get_session()
-        try:
-            db_products = self.database.find_all_by_boolean_field(session, ProductModel, "is_active", True)
-            products = []
-            for db_product in db_products:
-                try:
-                    product = self._to_entity(db_product)
-                    products.append(product)
-                except ValueError as e:
-                    # Log the error and skip products that can't be converted
-                    print(f"Warning: Skipping active product {db_product.id} - {str(e)}")
-                    continue
-            return products
-        finally:
-            self.database.close_session(session)
+
 
     def find_by_name(self, name: str) -> Optional[Product]:
         """

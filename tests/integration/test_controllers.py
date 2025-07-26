@@ -88,12 +88,15 @@ class TestCustomerController:
             return_value=CustomerResponse.from_entity(sample_customer)
         )
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act
-        result = controller.get_customer(1, "authenticated_user")
+        result = controller.get_customer(valid_uuid, "authenticated_user")
 
         # Assert
         assert result == {"id": 1, "first_name": "John"}
-        controller.read_use_case.execute.assert_called_once_with(1)
+        controller.read_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid), include_inactive=False)
         mock_presenter.present.assert_called_once()
 
     def test_get_customer_authentication_required(
@@ -104,9 +107,12 @@ class TestCustomerController:
         controller = CustomerController(mock_customer_repository, mock_presenter)
         mock_presenter.present_error.return_value = {"error": "Authentication required"}
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act & Assert
         with pytest.raises(Exception):  # HTTPException will be raised
-            controller.get_customer(1, "")
+            controller.get_customer(valid_uuid, "")
 
     def test_get_customer_not_found(self, mock_customer_repository, mock_presenter):
         """Test customer retrieval fails when customer not found"""
@@ -119,9 +125,12 @@ class TestCustomerController:
             side_effect=CustomerNotFoundException("Customer not found")
         )
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act & Assert
         with pytest.raises(Exception):  # HTTPException will be raised
-            controller.get_customer(1, "authenticated_user")
+            controller.get_customer(valid_uuid, "authenticated_user")
 
     def test_create_customer_success(
         self, mock_customer_repository, mock_presenter, sample_customer
@@ -213,12 +222,15 @@ class TestCustomerController:
         # Mock the use case instance directly
         controller.delete_use_case.execute = Mock(return_value=True)
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act
-        result = controller.delete_customer(1, "authenticated_user")
+        result = controller.delete_customer(valid_uuid, "authenticated_user")
 
         # Assert
         assert result == {"success": True, "message": "Customer deleted successfully"}
-        controller.delete_use_case.execute.assert_called_once_with(1)
+        controller.delete_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid))
         mock_presenter.present.assert_called_once()
 
     def test_list_customers_success(self, mock_customer_repository, mock_presenter):
@@ -340,12 +352,15 @@ class TestIngredientController:
             return_value=IngredientResponse.from_entity(sample_ingredient)
         )
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act
-        result = controller.get_ingredient(1, "authenticated_user")
+        result = controller.get_ingredient(valid_uuid, "authenticated_user")
 
         # Assert
         assert result == {"id": 1, "name": "Tomato"}
-        controller.read_use_case.execute.assert_called_once_with(1)
+        controller.read_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid), include_inactive=False)
         mock_presenter.present.assert_called_once()
 
     def test_get_ingredient_authentication_required(
@@ -356,9 +371,12 @@ class TestIngredientController:
         controller = IngredientController(mock_ingredient_repository, mock_presenter)
         mock_presenter.present_error.return_value = {"error": "Authentication required"}
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act & Assert
         with pytest.raises(Exception):  # HTTPException will be raised
-            controller.get_ingredient(1, "")
+            controller.get_ingredient(valid_uuid, "")
 
     def test_get_ingredient_not_found(self, mock_ingredient_repository, mock_presenter):
         """Test ingredient retrieval fails when ingredient not found"""
@@ -371,9 +389,12 @@ class TestIngredientController:
             side_effect=IngredientNotFoundException("Ingredient not found")
         )
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act & Assert
         with pytest.raises(Exception):  # HTTPException will be raised
-            controller.get_ingredient(1, "authenticated_user")
+            controller.get_ingredient(valid_uuid, "authenticated_user")
 
     def test_update_ingredient_success(
         self, mock_ingredient_repository, mock_presenter, sample_ingredient
@@ -468,12 +489,15 @@ class TestIngredientController:
         # Mock the use case instance directly
         controller.delete_use_case.execute = Mock(return_value=True)
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act
-        result = controller.delete_ingredient(1, "authenticated_user")
+        result = controller.delete_ingredient(valid_uuid, "authenticated_user")
 
         # Assert
         assert result == {"success": True, "message": "Ingredient deleted successfully"}
-        controller.delete_use_case.execute.assert_called_once_with(1)
+        controller.delete_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid))
         mock_presenter.present.assert_called_once()
 
     def test_delete_ingredient_authentication_required(
@@ -484,9 +508,12 @@ class TestIngredientController:
         controller = IngredientController(mock_ingredient_repository, mock_presenter)
         mock_presenter.present_error.return_value = {"error": "Authentication required"}
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act & Assert
         with pytest.raises(Exception):  # HTTPException will be raised
-            controller.delete_ingredient(1, "")
+            controller.delete_ingredient(valid_uuid, "")
 
     def test_delete_ingredient_not_found(self, mock_ingredient_repository, mock_presenter):
         """Test ingredient deletion fails when ingredient not found"""
@@ -499,9 +526,12 @@ class TestIngredientController:
             side_effect=IngredientNotFoundException("Ingredient not found")
         )
 
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
         # Act & Assert
         with pytest.raises(Exception):  # HTTPException will be raised
-            controller.delete_ingredient(1, "authenticated_user")
+            controller.delete_ingredient(valid_uuid, "authenticated_user")
 
     def test_list_ingredients_success(self, mock_ingredient_repository, mock_presenter):
         """Test successful ingredient listing"""
@@ -550,7 +580,7 @@ class TestIngredientController:
 
         # Assert
         assert result == {"ingredients": [], "total_count": 0}
-        controller.list_by_type_use_case.execute.assert_called_once_with(IngredientType.VEGETABLE)
+        controller.list_by_type_use_case.execute.assert_called_once_with(IngredientType.VEGETABLE, include_inactive=False)
         mock_presenter.present.assert_called_once()
 
     def test_list_ingredients_by_type_authentication_required(
@@ -574,7 +604,7 @@ class TestIngredientController:
         controller.list_by_applies_to_use_case.execute = Mock(return_value=IngredientListResponse(ingredients=[], total_count=0))
         result = controller.list_ingredients_by_applies_to("burger", login="authenticated_user")
         assert result == {'ingredients': [], 'total_count': 0}
-        controller.list_by_applies_to_use_case.execute.assert_called_once_with(ProductCategory.BURGER)
+        controller.list_by_applies_to_use_case.execute.assert_called_once_with(ProductCategory.BURGER, include_inactive=False)
         mock_presenter.present.assert_called_once()
 
     def test_list_ingredients_by_applies_to_authentication_required(
@@ -593,45 +623,7 @@ class TestIngredientController:
 class TestProductController:
     """Test cases for ProductController"""
 
-    def test_get_active_products_success(
-        self, mock_product_repository, mock_ingredient_repository, mock_presenter, sample_products
-    ):
-        """Test successful active products retrieval"""
-        # Arrange
-        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
-        mock_presenter.present.return_value = {"products": [], "total_count": 0}
 
-        # Mock the use case instance directly
-        controller.active_use_case.execute = Mock(
-            return_value=ProductListResponse(products=[], total_count=0)
-        )
-
-        # Act
-        result = controller.get_active_products()
-
-        # Assert
-        assert result == {"products": [], "total_count": 0}
-        controller.active_use_case.execute.assert_called_once()
-        mock_presenter.present.assert_called_once()
-
-    def test_get_active_products_not_found(
-        self, mock_product_repository, mock_ingredient_repository, mock_presenter
-    ):
-        """Test active products retrieval when not found"""
-        # Arrange
-        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
-        mock_presenter.present_error.return_value = {
-            "error": "No active products found"
-        }
-
-        # Mock the use case to raise exception
-        controller.active_use_case.execute = Mock(
-            side_effect=ProductNotFoundException("No active products found")
-        )
-
-        # Act & Assert
-        with pytest.raises(Exception):  # HTTPException will be raised
-            controller.get_active_products()
 
     def test_get_product_success(
         self, mock_product_repository, mock_ingredient_repository, mock_presenter, sample_product
@@ -654,7 +646,7 @@ class TestProductController:
 
         # Assert
         assert result == {"id": "test-id", "name": "Test Product"}
-        controller.read_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid))
+        controller.read_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid), include_inactive=False)
         mock_presenter.present.assert_called_once()
 
     def test_get_product_authentication_required(

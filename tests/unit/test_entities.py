@@ -72,6 +72,8 @@ class TestCustomerEntity:
                 last_name=Name.create("Customer"),
                 email=Email.create("wrong@email.com"),
                 document=Document.create(""),
+                is_active=True,
+                is_anonymous=True,
             )
 
     def test_customer_business_rules_registered_without_email(self):
@@ -82,6 +84,8 @@ class TestCustomerEntity:
                 last_name=Name.create("Doe"),
                 email=Email.create(""),
                 document=Document.create("52998224725"),  # Valid Brazilian CPF
+                is_active=True,
+                is_anonymous=False,
             )
 
     def test_customer_can_place_order_anonymous(self):
@@ -135,7 +139,7 @@ class TestCustomerEntity:
             document="52998224725",  # Valid Brazilian CPF
             customer_id=1,
         )
-        expected = "Customer(id=1, name='John Doe', email='john.doe@example.com')"
+        expected = "Customer(id=1, name='John Doe', email='john.doe@example.com', is_active=True)"
         assert str(customer) == expected
 
     def test_customer_repr_representation(self):

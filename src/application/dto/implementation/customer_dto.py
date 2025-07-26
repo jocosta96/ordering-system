@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Any
+from datetime import datetime
 from src.application.dto.interfaces.request_interface import RequestInterface
 from src.application.dto.interfaces.response_interface import ResponseInterface
 
@@ -53,6 +54,8 @@ class CustomerResponse(ResponseInterface):
     full_name: str
     is_anonymous: bool
     is_registered: bool
+    is_active: bool
+    created_at: Optional[datetime]
     
     @classmethod
     def from_entity(cls, customer):
@@ -66,13 +69,22 @@ class CustomerResponse(ResponseInterface):
             full_name=customer.full_name,
             is_anonymous=customer.is_anonymous,
             is_registered=customer.is_registered,
+            is_active=customer.is_active,
+            created_at=customer.created_at,
         )
 
     def to_dict(self):
         return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
             "email": self.email,
             "document": self.document,
             "full_name": self.full_name,
+            "is_anonymous": self.is_anonymous,
+            "is_registered": self.is_registered,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 

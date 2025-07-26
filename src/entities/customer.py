@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 import uuid
+from datetime import datetime
 from .value_objects.document import Document
 from .value_objects.email import Email
 from .value_objects.name import Name
@@ -22,27 +23,61 @@ class Customer:
     last_name: Name
     email: Email
     document: Document
+    is_active: bool
+    is_anonymous: bool
     id: Optional[uuid.UUID] = None
     internal_id: Optional[int] = None
+    created_at: Optional[datetime] = None
 
     def __post_init__(self):
         """Validate business rules during object creation"""
+        if self.created_at is None:
+            self.created_at = datetime.now()
         self._validate_business_rules()
 
     def _validate_business_rules(self):
         """Validate domain business rules"""
         from src.config.app_config import app_config
 
-        # Rule: Anonymous customers (empty document) must have anonymous email
+        # Rule: Active anonymous customers must have anonymous email
+        # Inactive customers can have any email
         if (
-            self.document.is_empty
+            self.is_anonymous
             and not self.email.value == app_config.anonymous_email
+            and self.is_active  # Only apply this rule to active customers
         ):
             raise ValueError("Anonymous customers must have anonymous email")
 
-        # Rule: Registered customers must have both document and email
-        if not self.document.is_empty and self.email.value == "":
+        # Rule: Active registered customers must have both document and email
+        # Exception: Inactive registered customers can have empty documents
+        if not self.is_anonymous and self.email.value == "" and self.is_active:
             raise ValueError("Registered customers must have an email")
+
+    def soft_delete(self) -> None:
+        """Business rule: Soft delete the customer by replacing data with placeholder values"""
+        if not self.is_active:
+            raise ValueError("Cannot soft delete inactive customer")
+        
+        # Business rule: Cannot soft delete customer without ID
+        if not self.id:
+            raise ValueError("Cannot soft delete customer without ID")
+            
+        # Business rule: Cannot delete active anonymous customers
+        # But allow deleting inactive anonymous customers (already soft-deleted)
+        if self.is_anonymous and self.is_active:
+            raise ValueError("Cannot delete anonymous customer")
+            
+        # Business rule: Set is_active to False
+        self.is_active = False
+        
+        # Business rule: Replace data with placeholder values for privacy
+        self.first_name = Name.create("Deleted")
+        self.last_name = Name.create("Customer")
+        self.document = Document.create("")
+        
+        # Business rule: Soft-deleted customers get unique email but remain registered
+        self.email = Email.create(f"deleted.{self.id}@fastfood.local")
+        # Keep is_anonymous as False - soft-deleted customers remain registered
 
     @property
     def full_name(self) -> str:
@@ -50,22 +85,21 @@ class Customer:
         return f"{self.first_name.value} {self.last_name.value}".strip()
 
     @property
-    def is_anonymous(self) -> bool:
-        """Check if this is an anonymous customer"""
-        return self.document.is_empty
-
-    @property
     def is_registered(self) -> bool:
-        """Check if this is a registered customer"""
+        """Check if this customer is registered (not anonymous)"""
         return not self.is_anonymous
 
     def can_place_order(self) -> bool:
         """Business rule: Check if customer can place an order"""
-        # Anonymous customers can always place orders
+        # Customer must be active to place orders
+        if not self.is_active:
+            return False
+            
+        # Active anonymous customers can always place orders
         if self.is_anonymous:
             return True
 
-        # Registered customers must have valid email and document
+        # Active registered customers must have valid email and document
         return not self.email.value == "" and not self.document.is_empty
 
     def get_display_name(self) -> str:
@@ -75,10 +109,10 @@ class Customer:
         return self.full_name
 
     def __str__(self) -> str:
-        return f"Customer(id={self.id}, name='{self.full_name}', email='{self.email}')"
+        return f"Customer(id={self.id}, name='{self.full_name}', email='{self.email}', is_active={self.is_active})"
 
     def __repr__(self) -> str:
-        return f"Customer(id={self.id}, first_name={self.first_name}, last_name={self.last_name}, email={self.email}, document={self.document})"
+        return f"Customer(id={self.id}, first_name={self.first_name}, last_name={self.last_name}, email={self.email}, document={self.document}, is_active={self.is_active})"
 
     @classmethod
     def create_anonymous(cls, customer_id: Optional[uuid.UUID] = None, internal_id: Optional[int] = None) -> "Customer":
@@ -90,6 +124,8 @@ class Customer:
             last_name=Name.create("Customer"),
             email=Email.create(app_config.anonymous_email),
             document=Document.create(""),
+            is_active=True,
+            is_anonymous=True,
             id=customer_id if customer_id else uuid.uuid4(),
             internal_id=internal_id,
         )
@@ -103,6 +139,8 @@ class Customer:
         document: str,
         customer_id: Optional[uuid.UUID] = None,
         internal_id: Optional[int] = None,
+        is_active: bool = True,
+        created_at: Optional[datetime] = None,
     ) -> "Customer":
         """Factory method to create a registered customer"""
         return cls(
@@ -110,6 +148,9 @@ class Customer:
             last_name=Name.create(last_name),
             email=Email.create(email),
             document=Document.create(document),
+            is_active=is_active,
+            is_anonymous=False,
             id=customer_id if customer_id else uuid.uuid4(),
             internal_id=internal_id,
+            created_at=created_at,
         )

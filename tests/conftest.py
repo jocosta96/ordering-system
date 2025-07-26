@@ -72,7 +72,6 @@ def mock_product_repository() -> Mock:
     mock_repo.find_by_id.return_value = None
     mock_repo.find_by_sku.return_value = None
     mock_repo.find_all.return_value = []
-    mock_repo.find_all_active.return_value = []
     mock_repo.delete.return_value = False
     mock_repo.exists_by_sku.return_value = False
     mock_repo.exists_by_id.return_value = False

@@ -282,7 +282,7 @@ class TestSQLProductRepository:
         repository = SQLProductRepository(mock_database, mock_ingredient_repository)
         mock_session = Mock()
         mock_database.get_session.return_value = mock_session
-        mock_database.find_all.return_value = [sample_product_model]
+        mock_database.find_all_by_boolean_field.return_value = [sample_product_model]
 
         # Act
         result = repository.find_all()
@@ -290,7 +290,7 @@ class TestSQLProductRepository:
         # Assert
         assert len(result) == 1
         assert isinstance(result[0], Product)
-        mock_database.find_all.assert_called_once_with(mock_session, ProductModel)
+        mock_database.find_all_by_boolean_field.assert_called_once_with(mock_session, ProductModel, "is_active", True)
         mock_database.close_session.assert_called_once_with(mock_session)
 
     def test_find_all_empty(self, mock_database):
@@ -315,7 +315,6 @@ class TestSQLProductRepository:
         mock_session = Mock()
         mock_database.get_session.return_value = mock_session
         mock_database.find_by_field.return_value = sample_product_model
-        mock_database.delete.return_value = True
         product_id = uuid.uuid4()
 
         # Act
@@ -324,7 +323,7 @@ class TestSQLProductRepository:
         # Assert
         assert result is True
         mock_database.find_by_field.assert_called_once_with(mock_session, ProductModel, "id", str(product_id))
-        mock_database.delete.assert_called_once_with(mock_session, sample_product_model)
+        mock_database.update.assert_called_once_with(mock_session, sample_product_model)
         mock_database.commit.assert_called_once_with(mock_session)
         mock_database.close_session.assert_called_once_with(mock_session)
 
@@ -351,7 +350,7 @@ class TestSQLProductRepository:
         repository = SQLProductRepository(mock_database)
         mock_session = Mock()
         mock_database.get_session.return_value = mock_session
-        mock_database.exists_by_field.return_value = True
+        mock_database.find_by_field.return_value = Mock(is_active=True)
         sku = SKU.create("TEST-2024-ABC")
 
         # Act
@@ -359,7 +358,7 @@ class TestSQLProductRepository:
 
         # Assert
         assert result is True
-        mock_database.exists_by_field.assert_called_once_with(mock_session, ProductModel, "sku", "TEST-2024-ABC")
+        mock_database.find_by_field.assert_called_once_with(mock_session, ProductModel, "sku", "TEST-2024-ABC")
         mock_database.close_session.assert_called_once_with(mock_session)
 
     def test_exists_by_sku_false(self, mock_database):
@@ -368,7 +367,7 @@ class TestSQLProductRepository:
         repository = SQLProductRepository(mock_database)
         mock_session = Mock()
         mock_database.get_session.return_value = mock_session
-        mock_database.exists_by_field.return_value = False
+        mock_database.find_by_field.return_value = None
         sku = SKU.create("TEST-2024-XYZ")
 
         # Act
@@ -376,7 +375,7 @@ class TestSQLProductRepository:
 
         # Assert
         assert result is False
-        mock_database.exists_by_field.assert_called_once_with(mock_session, ProductModel, "sku", "TEST-2024-XYZ")
+        mock_database.find_by_field.assert_called_once_with(mock_session, ProductModel, "sku", "TEST-2024-XYZ")
         mock_database.close_session.assert_called_once_with(mock_session)
 
     def test_exists_by_id_true(self, mock_database):
@@ -402,7 +401,7 @@ class TestSQLProductRepository:
         repository = SQLProductRepository(mock_database)
         mock_session = Mock()
         mock_database.get_session.return_value = mock_session
-        mock_database.exists_by_field.return_value = True
+        mock_database.find_by_field.return_value = Mock(is_active=True)
         name = "Test Product"
 
         # Act
@@ -410,7 +409,7 @@ class TestSQLProductRepository:
 
         # Assert
         assert result is True
-        mock_database.exists_by_field.assert_called_once_with(mock_session, ProductModel, "name", name)
+        mock_database.find_by_field.assert_called_once_with(mock_session, ProductModel, "name", name)
         mock_database.close_session.assert_called_once_with(mock_session)
 
     def test_exists_by_category_true(self, mock_database):
@@ -419,7 +418,7 @@ class TestSQLProductRepository:
         repository = SQLProductRepository(mock_database)
         mock_session = Mock()
         mock_database.get_session.return_value = mock_session
-        mock_database.exists_by_field.return_value = True
+        mock_database.find_all_by_field.return_value = [Mock(is_active=True)]
         category = ProductCategory.BURGER
 
         # Act
@@ -427,23 +426,7 @@ class TestSQLProductRepository:
 
         # Assert
         assert result is True
-        mock_database.exists_by_field.assert_called_once_with(mock_session, ProductModel, "category", category.value)
+        mock_database.find_all_by_field.assert_called_once_with(mock_session, ProductModel, "category", category.value)
         mock_database.close_session.assert_called_once_with(mock_session)
 
-    def test_find_all_active_success(self, mock_database, mock_ingredient_repository, sample_product_model):
-        """Test finding all active products successfully"""
-        # Arrange
-        repository = SQLProductRepository(mock_database, mock_ingredient_repository)
-        mock_session = Mock()
-        mock_database.get_session.return_value = mock_session
-        mock_database.find_all_by_boolean_field.return_value = [sample_product_model]
-
-        # Act
-        result = repository.find_all_active()
-
-        # Assert
-        assert len(result) == 1
-        assert isinstance(result[0], Product)
-        assert result[0].is_active is True
-        mock_database.find_all_by_boolean_field.assert_called_once_with(mock_session, ProductModel, "is_active", True)
-        mock_database.close_session.assert_called_once_with(mock_session) 
+ 

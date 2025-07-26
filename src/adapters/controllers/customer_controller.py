@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 from http import HTTPStatus
+import uuid
+import logging
 
 from src.application.use_cases.customer_use_cases import (
     CustomerCreateUseCase,
@@ -46,6 +48,7 @@ class CustomerController:
         self.delete_use_case = CustomerDeleteUseCase(customer_repository)
         self.list_use_case = CustomerListUseCase(customer_repository)
         self.anonymous_use_case = CustomerGetAnonymousUseCase(customer_repository)
+        self.logger = logging.getLogger(__name__)
 
     def get_anonymous_customer(self) -> dict:
         """Get anonymous customer endpoint"""
@@ -61,7 +64,7 @@ class CustomerController:
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
 
-    def get_customer(self, customer_id: int, login: str) -> dict:
+    def get_customer(self, customer_id: str, login: str, include_inactive: bool = False) -> dict:
         """Get customer by ID endpoint"""
         if not login:
             error_response = self.presenter.present_error(
@@ -72,11 +75,20 @@ class CustomerController:
             )
 
         try:
-            customer = self.read_use_case.execute(customer_id)
+            self.logger.info(f"Attempting to get customer with ID: {customer_id}")
+            # UUID validation is now handled at the route level
+            customer_uuid = uuid.UUID(customer_id)
+            customer = self.read_use_case.execute(customer_uuid, include_inactive=include_inactive)
+            self.logger.info(f"Successfully retrieved customer: {customer.id}")
             return self.presenter.present(customer)
         except CustomerNotFoundException as e:
+            self.logger.warning(f"Customer not found with ID: {customer_id}")
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
+        except Exception as e:
+            self.logger.error(f"Unexpected error getting customer {customer_id}: {e}")
+            error_response = self.presenter.present_error(e)
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_response)
 
     def create_customer(self, customer_data: dict, login: str) -> dict:
         """Create customer endpoint"""
@@ -138,26 +150,7 @@ class CustomerController:
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
 
-    def delete_customer(self, customer_id: int, login: str) -> dict:
-        """Delete customer endpoint"""
-        if not login:
-            error_response = self.presenter.present_error(
-                AuthenticationException("Authentication required")
-            )
-            raise HTTPException(
-                status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
-            )
-
-        try:
-            success = self.delete_use_case.execute(customer_id)
-            return self.presenter.present(
-                {"success": success, "message": "Customer deleted successfully"}
-            )
-        except (CustomerNotFoundException, CustomerBusinessRuleException) as e:
-            error_response = self.presenter.present_error(e)
-            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
-
-    def list_customers(self, login: str) -> dict:
+    def list_customers(self, login: str, include_inactive: bool = False) -> dict:
         """List all customers endpoint"""
         if not login:
             error_response = self.presenter.present_error(
@@ -168,10 +161,38 @@ class CustomerController:
             )
 
         try:
-            customer_list = self.list_use_case.execute()
-            return self.presenter.present(customer_list)
-        except Exception as e:
+            customers = self.list_use_case.execute(include_inactive=include_inactive)
+            return self.presenter.present(customers)
+        except CustomerBusinessRuleException as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_response
+                status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
+
+    def delete_customer(self, customer_id: str, login: str) -> dict:
+        """Delete customer endpoint"""
+        if not login:
+            error_response = self.presenter.present_error(
+                AuthenticationException("Authentication required")
+            )
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
+            )
+
+        try:
+            self.logger.info(f"Attempting to delete customer with ID: {customer_id}")
+            # UUID validation is now handled at the route level
+            customer_uuid = uuid.UUID(customer_id)
+            success = self.delete_use_case.execute(customer_uuid)
+            self.logger.info(f"Successfully deleted customer: {customer_id}")
+            return self.presenter.present(
+                {"success": success, "message": "Customer soft deleted successfully - data replaced with placeholder values"}
+            )
+        except (CustomerNotFoundException, CustomerBusinessRuleException) as e:
+            self.logger.warning(f"Customer deletion failed for ID: {customer_id}, error: {e}")
+            error_response = self.presenter.present_error(e)
+            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
+        except Exception as e:
+            self.logger.error(f"Unexpected error deleting customer {customer_id}: {e}")
+            error_response = self.presenter.present_error(e)
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_response)

@@ -3,6 +3,22 @@ from typing import Any
 from http import HTTPStatus
 
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
+from src.application.exceptions import (
+    CustomerValidationException,
+    CustomerNotFoundException,
+    CustomerAlreadyExistsException,
+    CustomerBusinessRuleException,
+    IngredientValidationException,
+    IngredientNotFoundException,
+    IngredientAlreadyExistsException,
+    IngredientBusinessRuleException,
+    ProductValidationException,
+    ProductNotFoundException,
+    ProductAlreadyExistsException,
+    ProductBusinessRuleException,
+    AuthenticationException,
+    AuthorizationException,
+)
 
 
 class JSONPresenter(PresenterInterface):
@@ -46,17 +62,59 @@ class JSONPresenter(PresenterInterface):
         if hasattr(error, "status_code"):
             error_response["error"]["status_code"] = error.status_code
         else:
-            # Map common exceptions to HTTP status codes
-            if isinstance(error, ValueError):
-                error_response["error"]["status_code"] = HTTPStatus.BAD_REQUEST
-            elif isinstance(error, FileNotFoundError):
-                error_response["error"]["status_code"] = HTTPStatus.NOT_FOUND
-            else:
-                error_response["error"]["status_code"] = (
-                    HTTPStatus.INTERNAL_SERVER_ERROR
-                )
+            # Map specific exceptions to appropriate HTTP status codes
+            error_response["error"]["status_code"] = self._get_status_code_for_exception(error)
 
         return error_response
+
+    def _get_status_code_for_exception(self, error: Exception) -> int:
+        """Get appropriate HTTP status code for different exception types"""
+        
+        # Validation exceptions - 400 Bad Request
+        if isinstance(error, (
+            CustomerValidationException,
+            IngredientValidationException,
+            ProductValidationException,
+            ValueError,
+        )):
+            return HTTPStatus.BAD_REQUEST
+        
+        # Not found exceptions - 404 Not Found
+        elif isinstance(error, (
+            CustomerNotFoundException,
+            IngredientNotFoundException,
+            ProductNotFoundException,
+            FileNotFoundError,
+        )):
+            return HTTPStatus.NOT_FOUND
+        
+        # Conflict exceptions - 409 Conflict
+        elif isinstance(error, (
+            CustomerAlreadyExistsException,
+            IngredientAlreadyExistsException,
+            ProductAlreadyExistsException,
+        )):
+            return HTTPStatus.CONFLICT
+        
+        # Business rule violations - 400 Bad Request
+        elif isinstance(error, (
+            CustomerBusinessRuleException,
+            IngredientBusinessRuleException,
+            ProductBusinessRuleException,
+        )):
+            return HTTPStatus.BAD_REQUEST
+        
+        # Authentication exceptions - 401 Unauthorized
+        elif isinstance(error, AuthenticationException):
+            return HTTPStatus.UNAUTHORIZED
+        
+        # Authorization exceptions - 403 Forbidden
+        elif isinstance(error, AuthorizationException):
+            return HTTPStatus.FORBIDDEN
+        
+        # Default to 500 Internal Server Error for unknown exceptions
+        else:
+            return HTTPStatus.INTERNAL_SERVER_ERROR
 
     def _present_generic(self, data: Any) -> dict:
         """Present generic data in JSON format"""
