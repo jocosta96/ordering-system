@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
+import uuid
 from src.entities.customer import Customer
 
 
@@ -20,7 +21,7 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, customer_id: int) -> Optional[Customer]:
+    def find_by_id(self, customer_id: uuid.UUID) -> Optional[Customer]:
         """Find a customer by ID"""
         pass
 
@@ -40,7 +41,7 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, customer_id: int) -> bool:
+    def delete(self, customer_id: uuid.UUID) -> bool:
         """Delete a customer by ID, return True if deleted"""
         pass
 

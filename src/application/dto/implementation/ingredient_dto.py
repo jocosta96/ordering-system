@@ -74,9 +74,9 @@ class IngredientResponse(ResponseInterface):
     def from_entity(cls, ingredient):
         """Create DTO from Ingredient entity"""
         return cls(
-            id=ingredient.id,
+            id=str(ingredient.id) if ingredient.id else None,
             name=ingredient.name.value,
-            price=ingredient.price.value,
+            price=float(ingredient.price.amount),
             is_active=ingredient.is_active,
             type=ingredient.type,
             applies_to_burger=ingredient.applies_to_burger,

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, TypeVar
+from typing import List, Optional, TypeVar, Dict, Any
 from sqlalchemy.orm import Session
 
 T = TypeVar("T")
@@ -56,6 +56,27 @@ class DatabaseInterface(ABC):
         pass
 
     @abstractmethod
+    def find_all_by_field(
+        self, session: Session, entity_class: type, field_name: str, field_value: any
+    ) -> List[T]:
+        """Find all entities by a specific field value"""
+        pass
+
+    @abstractmethod
+    def find_all_by_boolean_field(
+        self, session: Session, entity_class: type, field_name: str, field_value: bool
+    ) -> List[T]:
+        """Find all entities by a boolean field value"""
+        pass
+
+    @abstractmethod
+    def find_all_by_multiple_fields(
+        self, session: Session, entity_class: type, field_values: Dict[str, Any]
+    ) -> List[T]:
+        """Find all entities by multiple field values"""
+        pass
+
+    @abstractmethod
     def exists_by_field(
         self, session: Session, entity_class: type, field_name: str, field_value: any
     ) -> bool:
@@ -70,4 +91,9 @@ class DatabaseInterface(ABC):
     @abstractmethod
     def rollback(self, session: Session) -> None:
         """Rollback the session"""
+        pass
+
+    @abstractmethod
+    def close_session(self, session: Session) -> None:
+        """Close the session"""
         pass

@@ -7,6 +7,18 @@ from .customer_use_cases import (
     CustomerGetAnonymousUseCase,
 )
 
+from .product_use_cases import (
+    ProductCreateUseCase,
+    ProductReadUseCase,
+    ProductUpdateUseCase,
+    ProductDeleteUseCase,
+    ProductListUseCase,
+    ProductGetActiveUseCase,
+    ProductReadBySkuUseCase,
+    ProductListByCategoryUseCase,
+    ProductListByActiveStatusUseCase,
+)
+
 __all__ = [
     "CustomerCreateUseCase",
     "CustomerReadUseCase",
@@ -14,4 +26,13 @@ __all__ = [
     "CustomerDeleteUseCase",
     "CustomerListUseCase",
     "CustomerGetAnonymousUseCase",
+    "ProductCreateUseCase",
+    "ProductReadUseCase",
+    "ProductUpdateUseCase",
+    "ProductDeleteUseCase",
+    "ProductListUseCase",
+    "ProductGetActiveUseCase",
+    "ProductReadBySkuUseCase",
+    "ProductListByCategoryUseCase",
+    "ProductListByActiveStatusUseCase",
 ]

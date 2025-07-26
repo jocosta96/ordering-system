@@ -16,7 +16,9 @@ from src.config.database import db_config  # noqa: E402
 from src.adapters.di.container import container  # noqa: E402
 from src.entities.customer import Customer  # noqa: E402
 from src.entities.ingredient import Ingredient, IngredientType  # noqa: E402
+from src.entities.product import Product, ProductCategory, ProductReceiptItem  # noqa: E402
 from src.entities.value_objects.money import Money  # noqa: E402
+from src.entities.value_objects.sku import SKU  # noqa: E402
 
 
 def init_database():
@@ -55,6 +57,16 @@ def create_sample_customers():
         ]
 
         for customer_data in sample_customers:
+            # Check if customer already exists by email
+            if repository.exists_by_email(customer_data["email"]):
+                print(f"Customer with email {customer_data['email']} already exists, skipping...")
+                continue
+                
+            # Check if customer already exists by document
+            if repository.exists_by_document(customer_data["document"]):
+                print(f"Customer with document {customer_data['document']} already exists, skipping...")
+                continue
+
             customer = Customer.create_registered(
                 first_name=customer_data["first_name"],
                 last_name=customer_data["last_name"],
@@ -160,7 +172,7 @@ def create_sample_ingredients():
                 "is_active": True,
                 "type": IngredientType.VEGETABLE,
                 "applies_to_burger": True,
-                "applies_to_side": False,
+                "applies_to_side": True,
                 "applies_to_drink": False,
                 "applies_to_dessert": False,
             },
@@ -170,7 +182,7 @@ def create_sample_ingredients():
                 "is_active": True,
                 "type": IngredientType.VEGETABLE,
                 "applies_to_burger": True,
-                "applies_to_side": False,
+                "applies_to_side": True,
                 "applies_to_drink": False,
                 "applies_to_dessert": False,
             },
@@ -180,7 +192,7 @@ def create_sample_ingredients():
                 "is_active": True,
                 "type": IngredientType.VEGETABLE,
                 "applies_to_burger": True,
-                "applies_to_side": False,
+                "applies_to_side": True,
                 "applies_to_drink": False,
                 "applies_to_dessert": False,
             },
@@ -282,6 +294,11 @@ def create_sample_ingredients():
         ]
 
         for ingredient_data in sample_ingredients:
+            # Check if ingredient already exists by name
+            if repository.exists_by_name(ingredient_data["name"]):
+                print(f"Ingredient '{ingredient_data['name']}' already exists, skipping...")
+                continue
+
             ingredient = Ingredient.create(
                 name=ingredient_data["name"],
                 price=ingredient_data["price"],
@@ -302,11 +319,215 @@ def create_sample_ingredients():
         sys.exit(1)
 
 
+def create_sample_products():
+    """Create sample product data"""
+    print("Creating sample products...")
+
+    try:
+        repository = container.product_repository
+        ingredient_repository = container.ingredient_repository
+
+        # Get existing ingredients to use in products
+        all_ingredients = ingredient_repository.find_all()
+        
+        # Create ingredient lookup by name for easier reference
+        ingredient_lookup = {ingredient.name.value: ingredient for ingredient in all_ingredients}
+        
+        # Verify all required ingredients exist
+        required_ingredients = [
+            "Classic Bun", "Whole Wheat Bun", "Beef Patty", "Chicken Breast", "Veggie Patty",
+            "Cheddar Cheese", "Swiss Cheese", "Lettuce", "Tomato", "Onion", "Mixed Greens",
+            "Ketchup", "Mustard", "Mayonnaise", "Ice Cubes", "Whole Milk", "Almond Milk",
+            "Chocolate Sprinkles", "Whipped Cream"
+        ]
+        
+        missing_ingredients = []
+        for ingredient_name in required_ingredients:
+            if ingredient_name not in ingredient_lookup:
+                missing_ingredients.append(ingredient_name)
+        
+        if missing_ingredients:
+            print(f"Warning: Missing ingredients: {missing_ingredients}")
+            print("Please run create_sample_ingredients() first to ensure all ingredients exist.")
+            return
+
+        # Create sample products using valid test data structure
+        sample_products = [
+            # Burger products
+            {
+                "name": "Classic Burger",
+                "price": Money.create(12.99),
+                "category": ProductCategory.BURGER,
+                "sku": SKU.create("BURG-2024-CLS"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Classic Bun"], 1),
+                    ProductReceiptItem(ingredient_lookup["Beef Patty"], 1),
+                    ProductReceiptItem(ingredient_lookup["Cheddar Cheese"], 1),
+                    ProductReceiptItem(ingredient_lookup["Lettuce"], 1),
+                    ProductReceiptItem(ingredient_lookup["Tomato"], 1),
+                    ProductReceiptItem(ingredient_lookup["Ketchup"], 1),
+                ],
+                "is_active": True,
+            },
+            {
+                "name": "Chicken Burger",
+                "price": Money.create(11.99),
+                "category": ProductCategory.BURGER,
+                "sku": SKU.create("BURG-2024-CHK"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Classic Bun"], 1),
+                    ProductReceiptItem(ingredient_lookup["Chicken Breast"], 1),
+                    ProductReceiptItem(ingredient_lookup["Swiss Cheese"], 1),
+                    ProductReceiptItem(ingredient_lookup["Lettuce"], 1),
+                    ProductReceiptItem(ingredient_lookup["Onion"], 1),
+                    ProductReceiptItem(ingredient_lookup["Mayonnaise"], 1),
+                ],
+                "is_active": True,
+            },
+            {
+                "name": "Veggie Burger",
+                "price": Money.create(10.99),
+                "category": ProductCategory.BURGER,
+                "sku": SKU.create("BURG-2024-VEG"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Whole Wheat Bun"], 1),
+                    ProductReceiptItem(ingredient_lookup["Veggie Patty"], 1),
+                    ProductReceiptItem(ingredient_lookup["Cheddar Cheese"], 1),
+                    ProductReceiptItem(ingredient_lookup["Mixed Greens"], 1),
+                    ProductReceiptItem(ingredient_lookup["Tomato"], 1),
+                    ProductReceiptItem(ingredient_lookup["Mustard"], 1),
+                ],
+                "is_active": True,
+            },
+            # Side products
+            {
+                "name": "Fresh Salad",
+                "price": Money.create(5.99),
+                "category": ProductCategory.SIDE,
+                "sku": SKU.create("SIDE-2024-SAL"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Mixed Greens"], 1),
+                    ProductReceiptItem(ingredient_lookup["Tomato"], 1),
+                    ProductReceiptItem(ingredient_lookup["Onion"], 1),
+                    ProductReceiptItem(ingredient_lookup["Ketchup"], 1),
+                ],
+                "is_active": True,
+            },
+            {
+                "name": "Garden Salad",
+                "price": Money.create(6.99),
+                "category": ProductCategory.SIDE,
+                "sku": SKU.create("SIDE-2024-GRD"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Mixed Greens"], 1),
+                    ProductReceiptItem(ingredient_lookup["Lettuce"], 1),
+                    ProductReceiptItem(ingredient_lookup["Tomato"], 1),
+                    ProductReceiptItem(ingredient_lookup["Onion"], 1),
+                    ProductReceiptItem(ingredient_lookup["Mayonnaise"], 1),
+                ],
+                "is_active": True,
+            },
+            # Drink products
+            {
+                "name": "Milk Shake",
+                "price": Money.create(4.99),
+                "category": ProductCategory.DRINK,
+                "sku": SKU.create("DRNK-2024-MLK"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Whole Milk"], 1),
+                    ProductReceiptItem(ingredient_lookup["Ice Cubes"], 1),
+                ],
+                "is_active": True,
+            },
+            {
+                "name": "Almond Milk Shake",
+                "price": Money.create(5.99),
+                "category": ProductCategory.DRINK,
+                "sku": SKU.create("DRNK-2024-ALM"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Almond Milk"], 1),
+                    ProductReceiptItem(ingredient_lookup["Ice Cubes"], 1),
+                ],
+                "is_active": True,
+            },
+            # Dessert products
+            {
+                "name": "Ice Cream Sundae",
+                "price": Money.create(6.99),
+                "category": ProductCategory.DESSERT,
+                "sku": SKU.create("DSSR-2024-ICE"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Chocolate Sprinkles"], 1),
+                    ProductReceiptItem(ingredient_lookup["Whipped Cream"], 1),
+                ],
+                "is_active": True,
+            },
+            {
+                "name": "Chocolate Sundae",
+                "price": Money.create(7.99),
+                "category": ProductCategory.DESSERT,
+                "sku": SKU.create("DSSR-2024-CHO"),
+                "default_ingredient": [
+                    ProductReceiptItem(ingredient_lookup["Chocolate Sprinkles"], 2),
+                    ProductReceiptItem(ingredient_lookup["Whipped Cream"], 1),
+                ],
+                "is_active": True,
+            },
+        ]
+
+        for product_data in sample_products:
+            # Check if product already exists by SKU
+            if repository.exists_by_sku(product_data["sku"]):
+                print(f"Product with SKU {product_data['sku']} already exists, skipping...")
+                continue
+                
+            # Check if product already exists by name
+            if repository.exists_by_name(product_data["name"]):
+                print(f"Product '{product_data['name']}' already exists, skipping...")
+                continue
+
+            try:
+                product = Product.create(
+                    name=product_data["name"],
+                    price=product_data["price"],
+                    category=product_data["category"],
+                    sku=product_data["sku"],
+                    default_ingredient=product_data["default_ingredient"],
+                    is_active=product_data["is_active"],
+                )
+                saved_product = repository.save(product)
+                print(f"Created product: {saved_product.name.value} ({saved_product.category}) - ${saved_product.price}")
+            except Exception as e:
+                print(f"Failed to create product {product_data['name']}: {e}")
+                continue
+
+        print("Sample products creation completed!")
+
+    except Exception as e:
+        print(f"Error creating sample products: {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     # Initialize database
     init_database()
 
     # Create sample data if requested
     if "--sample-data" in sys.argv:
+        print("Creating sample data in the correct order...")
         create_sample_customers()
         create_sample_ingredients()
+        create_sample_products()
+        print("Sample data creation completed!")
+    elif "--ingredients-only" in sys.argv:
+        print("Creating only ingredients...")
+        create_sample_ingredients()
+        print("Ingredients creation completed!")
+    elif "--products-only" in sys.argv:
+        print("Creating only products...")
+        create_sample_products()
+        print("Products creation completed!")
+    else:
+        print("Database initialized. Use --sample-data to create sample data.")
+        print("Use --ingredients-only to create only ingredients.")
+        print("Use --products-only to create only products.")

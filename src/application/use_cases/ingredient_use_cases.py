@@ -13,6 +13,7 @@ from src.application.exceptions import (
 from src.app_logs import get_logger
 from src.entities.value_objects.money import Money
 from decimal import Decimal
+from src.entities.product import ProductCategory
 
 
 class IngredientCreateUseCase:
@@ -186,14 +187,28 @@ class IngredientListByAppliesToUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientListByAppliesToUseCase")
 
-    def execute(self, applies_to_burger: bool, applies_to_side: bool, applies_to_drink: bool, applies_to_dessert: bool) -> IngredientListResponse:
+    def execute(self, category: ProductCategory) -> IngredientListResponse:
         """Execute the get ingredient by applies to use case"""
         ingredients = self.ingredient_repository.find_by_applies_usage(
-            applies_to_burger,
-            applies_to_side,
-            applies_to_drink,
-            applies_to_dessert
+            category
         )
+        ingredient_responses = [
+            IngredientResponse.from_entity(ingredient) for ingredient in ingredients
+        ]
+        return IngredientListResponse(
+            ingredients=ingredient_responses, total_count=len(ingredient_responses)
+        )
+
+class IngredientGetActiveUseCase:
+    """Use case for getting active ingredients"""
+
+    def __init__(self, ingredient_repository: IngredientRepository):
+        self.ingredient_repository = ingredient_repository
+        self.logger = get_logger("IngredientGetActiveUseCase")
+
+    def execute(self) -> IngredientListResponse:
+        """Execute the get active ingredients use case"""
+        ingredients = self.ingredient_repository.find_all_active()
         ingredient_responses = [
             IngredientResponse.from_entity(ingredient) for ingredient in ingredients
         ]

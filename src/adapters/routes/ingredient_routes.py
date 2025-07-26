@@ -7,6 +7,7 @@ from src.adapters.di.container import Container
 from src.security.http_auth import check_credentials
 from src.entities.ingredient import IngredientType
 from src.adapters.presenters.implementations.json_presenter import JSONPresenter
+from src.entities.product import ProductCategory
 
 
 class IngredientCreateModel(BaseModel):
@@ -56,7 +57,7 @@ def get_ingredient_controller() -> IngredientController:
 ingredient_router = APIRouter(tags=["ingredient"], prefix="/ingredient")
 
 
-@ingredient_router.post("", response_model=IngredientResponseModel)
+@ingredient_router.post("/create", response_model=IngredientResponseModel)
 def create_ingredient(
     ingredient: IngredientCreateModel,
     login: Annotated[str, Depends(check_credentials)],
@@ -66,26 +67,25 @@ def create_ingredient(
     return controller.create_ingredient(ingredient.dict(), login)
 
 
-@ingredient_router.get("/applies-to", response_model=IngredientListResponseModel)
-def list_ingredients_by_applies_to(
+@ingredient_router.get("/list", response_model=IngredientListResponseModel)
+def list_ingredients(
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
-    applies_to_burger: bool=False,
-    applies_to_side: bool=False,
-    applies_to_drink: bool=False,
-    applies_to_dessert: bool=False,
 ) -> dict:
-    """List ingredients by applies to"""
-    return controller.list_ingredients_by_applies_to(
-        applies_to_burger,
-        applies_to_side,
-        applies_to_drink,
-        applies_to_dessert,
-        login,
-    )
+    """List all ingredients"""
+    return controller.list_ingredients(login)
 
 
-@ingredient_router.get("/type/{type}", response_model=IngredientListResponseModel)
+@ingredient_router.get("/list/active", response_model=IngredientListResponseModel)
+def list_active_ingredients(
+    login: Annotated[str, Depends(check_credentials)],
+    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+) -> dict:
+    """List all active ingredients"""
+    return controller.list_active_ingredients(login)
+
+
+@ingredient_router.get("/list/type/{type}", response_model=IngredientListResponseModel)
 def list_ingredients_by_type(
     type: IngredientType,
     login: Annotated[str, Depends(check_credentials)],
@@ -95,7 +95,20 @@ def list_ingredients_by_type(
     return controller.list_ingredients_by_type(type, login)
 
 
-@ingredient_router.get("/{ingredient_id}", response_model=IngredientResponseModel)
+@ingredient_router.get("/list/applies-to", response_model=IngredientListResponseModel)
+def list_ingredients_by_applies_to(
+    login: Annotated[str, Depends(check_credentials)],
+    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+    category: ProductCategory,
+) -> dict:
+    """List ingredients by applies to"""
+    return controller.list_ingredients_by_applies_to(
+        category,
+        login,
+    )
+
+
+@ingredient_router.get("/by-id/{ingredient_id}", response_model=IngredientResponseModel)
 def get_ingredient(
     ingredient_id: int,
     login: Annotated[str, Depends(check_credentials)],
@@ -105,7 +118,7 @@ def get_ingredient(
     return controller.get_ingredient(ingredient_id, login)
 
 
-@ingredient_router.put("", response_model=IngredientResponseModel)
+@ingredient_router.put("/update", response_model=IngredientResponseModel)
 def update_ingredient(
     ingredient: IngredientUpdateModel,
     login: Annotated[str, Depends(check_credentials)],
@@ -115,7 +128,7 @@ def update_ingredient(
     return controller.update_ingredient(ingredient.dict(), login)
 
 
-@ingredient_router.delete("/{ingredient_id}")
+@ingredient_router.delete("/delete/{ingredient_id}")
 def delete_ingredient(
     ingredient_id: int,
     login: Annotated[str, Depends(check_credentials)],
@@ -123,12 +136,3 @@ def delete_ingredient(
 ) -> dict:
     """Delete an ingredient"""
     return controller.delete_ingredient(ingredient_id, login)
-
-
-@ingredient_router.get("", response_model=IngredientListResponseModel)
-def list_ingredients(
-    login: Annotated[str, Depends(check_credentials)],
-    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
-) -> dict:
-    """List all ingredients"""
-    return controller.list_ingredients(login)

@@ -23,6 +23,7 @@ from src.application.exceptions import (
 )
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
 from src.entities.ingredient import IngredientType
+from src.entities.product import ProductCategory
 
 
 class IngredientController:
@@ -191,10 +192,7 @@ class IngredientController:
 
     def list_ingredients_by_applies_to(
         self,
-        applies_to_burger: bool,
-        applies_to_side: bool,
-        applies_to_drink: bool,
-        applies_to_dessert: bool,
+        category: ProductCategory,
         login: str,
     ) -> dict:
         """List ingredients by applies to"""
@@ -208,11 +206,25 @@ class IngredientController:
 
         try:
             response = self.list_by_applies_to_use_case.execute(
-                applies_to_burger,
-                applies_to_side,
-                applies_to_drink,
-                applies_to_dessert,
+                category,
             )
+            return self.presenter.present(response)
+        except IngredientNotFoundException as e:
+            error_response = self.presenter.present_error(e)
+            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
+
+    def list_active_ingredients(self, login: str) -> dict:
+        """List all active ingredients"""
+        if not login:
+            error_response = self.presenter.present_error(
+                AuthenticationException("Authentication required")
+            )
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
+            )
+
+        try:
+            response = self.list_by_active_status_use_case.execute()
             return self.presenter.present(response)
         except IngredientNotFoundException as e:
             error_response = self.presenter.present_error(e)

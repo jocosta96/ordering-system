@@ -19,6 +19,10 @@ class Money:
 
     def __post_init__(self):
         """Validate the money amount during object creation"""
+        # Convert float to Decimal if needed
+        if isinstance(self.amount, float):
+            self.amount = Decimal(str(self.amount))
+        
         if not self._is_valid_amount(self.amount):
             raise ValueError(f"Invalid amount: {self.amount}")
 

@@ -1,4 +1,4 @@
-from typing import List, Optional, TypeVar
+from typing import List, Optional, TypeVar, Dict, Any
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -96,6 +96,45 @@ class SQLAlchemyDatabase(DatabaseInterface):
         except AttributeError as e:
             raise ValueError(f"Invalid field name '{field_name}': {e}")
 
+    def find_all_by_field(
+        self, session: Session, entity_class: type, field_name: str, field_value: any
+    ) -> List[T]:
+        """Find all entities by a specific field value"""
+        try:
+            field = getattr(entity_class, field_name)
+            return session.query(entity_class).filter(field == field_value).all()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Error finding entities by field: {e}")
+        except AttributeError as e:
+            raise ValueError(f"Invalid field name '{field_name}': {e}")
+
+    def find_all_by_boolean_field(
+        self, session: Session, entity_class: type, field_name: str, field_value: bool
+    ) -> List[T]:
+        """Find all entities by a boolean field value"""
+        try:
+            field = getattr(entity_class, field_name)
+            return session.query(entity_class).filter(field == field_value).all()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Error finding entities by boolean field: {e}")
+        except AttributeError as e:
+            raise ValueError(f"Invalid field name '{field_name}': {e}")
+
+    def find_all_by_multiple_fields(
+        self, session: Session, entity_class: type, field_values: Dict[str, Any]
+    ) -> List[T]:
+        """Find all entities by multiple field values"""
+        try:
+            query = session.query(entity_class)
+            for field_name, field_value in field_values.items():
+                field = getattr(entity_class, field_name)
+                query = query.filter(field == field_value)
+            return query.all()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Error finding entities by multiple fields: {e}")
+        except AttributeError as e:
+            raise ValueError(f"Invalid field name in {field_values}: {e}")
+
     def exists_by_field(
         self, session: Session, entity_class: type, field_name: str, field_value: any
     ) -> bool:
@@ -125,6 +164,13 @@ class SQLAlchemyDatabase(DatabaseInterface):
             session.rollback()
         except SQLAlchemyError as e:
             raise ValueError(f"Error rolling back transaction: {e}")
+
+    def close_session(self, session: Session) -> None:
+        """Close the session"""
+        try:
+            session.close()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Error closing session: {e}")
 
     def create_tables(self, base_class) -> None:
         """Create all tables for the given base class"""

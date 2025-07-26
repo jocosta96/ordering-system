@@ -1,7 +1,9 @@
 from src.application.repositories.customer_repository import CustomerRepository
 from src.application.repositories.ingredient_repository import IngredientRepository
+from src.application.repositories.product_repository import ProductRepository
 from src.adapters.gateways.sql_customer_repository import SQLCustomerRepository
 from src.adapters.gateways.sql_ingredient_repository import SQLIngredientRepository
+from src.adapters.gateways.sql_product_repository import SQLProductRepository
 from src.adapters.gateways.implementations.sqlalchemy_database import SQLAlchemyDatabase
 from src.adapters.gateways.interfaces.database_interface import DatabaseInterface
 
@@ -22,6 +24,7 @@ class Container:
         self._database: DatabaseInterface = None
         self._customer_repository: CustomerRepository = None
         self._ingredient_repository: IngredientRepository = None
+        self._product_repository: ProductRepository = None
 
     @property
     def database(self) -> DatabaseInterface:
@@ -44,11 +47,19 @@ class Container:
             self._ingredient_repository = SQLIngredientRepository(self.database)
         return self._ingredient_repository
 
+    @property
+    def product_repository(self) -> ProductRepository:
+        """Get product repository instance"""
+        if self._product_repository is None:
+            self._product_repository = SQLProductRepository(self.database, self.ingredient_repository)
+        return self._product_repository
+
     def reset(self):
         """Reset all dependencies (useful for testing)"""
         self._database = None
         self._customer_repository = None
         self._ingredient_repository = None
+        self._product_repository = None
 
 
 # Global container instance

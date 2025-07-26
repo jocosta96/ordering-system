@@ -81,3 +81,23 @@ class IngredientBusinessRuleException(ApplicationException):
     """Raised when a ingredient business rule is violated"""
 
     pass
+
+class ProductNotFoundException(ApplicationException):
+    """Raised when a product is not found"""
+
+    pass
+
+class ProductAlreadyExistsException(ApplicationException):
+    """Raised when a product already exists"""
+
+    pass
+
+class ProductValidationException(ApplicationException):
+    """Raised when a product validation fails"""
+
+    pass
+
+class ProductBusinessRuleException(ApplicationException):
+    """Raised when a product business rule is violated"""
+
+    pass

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
+import uuid
 from src.entities.ingredient import Ingredient, IngredientType
+from src.entities.product import ProductCategory
 
 
 class IngredientRepository(ABC):
@@ -20,7 +22,7 @@ class IngredientRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, ingredient_id: int) -> Optional[Ingredient]:
+    def find_by_id(self, ingredient_id: uuid.UUID) -> Optional[Ingredient]:
         """Find a ingredient by ID"""
         pass
 
@@ -37,10 +39,7 @@ class IngredientRepository(ABC):
     @abstractmethod
     def find_by_applies_usage(
         self,
-        applies_to_burger: bool,
-        applies_to_side: bool,
-        applies_to_drink: bool,
-        applies_to_dessert: bool
+        category: ProductCategory
     ) -> List[Ingredient]:
         """Find ingredients by applies_to_burger, applies_to_side, applies_to_drink and applies_to_dessert"""
         pass
@@ -51,7 +50,7 @@ class IngredientRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, ingredient_id: int) -> bool:
+    def delete(self, ingredient_id: uuid.UUID) -> bool:
         """Delete a ingredient by ID, return True if deleted"""
         pass
 
@@ -63,4 +62,9 @@ class IngredientRepository(ABC):
     @abstractmethod
     def exists_by_type(self, type: IngredientType) -> bool:
         """Check if an ingredient exists with the given type"""
+        pass
+
+    @abstractmethod
+    def find_all_active(self) -> List[Ingredient]:
+        """Find all active ingredients"""
         pass

@@ -30,12 +30,20 @@ class StructuredLogger:
 
     def _format_log(self, level: str, message: str, **kwargs) -> str:
         """Format log message as structured JSON"""
+        # Convert non-serializable objects to strings
+        serializable_kwargs = {}
+        for key, value in kwargs.items():
+            if hasattr(value, '__str__'):
+                serializable_kwargs[key] = str(value)
+            else:
+                serializable_kwargs[key] = repr(value)
+        
         log_entry = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "level": level,
             "logger": self.name,
             "message": message,
-            **kwargs,
+            **serializable_kwargs,
         }
         return json.dumps(log_entry)
 

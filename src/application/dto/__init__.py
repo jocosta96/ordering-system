@@ -12,6 +12,13 @@ from .implementation.ingredient_dto import (
     IngredientListResponse,
 )
 
+from .implementation.product_dto import (
+    ProductCreateRequest,
+    ProductUpdateRequest,
+    ProductResponse,
+    ProductListResponse,
+)
+
 __all__ = [
     "CustomerCreateRequest",
     "CustomerUpdateRequest",
@@ -21,4 +28,8 @@ __all__ = [
     "IngredientUpdateRequest",
     "IngredientResponse",
     "IngredientListResponse",
+    "ProductCreateRequest",
+    "ProductUpdateRequest",
+    "ProductResponse",
+    "ProductListResponse",
 ]

@@ -16,7 +16,24 @@ from src.application.dto import (
     CustomerResponse,
     CustomerListResponse,
 )
-
+from src.application.use_cases.ingredient_use_cases import (
+    IngredientCreateUseCase,
+    IngredientReadUseCase,
+    IngredientUpdateUseCase,
+    IngredientDeleteUseCase,
+    IngredientListUseCase,
+    IngredientListByTypeUseCase,
+    IngredientListByAppliesToUseCase,
+    IngredientGetActiveUseCase,
+)
+from src.application.use_cases.product_use_cases import (
+    ProductCreateUseCase,
+    ProductReadUseCase,
+    ProductUpdateUseCase,
+    ProductDeleteUseCase,
+    ProductListUseCase,
+    ProductGetActiveUseCase,
+)
 __all__ = [
     "CustomerCreateUseCase",
     "CustomerReadUseCase",
@@ -29,4 +46,18 @@ __all__ = [
     "CustomerUpdateRequest",
     "CustomerResponse",
     "CustomerListResponse",
+    "IngredientCreateUseCase",
+    "IngredientReadUseCase",
+    "IngredientUpdateUseCase",
+    "IngredientDeleteUseCase",
+    "IngredientListUseCase",
+    "IngredientListByTypeUseCase",
+    "IngredientListByAppliesToUseCase",
+    "IngredientGetActiveUseCase",
+    "ProductCreateUseCase",
+    "ProductReadUseCase",
+    "ProductUpdateUseCase",
+    "ProductDeleteUseCase",
+    "ProductListUseCase",
+    "ProductGetActiveUseCase",
 ]

@@ -4,6 +4,7 @@ Integration tests for controllers.
 Tests cover:
 - CustomerController integration with use cases
 - IngredientController integration with use cases
+- ProductController integration with use cases
 - Error handling and presentation
 - Authentication handling
 """
@@ -13,14 +14,22 @@ from unittest.mock import Mock
 
 from src.adapters.controllers.customer_controller import CustomerController
 from src.adapters.controllers.ingredient_controller import IngredientController
-from src.application.dto import CustomerResponse, CustomerListResponse, IngredientResponse, IngredientListResponse
+from src.adapters.controllers.product_controller import ProductController
+from src.application.dto import CustomerResponse, CustomerListResponse, IngredientResponse, IngredientListResponse, ProductResponse, ProductListResponse
 from src.application.exceptions import (
     CustomerNotFoundException,
     CustomerAlreadyExistsException,
     IngredientNotFoundException,
     IngredientAlreadyExistsException,
+    ProductNotFoundException,
+    ProductAlreadyExistsException,
+    ProductBusinessRuleException,
+    ProductValidationException,
+    AuthenticationException,
 )
 from src.entities.ingredient import IngredientType
+from src.entities.product import ProductCategory, ProductReceiptItem
+import uuid
 
 
 class TestCustomerController:
@@ -557,30 +566,15 @@ class TestIngredientController:
             controller.list_ingredients_by_type(IngredientType.VEGETABLE, "")
 
     def test_list_ingredients_by_applies_to_success(self, mock_ingredient_repository, mock_presenter):
-        """Test successful ingredient listing by applies to"""
-        # Arrange
+        """Test successful ingredient listing by applies_to usage"""
         controller = IngredientController(mock_ingredient_repository, mock_presenter)
-        mock_presenter.present.return_value = {"ingredients": [], "total_count": 0}
-
-        # Mock the use case instance directly
-        controller.list_by_applies_to_use_case.execute = Mock(
-            return_value=IngredientListResponse(ingredients=[], total_count=0)
-        )
-
-        # Act
-        result = controller.list_ingredients_by_applies_to(
-            applies_to_burger=True,
-            applies_to_side=False,
-            applies_to_drink=False,
-            applies_to_dessert=False,
-            login="authenticated_user"
-        )
-
-        # Assert
-        assert result == {"ingredients": [], "total_count": 0}
-        controller.list_by_applies_to_use_case.execute.assert_called_once_with(
-            True, False, False, False
-        )
+        # Mock the presenter to return the expected format
+        mock_presenter.present.return_value = {'ingredients': [], 'total_count': 0}
+        # Mock the use case to return the expected response
+        controller.list_by_applies_to_use_case.execute = Mock(return_value=IngredientListResponse(ingredients=[], total_count=0))
+        result = controller.list_ingredients_by_applies_to("burger", login="authenticated_user")
+        assert result == {'ingredients': [], 'total_count': 0}
+        controller.list_by_applies_to_use_case.execute.assert_called_once_with(ProductCategory.BURGER)
         mock_presenter.present.assert_called_once()
 
     def test_list_ingredients_by_applies_to_authentication_required(
@@ -593,10 +587,409 @@ class TestIngredientController:
 
         # Act & Assert
         with pytest.raises(Exception):  # HTTPException will be raised
-            controller.list_ingredients_by_applies_to(
-                applies_to_burger=True,
-                applies_to_side=False,
-                applies_to_drink=False,
-                applies_to_dessert=False,
-                login=""
+            controller.list_ingredients_by_applies_to("burger", login="")
+
+
+class TestProductController:
+    """Test cases for ProductController"""
+
+    def test_get_active_products_success(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter, sample_products
+    ):
+        """Test successful active products retrieval"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"products": [], "total_count": 0}
+
+        # Mock the use case instance directly
+        controller.active_use_case.execute = Mock(
+            return_value=ProductListResponse(products=[], total_count=0)
+        )
+
+        # Act
+        result = controller.get_active_products()
+
+        # Assert
+        assert result == {"products": [], "total_count": 0}
+        controller.active_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_get_active_products_not_found(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test active products retrieval when not found"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {
+            "error": "No active products found"
+        }
+
+        # Mock the use case to raise exception
+        controller.active_use_case.execute = Mock(
+            side_effect=ProductNotFoundException("No active products found")
+        )
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.get_active_products()
+
+    def test_get_product_success(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter, sample_product
+    ):
+        """Test successful product retrieval"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"id": "test-id", "name": "Test Product"}
+
+        # Mock the use case instance directly
+        controller.read_use_case.execute = Mock(
+            return_value=ProductResponse.from_entity(sample_product)
+        )
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Act
+        result = controller.get_product(valid_uuid, "authenticated_user")
+
+        # Assert
+        assert result == {"id": "test-id", "name": "Test Product"}
+        controller.read_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid))
+        mock_presenter.present.assert_called_once()
+
+    def test_get_product_authentication_required(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test product retrieval fails without authentication"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.get_product(valid_uuid, "")
+
+    def test_get_product_not_found(self, mock_product_repository, mock_ingredient_repository, mock_presenter):
+        """Test product retrieval when not found"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {
+            "error": "Product not found"
+        }
+
+        # Mock the use case to raise exception
+        controller.read_use_case.execute = Mock(
+            side_effect=ProductNotFoundException("Product not found")
+        )
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.get_product(valid_uuid, "authenticated_user")
+
+    def test_create_product_success(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter, sample_product
+    ):
+        """Test successful product creation"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"id": "test-id", "name": "New Product"}
+
+        # Mock the use case instance directly
+        controller.create_use_case.execute = Mock(
+            return_value=ProductResponse.from_entity(sample_product)
+        )
+
+        product_data = {
+            "name": "New Product",
+            "price": 15.99,
+            "category": "burger",
+            "sku": "BURG-2024-NEW",
+            "default_ingredient": []
+        }
+
+        # Act
+        result = controller.create_product(product_data, "authenticated_user")
+
+        # Assert
+        assert result == {"id": "test-id", "name": "New Product"}
+        controller.create_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_create_product_authentication_required(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test product creation fails without authentication"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        product_data = {
+            "name": "New Product",
+            "price": 15.99,
+            "category": "burger",
+            "sku": "BURG-2024-NEW",
+            "default_ingredient": []
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.create_product(product_data, "")
+
+    def test_create_product_already_exists(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test product creation fails when product already exists"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {
+            "error": "Product already exists"
+        }
+
+        # Mock the use case to raise exception
+        controller.create_use_case.execute = Mock(
+            side_effect=ProductAlreadyExistsException("Product already exists")
+        )
+
+        product_data = {
+            "name": "Existing Product",
+            "price": 15.99,
+            "category": "burger",
+            "sku": "BURG-2024-EXIST",
+            "default_ingredient": []
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.create_product(product_data, "authenticated_user")
+
+    def test_update_product_success(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter, sample_product
+    ):
+        """Test successful product update"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"id": "test-id", "name": "Updated Product"}
+
+        # Mock the use case instance directly
+        controller.update_use_case.execute = Mock(
+            return_value=ProductResponse.from_entity(sample_product)
+        )
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        product_data = {
+            "id": valid_uuid,
+            "name": "Updated Product",
+            "price": 18.99,
+            "category": "burger",
+            "sku": "BURG-2024-UPD",
+            "default_ingredient": []
+        }
+
+        # Act
+        result = controller.update_product(product_data, "authenticated_user")
+
+        # Assert
+        assert result == {"id": "test-id", "name": "Updated Product"}
+        controller.update_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_update_product_authentication_required(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test product update fails without authentication"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        product_data = {
+            "id": valid_uuid,
+            "name": "Updated Product",
+            "price": 18.99,
+            "category": "burger",
+            "sku": "BURG-2024-UPD",
+            "default_ingredient": []
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.update_product(product_data, "")
+
+    def test_update_product_not_found(self, mock_product_repository, mock_ingredient_repository, mock_presenter):
+        """Test product update fails when product not found"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {
+            "error": "Product not found"
+        }
+
+        # Mock the use case to raise exception
+        controller.update_use_case.execute = Mock(
+            side_effect=ProductNotFoundException("Product not found")
+        )
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        product_data = {
+            "id": valid_uuid,
+            "name": "Updated Product",
+            "price": 18.99,
+            "category": "burger",
+            "sku": "BURG-2024-UPD",
+            "default_ingredient": []
+        }
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.update_product(product_data, "authenticated_user")
+
+    def test_delete_product_success(self, mock_product_repository, mock_ingredient_repository, mock_presenter):
+        """Test successful product deletion"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {
+            "success": True, "message": "Product deleted successfully"
+        }
+
+        # Mock the use case instance directly
+        controller.delete_use_case.execute = Mock(return_value=True)
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Act
+        result = controller.delete_product(valid_uuid, "authenticated_user")
+
+        # Assert
+        assert result == {"success": True, "message": "Product deleted successfully"}
+        controller.delete_use_case.execute.assert_called_once_with(uuid.UUID(valid_uuid))
+        mock_presenter.present.assert_called_once()
+
+    def test_delete_product_authentication_required(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test product deletion fails without authentication"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.delete_product(valid_uuid, "")
+
+    def test_delete_product_not_found(self, mock_product_repository, mock_ingredient_repository, mock_presenter):
+        """Test product deletion fails when product not found"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {
+            "error": "Product not found"
+        }
+
+        # Mock the use case to raise exception
+        controller.delete_use_case.execute = Mock(
+            side_effect=ProductNotFoundException("Product not found")
+        )
+
+        # Use a valid UUID string
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.delete_product(valid_uuid, "authenticated_user")
+
+    def test_list_products_success(self, mock_product_repository, mock_ingredient_repository, mock_presenter):
+        """Test successful product listing"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"products": [], "total_count": 0}
+
+        # Mock the use case instance directly
+        controller.list_use_case.execute = Mock(
+            return_value=ProductListResponse(products=[], total_count=0)
+        )
+
+        # Act
+        result = controller.list_products("authenticated_user")
+
+        # Assert
+        assert result == {"products": [], "total_count": 0}
+        controller.list_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_list_products_authentication_required(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test product listing fails without authentication"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.list_products("")
+
+    def test_get_product_by_name_success(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter, sample_product
+    ):
+        """Test successful product retrieval by name"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present.return_value = {"id": "test-id", "name": "Test Product"}
+
+        # Mock the use case instance directly
+        controller.list_use_case.execute = Mock(
+            return_value=ProductListResponse(
+                products=[ProductResponse.from_entity(sample_product)], total_count=1
             )
+        )
+
+        # Act
+        result = controller.get_product_by_name("Test Product", "authenticated_user")
+
+        # Assert
+        assert result == {"id": "test-id", "name": "Test Product"}
+        controller.list_use_case.execute.assert_called_once()
+        mock_presenter.present.assert_called_once()
+
+    def test_get_product_by_name_authentication_required(
+        self, mock_product_repository, mock_ingredient_repository, mock_presenter
+    ):
+        """Test product retrieval by name fails without authentication"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {"error": "Authentication required"}
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.get_product_by_name("Test Product", "")
+
+    def test_get_product_by_name_not_found(self, mock_product_repository, mock_ingredient_repository, mock_presenter):
+        """Test product retrieval by name fails when product not found"""
+        # Arrange
+        controller = ProductController(mock_product_repository, mock_ingredient_repository, mock_presenter)
+        mock_presenter.present_error.return_value = {
+            "error": "Product not found"
+        }
+
+        # Mock the use case to return empty list
+        controller.list_use_case.execute = Mock(
+            return_value=ProductListResponse(products=[], total_count=0)
+        )
+
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException will be raised
+            controller.get_product_by_name("Non-existent Product", "authenticated_user")

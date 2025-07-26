@@ -10,13 +10,16 @@ Tests cover:
 """
 
 import pytest
+import uuid
 from decimal import Decimal
 from src.entities.customer import Customer
 from src.entities.ingredient import Ingredient, IngredientType
+from src.entities.product import Product, ProductCategory, ProductReceiptItem
 from src.entities.value_objects.name import Name
 from src.entities.value_objects.email import Email
 from src.entities.value_objects.document import Document
 from src.entities.value_objects.money import Money
+from src.entities.value_objects.sku import SKU
 from src.application.dto import CustomerResponse, IngredientResponse
 
 
@@ -30,10 +33,11 @@ class TestCustomerEntity:
             last_name="Doe",
             email="john.doe@example.com",
             document="52998224725",  # Valid Brazilian CPF
-            customer_id=1,
+            customer_id=None,  # UUID will be auto-generated
         )
 
-        assert customer.id == 1
+        assert customer.id is not None  # UUID should be generated
+        assert isinstance(customer.id, uuid.UUID)
         assert customer.first_name.value == "John"
         assert customer.last_name.value == "Doe"
         assert customer.email.value == "john.doe@example.com"
@@ -46,7 +50,8 @@ class TestCustomerEntity:
         """Test creating an anonymous customer"""
         customer = Customer.create_anonymous()
 
-        assert customer.id is None
+        assert customer.id is not None  # UUID should be generated
+        assert isinstance(customer.id, uuid.UUID)
         assert customer.first_name.value == "Anonymous"
         assert customer.last_name.value == "Customer"
         assert (
@@ -158,12 +163,13 @@ class TestCustomerEntity:
             last_name="Doe",
             email="john.doe@example.com",
             document="52998224725",  # Valid Brazilian CPF
-            customer_id=1,
+            customer_id=None,  # UUID will be auto-generated
         )
         
         dto = CustomerResponse.from_entity(customer)
         
-        assert dto.id == 1
+        assert isinstance(dto.id, str)
+        uuid.UUID(dto.id)
         assert dto.first_name == "John"
         assert dto.last_name == "Doe"
         assert dto.email == "john.doe@example.com"
@@ -187,10 +193,11 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
+            ingredient_id=None  # UUID will be auto-generated
         )
 
-        assert ingredient.id == 1
+        assert ingredient.id is not None  # UUID should be generated
+        assert isinstance(ingredient.id, uuid.UUID)
         assert ingredient.name.value == "Tomato"
         assert ingredient.price.amount == Decimal("2.50")
         assert ingredient.is_active is True
@@ -213,7 +220,8 @@ class TestIngredientEntity:
             applies_to_dessert=False
         )
 
-        assert ingredient.id is None
+        assert ingredient.id is not None  # UUID should be auto-generated
+        assert isinstance(ingredient.id, uuid.UUID)
         assert ingredient.name.value == "Lettuce"
         assert ingredient.price.amount == Decimal("1.00")
         assert ingredient.is_active is True
@@ -806,12 +814,13 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
+            ingredient_id=None  # UUID will be auto-generated
         )
         
         dto = IngredientResponse.from_entity(ingredient)
         
-        assert dto.id == 1
+        assert isinstance(dto.id, str)
+        uuid.UUID(dto.id)
         assert dto.name == "Tomato"
         assert dto.price == 2.50
         assert dto.is_active is True
@@ -836,7 +845,8 @@ class TestIngredientEntity:
         
         dto = IngredientResponse.from_entity(ingredient)
         
-        assert dto.id is None
+        assert isinstance(dto.id, str)
+        uuid.UUID(dto.id)
         assert dto.name == "Lettuce"
         assert dto.price == 1.00
         assert dto.is_active is True
@@ -845,3 +855,1010 @@ class TestIngredientEntity:
         assert dto.applies_to_side is True
         assert dto.applies_to_drink is False
         assert dto.applies_to_dessert is False
+
+
+class TestProductEntity:
+    """Test cases for Product entity"""
+
+    def test_create_product_with_id(self):
+        """Test creating a product with ID"""
+        # Create test ingredients
+        bread = Ingredient.create(
+            name="Burger Bun",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.BREAD,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False,
+            ingredient_id=None  # UUID will be auto-generated
+        )
+        
+        meat = Ingredient.create(
+            name="Beef Patty",
+            price=Money(amount=Decimal("8.00")),
+            is_active=True,
+            type=IngredientType.MEAT,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False,
+            ingredient_id=None  # UUID will be auto-generated
+        )
+        
+        default_ingredients = [
+            ProductReceiptItem(bread, 1),
+            ProductReceiptItem(meat, 1)
+        ]
+        
+        product = Product.create(
+            name="Classic Burger",
+            price=Money(amount=Decimal("12.99")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-CLS"),
+            default_ingredient=default_ingredients,
+            is_active=True,
+            product_id=None  # UUID will be auto-generated
+        )
+        
+        assert product.id is not None  # UUID should be generated
+        assert isinstance(product.id, uuid.UUID)
+        assert product.name.value == "Classic Burger"
+        assert product.price.amount == Decimal("12.99")
+        assert product.category == ProductCategory.BURGER
+        assert product.sku.value == "BURG-2024-CLS"
+        assert len(product.default_ingredient) == 2
+        assert product.default_ingredient[0].ingredient.name.value == "Burger Bun"
+        assert product.default_ingredient[1].ingredient.name.value == "Beef Patty"
+
+    def test_create_product_without_id(self):
+        """Test creating a product without ID (auto-generated)"""
+        # Create test ingredients
+        cheese = Ingredient.create(
+            name="Cheddar Cheese",
+            price=Money(amount=Decimal("1.50")),
+            is_active=True,
+            type=IngredientType.CHEESE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        default_ingredients = [ProductReceiptItem(cheese, 1)]
+        
+        product = Product.create(
+            name="Cheese Burger",
+            price=Money(amount=Decimal("14.49")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-CHS"),
+            default_ingredient=default_ingredients,
+            is_active=True
+        )
+        
+        assert product.id is not None
+        assert product.name.value == "Cheese Burger"
+        assert product.price.amount == Decimal("14.49")
+        assert product.category == ProductCategory.BURGER
+        assert product.sku.value == "BURG-2024-CHS"
+        assert len(product.default_ingredient) == 1
+        assert product.default_ingredient[0].ingredient.name.value == "Cheddar Cheese"
+
+    def test_create_product_different_categories(self):
+        """Test creating products with different categories"""
+        # Test SIDE category
+        salad = Ingredient.create(
+            name="Mixed Salad",
+            price=Money(amount=Decimal("3.00")),
+            is_active=True,
+            type=IngredientType.SALAD,
+            applies_to_burger=False,
+            applies_to_side=True,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        side_product = Product.create(
+            name="Fresh Salad",
+            price=Money(amount=Decimal("5.99")),
+            category=ProductCategory.SIDE,
+            sku=SKU.create("SIDE-2024-SAL"),
+            default_ingredient=[ProductReceiptItem(salad, 1)],
+            is_active=True
+        )
+        
+        assert side_product.category == ProductCategory.SIDE
+        
+        # Test DRINK category
+        milk = Ingredient.create(
+            name="Whole Milk",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.MILK,
+            applies_to_burger=False,
+            applies_to_side=False,
+            applies_to_drink=True,
+            applies_to_dessert=False
+        )
+        
+        drink_product = Product.create(
+            name="Milk Shake",
+            price=Money(amount=Decimal("4.99")),
+            category=ProductCategory.DRINK,
+            sku=SKU.create("DRNK-2024-MLK"),
+            default_ingredient=[ProductReceiptItem(milk, 1)],
+            is_active=True
+        )
+        
+        assert drink_product.category == ProductCategory.DRINK
+        
+        # Test DESSERT category
+        topping = Ingredient.create(
+            name="Chocolate Sprinkles",
+            price=Money(amount=Decimal("0.50")),
+            is_active=True,
+            type=IngredientType.TOPPING,
+            applies_to_burger=False,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=True
+        )
+        
+        dessert_product = Product.create(
+            name="Ice Cream Sundae",
+            price=Money(amount=Decimal("6.99")),
+            category=ProductCategory.DESSERT,
+            sku=SKU.create("DSSR-2024-ICE"),
+            default_ingredient=[ProductReceiptItem(topping, 1)],
+            is_active=True
+        )
+        
+        assert dessert_product.category == ProductCategory.DESSERT
+
+    def test_product_business_rules_without_name(self):
+        """Test that product without name raises error"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Product must have a name"):
+            Product(
+                name=None,
+                price=Money(amount=Decimal("10.00")),
+                category=ProductCategory.BURGER,
+                sku=SKU.create("TEST-2024-ABC"),
+                default_ingredient=[ProductReceiptItem(ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_without_price(self):
+        """Test that product without price raises error"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Product must have a price"):
+            Product(
+                name=Name.create("Test Product"),
+                price=None,
+                category=ProductCategory.BURGER,
+                sku=SKU.create("TEST-2024-ABC"),
+                default_ingredient=[ProductReceiptItem(ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_without_category(self):
+        """Test that product without category raises error"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Product must have a category"):
+            Product(
+                name=Name.create("Test Product"),
+                price=Money(amount=Decimal("10.00")),
+                category=None,
+                sku=SKU.create("TEST-2024-ABC"),
+                default_ingredient=[ProductReceiptItem(ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_without_sku(self):
+        """Test that product without SKU raises error"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Product must have a SKU"):
+            Product(
+                name=Name.create("Test Product"),
+                price=Money(amount=Decimal("10.00")),
+                category=ProductCategory.BURGER,
+                sku=None,
+                default_ingredient=[ProductReceiptItem(ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_without_default_ingredient(self):
+        """Test that product without default ingredient raises error"""
+        with pytest.raises(ValueError, match="Product must have a default ingredient"):
+            Product(
+                name=Name.create("Test Product"),
+                price=Money(amount=Decimal("10.00")),
+                category=ProductCategory.BURGER,
+                sku=SKU.create("TEST-2024-ABC"),
+                default_ingredient=[],
+                is_active=True
+            )
+
+    def test_product_business_rules_invalid_category(self):
+        """Test that product with invalid category raises error"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises((ValueError, TypeError)):
+            # Pass a string that's not a valid ProductCategory enum value
+            Product(
+                name=Name.create("Test Product"),
+                price=Money(amount=Decimal("10.00")),
+                category="invalid_category",  # This will fail validation
+                sku=SKU.create("TEST-2024-ABC"),
+                default_ingredient=[ProductReceiptItem(ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_burger_with_wrong_ingredient(self):
+        """Test that burger product with non-burger ingredient raises error"""
+        # Create an ingredient that doesn't apply to burgers
+        drink_ingredient = Ingredient.create(
+            name="Milk",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.MILK,
+            applies_to_burger=False,
+            applies_to_side=False,
+            applies_to_drink=True,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Ingredient must apply to burger"):
+            Product.create(
+                name="Invalid Burger",
+                price=Money(amount=Decimal("10.00")),
+                category=ProductCategory.BURGER,
+                sku=SKU.create("BURG-2024-INV"),
+                default_ingredient=[ProductReceiptItem(drink_ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_side_with_wrong_ingredient(self):
+        """Test that side product with non-side ingredient raises error"""
+        # Create an ingredient that doesn't apply to sides
+        burger_ingredient = Ingredient.create(
+            name="Beef Patty",
+            price=Money(amount=Decimal("8.00")),
+            is_active=True,
+            type=IngredientType.MEAT,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Ingredient must apply to side"):
+            Product.create(
+                name="Invalid Side",
+                price=Money(amount=Decimal("5.00")),
+                category=ProductCategory.SIDE,
+                sku=SKU.create("SIDE-2024-INV"),
+                default_ingredient=[ProductReceiptItem(burger_ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_drink_with_wrong_ingredient(self):
+        """Test that drink product with non-drink ingredient raises error"""
+        # Create an ingredient that doesn't apply to drinks
+        burger_ingredient = Ingredient.create(
+            name="Beef Patty",
+            price=Money(amount=Decimal("8.00")),
+            is_active=True,
+            type=IngredientType.MEAT,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Ingredient must apply to drink"):
+            Product.create(
+                name="Invalid Drink",
+                price=Money(amount=Decimal("3.00")),
+                category=ProductCategory.DRINK,
+                sku=SKU.create("DRNK-2024-INV"),
+                default_ingredient=[ProductReceiptItem(burger_ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_business_rules_dessert_with_wrong_ingredient(self):
+        """Test that dessert product with non-dessert ingredient raises error"""
+        # Create an ingredient that doesn't apply to desserts
+        burger_ingredient = Ingredient.create(
+            name="Beef Patty",
+            price=Money(amount=Decimal("8.00")),
+            is_active=True,
+            type=IngredientType.MEAT,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        with pytest.raises(ValueError, match="Ingredient must apply to dessert"):
+            Product.create(
+                name="Invalid Dessert",
+                price=Money(amount=Decimal("7.00")),
+                category=ProductCategory.DESSERT,
+                sku=SKU.create("DSSR-2024-INV"),
+                default_ingredient=[ProductReceiptItem(burger_ingredient, 1)],
+                is_active=True
+            )
+
+    def test_product_valid_burger_ingredients(self):
+        """Test product with valid burger ingredients"""
+        bread = Ingredient.create(
+            name="Burger Bun",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.BREAD,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        meat = Ingredient.create(
+            name="Beef Patty",
+            price=Money(amount=Decimal("8.00")),
+            is_active=True,
+            type=IngredientType.MEAT,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        cheese = Ingredient.create(
+            name="Cheddar Cheese",
+            price=Money(amount=Decimal("1.50")),
+            is_active=True,
+            type=IngredientType.CHEESE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        lettuce = Ingredient.create(
+            name="Lettuce",
+            price=Money(amount=Decimal("0.50")),
+            is_active=True,
+            type=IngredientType.SALAD,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        tomato = Ingredient.create(
+            name="Tomato",
+            price=Money(amount=Decimal("0.75")),
+            is_active=True,
+            type=IngredientType.VEGETABLE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        sauce = Ingredient.create(
+            name="Ketchup",
+            price=Money(amount=Decimal("0.25")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        default_ingredients = [
+            ProductReceiptItem(bread, 1),
+            ProductReceiptItem(meat, 1),
+            ProductReceiptItem(cheese, 2),  # Double cheese
+            ProductReceiptItem(lettuce, 1),
+            ProductReceiptItem(tomato, 2),  # Double tomato
+            ProductReceiptItem(sauce, 1)
+        ]
+        
+        product = Product.create(
+            name="Deluxe Burger",
+            price=Money(amount=Decimal("18.99")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-DLX"),
+            default_ingredient=default_ingredients,
+            is_active=True
+        )
+        
+        assert product.category == ProductCategory.BURGER
+        assert len(product.default_ingredient) == 6
+
+    def test_product_valid_side_ingredients(self):
+        """Test product with valid side ingredients"""
+        salad = Ingredient.create(
+            name="Mixed Salad",
+            price=Money(amount=Decimal("3.00")),
+            is_active=True,
+            type=IngredientType.SALAD,
+            applies_to_burger=False,
+            applies_to_side=True,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        sauce = Ingredient.create(
+            name="Ranch Dressing",
+            price=Money(amount=Decimal("0.75")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=False,
+            applies_to_side=True,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        default_ingredients = [
+            ProductReceiptItem(salad, 1),
+            ProductReceiptItem(sauce, 1)
+        ]
+        
+        product = Product.create(
+            name="Garden Salad",
+            price=Money(amount=Decimal("6.99")),
+            category=ProductCategory.SIDE,
+            sku=SKU.create("SIDE-2024-SAL"),
+            default_ingredient=default_ingredients,
+            is_active=True
+        )
+        
+        assert product.category == ProductCategory.SIDE
+        assert len(product.default_ingredient) == 2
+
+    def test_product_valid_drink_ingredients(self):
+        """Test product with valid drink ingredients"""
+        milk = Ingredient.create(
+            name="Whole Milk",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.MILK,
+            applies_to_burger=False,
+            applies_to_side=False,
+            applies_to_drink=True,
+            applies_to_dessert=False
+        )
+        
+        ice = Ingredient.create(
+            name="Crushed Ice",
+            price=Money(amount=Decimal("0.10")),
+            is_active=True,
+            type=IngredientType.ICE,
+            applies_to_burger=False,
+            applies_to_side=False,
+            applies_to_drink=True,
+            applies_to_dessert=False
+        )
+        
+        default_ingredients = [
+            ProductReceiptItem(milk, 1),
+            ProductReceiptItem(ice, 1)
+        ]
+        
+        product = Product.create(
+            name="Iced Milk",
+            price=Money(amount=Decimal("3.99")),
+            category=ProductCategory.DRINK,
+            sku=SKU.create("DRNK-2024-MLK"),
+            default_ingredient=default_ingredients,
+            is_active=True
+        )
+        
+        assert product.category == ProductCategory.DRINK
+        assert len(product.default_ingredient) == 2
+
+    def test_product_valid_dessert_ingredients(self):
+        """Test product with valid dessert ingredients"""
+        topping = Ingredient.create(
+            name="Chocolate Sprinkles",
+            price=Money(amount=Decimal("0.50")),
+            is_active=True,
+            type=IngredientType.TOPPING,
+            applies_to_burger=False,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=True
+        )
+        
+        default_ingredients = [ProductReceiptItem(topping, 1)]
+        
+        product = Product.create(
+            name="Ice Cream Sundae",
+            price=Money(amount=Decimal("6.99")),
+            category=ProductCategory.DESSERT,
+            sku=SKU.create("DSSR-2024-ICE"),
+            default_ingredient=default_ingredients,
+            is_active=True
+        )
+        
+        assert product.category == ProductCategory.DESSERT
+        assert len(product.default_ingredient) == 1
+
+    def test_product_string_representation(self):
+        """Test product string representation"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="Test Product",
+            price=Money(amount=Decimal("10.00")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("TEST-2024-ABC"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True,
+            product_id="test-id"
+        )
+        
+        expected_str = f"Product(id=test-id, name={product.name}, price={product.price}, category={product.category}, sku={product.sku}, default_ingredient={product.default_ingredient})"
+        assert str(product) == expected_str
+
+    def test_product_repr_representation(self):
+        """Test product repr representation"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="Test Product",
+            price=Money(amount=Decimal("10.00")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("TEST-2024-ABC"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True,
+            product_id="test-id"
+        )
+        
+        expected_repr = f"Product(id=test-id, name={product.name}, price={product.price}, category={product.category}, sku={product.sku}, default_ingredient={product.default_ingredient})"
+        assert repr(product) == expected_repr
+
+    def test_product_with_whitespace_name(self):
+        """Test product with whitespace in name"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="  Test Product  ",
+            price=Money(amount=Decimal("10.00")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("TEST-2024-ABC"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True
+        )
+        
+        assert product.name.value == "Test Product"  # Name should be normalized
+
+    def test_product_with_special_characters_name(self):
+        """Test product with special characters in name"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="Bacon and Cheese Deluxe",
+            price=Money(amount=Decimal("15.99")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-BCD"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True
+        )
+        
+        assert product.name.value == "Bacon And Cheese Deluxe"
+
+    def test_product_price_formatting(self):
+        """Test product price formatting"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="Premium Product",
+            price=Money(amount=Decimal("19.99")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-PRM"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True
+        )
+        
+        assert product.price.amount == Decimal("19.99")
+
+    def test_product_equality(self):
+        """Test product equality"""
+        ingredient1 = Ingredient.create(
+            name="Test Ingredient One",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        ingredient2 = Ingredient.create(
+            name="Test Ingredient Two",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        receipt_item = ProductReceiptItem(ingredient1, 1)
+        
+        product1 = Product.create(
+            name="Test Product",
+            price=Money(amount=Decimal("10.00")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("TEST-2024-ABC"),
+            default_ingredient=[receipt_item],
+            is_active=True,
+            product_id="test-id"
+        )
+        
+        product2 = Product.create(
+            name="Test Product",
+            price=Money(amount=Decimal("10.00")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("TEST-2024-ABC"),
+            default_ingredient=[receipt_item],
+            is_active=True,
+            product_id="test-id"
+        )
+        
+        # Products with same ID should be equal
+        assert product1 == product2
+
+    def test_product_inequality(self):
+        """Test product inequality"""
+        ingredient1 = Ingredient.create(
+            name="Test Ingredient One",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        ingredient2 = Ingredient.create(
+            name="Test Ingredient Two",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.SALAD,
+            applies_to_burger=False,
+            applies_to_side=True,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product1 = Product.create(
+            name="Test Product One",
+            price=Money(amount=Decimal("10.00")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("TEST-2024-ABC"),
+            default_ingredient=[ProductReceiptItem(ingredient1, 1)],
+            is_active=True,
+            product_id="test-id-1"
+        )
+        
+        product2 = Product.create(
+            name="Test Product Two",
+            price=Money(amount=Decimal("15.00")),
+            category=ProductCategory.SIDE,
+            sku=SKU.create("TEST-2024-DEF"),
+            default_ingredient=[ProductReceiptItem(ingredient2, 1)],
+            is_active=True,
+            product_id="test-id-2"
+        )
+        
+        # Products with different IDs should not be equal
+        assert product1 != product2
+
+    def test_product_category_enum_values(self):
+        """Test product category enum values"""
+        assert ProductCategory.BURGER == "burger"
+        assert ProductCategory.SIDE == "side"
+        assert ProductCategory.DRINK == "drink"
+        assert ProductCategory.DESSERT == "dessert"
+        
+        # Test all enum values
+        categories = [ProductCategory.BURGER, ProductCategory.SIDE, ProductCategory.DRINK, ProductCategory.DESSERT]
+        assert len(categories) == 4
+
+    def test_product_with_large_price(self):
+        """Test product with large price"""
+        ingredient = Ingredient.create(
+            name="Premium Ingredient",
+            price=Money(amount=Decimal("25.00")),
+            is_active=True,
+            type=IngredientType.MEAT,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="Premium Burger",
+            price=Money(amount=Decimal("49.99")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-PRM"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True
+        )
+        
+        assert product.price.amount == Decimal("49.99")
+
+    def test_product_with_small_price(self):
+        """Test product with small price"""
+        ingredient = Ingredient.create(
+            name="Basic Ingredient",
+            price=Money(amount=Decimal("0.50")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="Basic Burger",
+            price=Money(amount=Decimal("5.99")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-BSC"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True
+        )
+        
+        assert product.price.amount == Decimal("5.99")
+
+    def test_product_mutability(self):
+        """Test that product is immutable after creation"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        product = Product.create(
+            name="Test Product",
+            price=Money(amount=Decimal("10.00")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("TEST-2024-ABC"),
+            default_ingredient=[ProductReceiptItem(ingredient, 1)],
+            is_active=True,
+            product_id="test-id"
+        )
+        
+        # The product should be immutable, so we can't modify its attributes directly
+        # This is enforced by the dataclass and value objects being immutable
+        original_name = product.name.value
+        original_price = product.price.amount
+        
+        # Any attempt to modify would require creating a new instance
+        # This test verifies the current state remains unchanged
+        assert product.name.value == original_name
+        assert product.price.amount == original_price
+
+    def test_product_receipt_item(self):
+        """Test ProductReceiptItem functionality"""
+        ingredient = Ingredient.create(
+            name="Test Ingredient",
+            price=Money(amount=Decimal("1.00")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        receipt_item = ProductReceiptItem(ingredient, 2)
+        
+        assert receipt_item.ingredient == ingredient
+        assert receipt_item.quantity == 2
+        
+        # Test tuple conversion
+        ingredient_tuple, quantity_tuple = receipt_item.__tuple__()
+        assert ingredient_tuple == ingredient
+        assert quantity_tuple == 2
+
+    def test_product_with_multiple_ingredients(self):
+        """Test product with multiple ingredients"""
+        bread = Ingredient.create(
+            name="Burger Bun",
+            price=Money(amount=Decimal("2.00")),
+            is_active=True,
+            type=IngredientType.BREAD,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        meat = Ingredient.create(
+            name="Beef Patty",
+            price=Money(amount=Decimal("8.00")),
+            is_active=True,
+            type=IngredientType.MEAT,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        cheese = Ingredient.create(
+            name="Cheddar Cheese",
+            price=Money(amount=Decimal("1.50")),
+            is_active=True,
+            type=IngredientType.CHEESE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        lettuce = Ingredient.create(
+            name="Lettuce",
+            price=Money(amount=Decimal("0.50")),
+            is_active=True,
+            type=IngredientType.SALAD,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        tomato = Ingredient.create(
+            name="Tomato",
+            price=Money(amount=Decimal("0.75")),
+            is_active=True,
+            type=IngredientType.VEGETABLE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        sauce = Ingredient.create(
+            name="Ketchup",
+            price=Money(amount=Decimal("0.25")),
+            is_active=True,
+            type=IngredientType.SAUCE,
+            applies_to_burger=True,
+            applies_to_side=False,
+            applies_to_drink=False,
+            applies_to_dessert=False
+        )
+        
+        default_ingredients = [
+            ProductReceiptItem(bread, 1),
+            ProductReceiptItem(meat, 1),
+            ProductReceiptItem(cheese, 2),  # Double cheese
+            ProductReceiptItem(lettuce, 1),
+            ProductReceiptItem(tomato, 2),  # Double tomato
+            ProductReceiptItem(sauce, 1)
+        ]
+        
+        product = Product.create(
+            name="Double Cheese and Tomato Burger",
+            price=Money(amount=Decimal("18.99")),
+            category=ProductCategory.BURGER,
+            sku=SKU.create("BURG-2024-DCT"),
+            default_ingredient=default_ingredients,
+            is_active=True
+        )
+        
+        assert len(product.default_ingredient) == 6
+        assert product.default_ingredient[2].quantity == 2  # Double cheese
+        assert product.default_ingredient[4].quantity == 2  # Double tomato

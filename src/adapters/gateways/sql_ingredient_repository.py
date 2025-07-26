@@ -1,5 +1,6 @@
 from typing import List, Optional
-from sqlalchemy import Column, Integer, String, DECIMAL, Boolean, DateTime
+import uuid
+from sqlalchemy import Column, Integer, String, DECIMAL, Boolean, DateTime, Index
 from sqlalchemy.orm import declarative_base
 from src.application.repositories.ingredient_repository import IngredientRepository
 from src.entities.ingredient import Ingredient, IngredientType
@@ -7,6 +8,7 @@ from src.adapters.gateways.interfaces.database_interface import DatabaseInterfac
 from src.entities.value_objects.name import Name
 from src.entities.value_objects.money import Money
 from datetime import datetime
+from src.entities.product import ProductCategory
 
 
 # SQLAlchemy model
@@ -18,7 +20,8 @@ class IngredientModel(Base):
 
     __tablename__ = "ingredients"
 
-    id = Column(Integer, primary_key=True, index=True)
+    internal_id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(String(36), nullable=False, unique=True, index=True)  # UUID as string
     name = Column(String(100), nullable=False)
     price = Column(DECIMAL(10, 2), nullable=False)
     is_active = Column(Boolean, default=True)
@@ -28,6 +31,10 @@ class IngredientModel(Base):
     applies_to_drink = Column(Boolean, default=False)
     applies_to_dessert = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index('idx_ingredient_id', 'id'),
+    )
 
 
 class SQLIngredientRepository(IngredientRepository):
@@ -52,8 +59,10 @@ class SQLIngredientRepository(IngredientRepository):
 
     def _to_entity(self, model: IngredientModel) -> Ingredient:
         """Convert a database model to an entity"""
+        import uuid
         return Ingredient(
-            id=model.id,
+            id=uuid.UUID(model.id) if model.id else None,
+            internal_id=model.internal_id,
             name=Name.create(model.name),
             price=Money(amount=model.price),
             is_active=model.is_active,
@@ -67,7 +76,8 @@ class SQLIngredientRepository(IngredientRepository):
     def _to_model(self, ingredient: Ingredient) -> IngredientModel:
         """Convert an entity to a database model"""
         return IngredientModel(
-            id=ingredient.id,
+            id=str(ingredient.id) if ingredient.id else None,
+            internal_id=ingredient.internal_id,
             name=ingredient.name.value,
             price=ingredient.price.amount,
             is_active=ingredient.is_active,
@@ -83,25 +93,28 @@ class SQLIngredientRepository(IngredientRepository):
         session = self._get_session()
         try:
             if ingredient.id:
-                # Update existing ingredient
-                db_ingredient = self.database.find_by_id(
-                    session, IngredientModel, ingredient.id
+                # Try to find existing ingredient for update
+                db_ingredient = self.database.find_by_field(
+                    session, IngredientModel, "id", str(ingredient.id)
                 )
-                if not db_ingredient:
-                    raise ValueError(f"Ingredient with ID {ingredient.id} not found")
+                if db_ingredient:
+                    # Update existing ingredient
+                    db_ingredient.name = ingredient.name.value
+                    db_ingredient.price = ingredient.price.amount
+                    db_ingredient.is_active = ingredient.is_active
+                    db_ingredient.type = ingredient.type.value
+                    db_ingredient.applies_to_burger = ingredient.applies_to_burger
+                    db_ingredient.applies_to_side = ingredient.applies_to_side
+                    db_ingredient.applies_to_drink = ingredient.applies_to_drink
+                    db_ingredient.applies_to_dessert = ingredient.applies_to_dessert
 
-                db_ingredient.name = ingredient.name.value
-                db_ingredient.price = ingredient.price.amount
-                db_ingredient.is_active = ingredient.is_active
-                db_ingredient.type = ingredient.type.value
-                db_ingredient.applies_to_burger = ingredient.applies_to_burger
-                db_ingredient.applies_to_side = ingredient.applies_to_side
-                db_ingredient.applies_to_drink = ingredient.applies_to_drink
-                db_ingredient.applies_to_dessert = ingredient.applies_to_dessert
-
-                self.database.update(session, db_ingredient)
+                    self.database.update(session, db_ingredient)
+                else:
+                    # Ingredient has ID but doesn't exist in DB, treat as new ingredient
+                    db_ingredient = self._to_model(ingredient)
+                    self.database.add(session, db_ingredient)
             else:
-                # Create new ingredient
+                # Create new ingredient without ID
                 db_ingredient = self._to_model(ingredient)
                 self.database.add(session, db_ingredient)
 
@@ -111,16 +124,16 @@ class SQLIngredientRepository(IngredientRepository):
             self.database.rollback(session)
             raise e
         finally:
-            session.close()
+            self.database.close_session(session)
 
-    def find_by_id(self, ingredient_id: int) -> Optional[Ingredient]:
+    def find_by_id(self, ingredient_id: uuid.UUID) -> Optional[Ingredient]:
         """Find an ingredient by ID"""
         session = self._get_session()
         try:
-            db_ingredient = self.database.find_by_id(session, IngredientModel, ingredient_id)
+            db_ingredient = self.database.find_by_field(session, IngredientModel, "id", str(ingredient_id))
             return self._to_entity(db_ingredient) if db_ingredient else None
         finally:
-            session.close()
+            self.database.close_session(session)
 
     def find_by_name(self, name: str) -> Optional[Ingredient]:
         """Find an ingredient by name"""
@@ -129,36 +142,50 @@ class SQLIngredientRepository(IngredientRepository):
             db_ingredient = self.database.find_by_field(session, IngredientModel, "name", name)
             return self._to_entity(db_ingredient) if db_ingredient else None
         finally:
-            session.close()
+            self.database.close_session(session)
 
     def find_by_type(self, type: IngredientType) -> List[Ingredient]:
         """Find ingredients by type"""
         session = self._get_session()
         try:
-            db_ingredients = session.query(IngredientModel).filter(IngredientModel.type == type.value).all()
+            db_ingredients = self.database.find_all_by_field(session, IngredientModel, "type", type.value)
             return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
         finally:
-            session.close()
+            self.database.close_session(session)
 
     def find_by_applies_usage(
         self,
-        applies_to_burger: bool,
-        applies_to_side: bool,
-        applies_to_drink: bool,
-        applies_to_dessert: bool,
+        category: ProductCategory
     ) -> List[Ingredient]:
         """Find ingredients by applies to usage"""
         session = self._get_session()
         try:
-            db_ingredients = session.query(IngredientModel).filter(
-                IngredientModel.applies_to_burger == applies_to_burger,
-                IngredientModel.applies_to_side == applies_to_side,
-                IngredientModel.applies_to_drink == applies_to_drink,
-                IngredientModel.applies_to_dessert == applies_to_dessert,
-            ).all()
+            # Initialize all applies_to fields to False
+            applies_to_burger = False
+            applies_to_side = False
+            applies_to_drink = False
+            applies_to_dessert = False
+
+            # Set the appropriate field to True based on category
+            if category == ProductCategory.BURGER:
+                applies_to_burger = True
+            elif category == ProductCategory.SIDE:
+                applies_to_side = True
+            elif category == ProductCategory.DRINK:
+                applies_to_drink = True
+            elif category == ProductCategory.DESSERT:
+                applies_to_dessert = True
+
+            field_values = {
+                "applies_to_burger": applies_to_burger,
+                "applies_to_side": applies_to_side,
+                "applies_to_drink": applies_to_drink,
+                "applies_to_dessert": applies_to_dessert,
+            }
+            db_ingredients = self.database.find_all_by_multiple_fields(session, IngredientModel, field_values)
             return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
         finally:
-            session.close()
+            self.database.close_session(session)
 
     def find_all(self) -> List[Ingredient]:
         """Find all ingredients"""
@@ -167,13 +194,13 @@ class SQLIngredientRepository(IngredientRepository):
             db_ingredients = self.database.find_all(session, IngredientModel)
             return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
         finally:
-            session.close()
+            self.database.close_session(session)
 
-    def delete(self, ingredient_id: int) -> bool:
+    def delete(self, ingredient_id: uuid.UUID) -> bool:
         """Delete an ingredient by ID, return True if deleted"""
         session = self._get_session()
         try:
-            db_ingredient = self.database.find_by_id(session, IngredientModel, ingredient_id)
+            db_ingredient = self.database.find_by_field(session, IngredientModel, "id", str(ingredient_id))
             if not db_ingredient:
                 return False
 
@@ -184,7 +211,7 @@ class SQLIngredientRepository(IngredientRepository):
             self.database.rollback(session)
             raise e
         finally:
-            session.close()
+            self.database.close_session(session)
 
     def exists_by_name(self, name: str) -> bool:
         """Check if an ingredient exists with the given name"""
@@ -192,13 +219,21 @@ class SQLIngredientRepository(IngredientRepository):
         try:
             return self.database.exists_by_field(session, IngredientModel, "name", name)
         finally:
-            session.close()
+            self.database.close_session(session)
 
     def exists_by_type(self, type: IngredientType) -> bool:
         """Check if an ingredient exists with the given type"""
         session = self._get_session()
         try:
-            db_ingredient = self.database.find_by_field(session, IngredientModel, "type", type.value)
-            return db_ingredient is not None
+            return self.database.exists_by_field(session, IngredientModel, "type", type.value)
         finally:
-            session.close()
+            self.database.close_session(session)
+
+    def find_all_active(self) -> List[Ingredient]:
+        """Find all active ingredients"""
+        session = self._get_session()
+        try:
+            db_ingredients = self.database.find_all_by_boolean_field(session, IngredientModel, "is_active", True)
+            return [self._to_entity(db_ingredient) for db_ingredient in db_ingredients]
+        finally:
+            self.database.close_session(session)

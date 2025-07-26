@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from enum import Enum
+import uuid
 
 from src.entities.value_objects.name import Name
 from src.entities.value_objects.money import Money
@@ -39,7 +40,8 @@ class Ingredient:
     applies_to_side: bool
     applies_to_drink: bool
     applies_to_dessert: bool
-    id: Optional[int] = None
+    id: Optional[uuid.UUID] = None
+    internal_id: Optional[int] = None
 
     def __post_init__(self):
         """Validate business rules during object creation"""
@@ -81,6 +83,7 @@ class Ingredient:
         if self.applies_to_side and self.type not in [
             IngredientType.SALAD,
             IngredientType.SAUCE,
+            IngredientType.VEGETABLE,
         ]:
             raise ValueError("Ingredient must be a valid side ingredient")
         
@@ -94,7 +97,6 @@ class Ingredient:
             IngredientType.TOPPING,
         ]:
             raise ValueError("Ingredient must be a valid dessert ingredient")
-        
 
     def __str__(self) -> str:
         return f"Ingredient(id={self.id}, name={self.name}, price={self.price}, is_active={self.is_active})"
@@ -113,7 +115,8 @@ class Ingredient:
         applies_to_side: bool,
         applies_to_drink: bool,
         applies_to_dessert: bool,
-        ingredient_id: Optional[int] = None
+        ingredient_id: Optional[uuid.UUID] = None,
+        internal_id: Optional[int] = None
     ) -> "Ingredient":
 
         """Factory method to create an Ingredient"""
@@ -126,6 +129,6 @@ class Ingredient:
             applies_to_side=applies_to_side,
             applies_to_drink=applies_to_drink,
             applies_to_dessert=applies_to_dessert,
-            id=ingredient_id
+            id=ingredient_id if ingredient_id else uuid.uuid4(),
+            internal_id=internal_id
         )
-

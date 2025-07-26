@@ -55,7 +55,16 @@ def get_anonymous_customer(
     return controller.get_anonymous_customer()
 
 
-@customer_router.get("/{customer_id}", response_model=CustomerResponseModel)
+@customer_router.get("/list", response_model=CustomerListResponseModel)
+def list_customers(
+    login: Annotated[str, Depends(check_credentials)],
+    controller: Annotated[CustomerController, Depends(get_customer_controller)],
+):
+    """List all customers endpoint"""
+    return controller.list_customers(login)
+
+
+@customer_router.get("/by-id/{customer_id}", response_model=CustomerResponseModel)
 def get_customer(
     customer_id: int,
     login: Annotated[str, Depends(check_credentials)],
@@ -65,7 +74,7 @@ def get_customer(
     return controller.get_customer(customer_id, login)
 
 
-@customer_router.post("", response_model=CustomerResponseModel)
+@customer_router.post("/create", response_model=CustomerResponseModel)
 def create_customer(
     customer_data: CustomerCreateModel,
     login: Annotated[str, Depends(check_credentials)],
@@ -75,7 +84,7 @@ def create_customer(
     return controller.create_customer(customer_data.dict(), login)
 
 
-@customer_router.put("", response_model=CustomerResponseModel)
+@customer_router.put("/update", response_model=CustomerResponseModel)
 def update_customer(
     customer_data: CustomerUpdateModel,
     login: Annotated[str, Depends(check_credentials)],
@@ -85,7 +94,7 @@ def update_customer(
     return controller.update_customer(customer_data.dict(), login)
 
 
-@customer_router.delete("/{customer_id}")
+@customer_router.delete("/delete/{customer_id}")
 def delete_customer(
     customer_id: int,
     login: Annotated[str, Depends(check_credentials)],
@@ -93,12 +102,3 @@ def delete_customer(
 ):
     """Delete customer endpoint"""
     return controller.delete_customer(customer_id, login)
-
-
-@customer_router.get("", response_model=CustomerListResponseModel)
-def list_customers(
-    login: Annotated[str, Depends(check_credentials)],
-    controller: Annotated[CustomerController, Depends(get_customer_controller)],
-):
-    """List all customers endpoint"""
-    return controller.list_customers(login)

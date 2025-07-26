@@ -58,7 +58,7 @@ class CustomerResponse(ResponseInterface):
     def from_entity(cls, customer):
         """Create DTO from Customer entity"""
         return cls(
-            id=customer.id,
+            id=str(customer.id) if customer.id else None,
             first_name=customer.first_name.value,
             last_name=customer.last_name.value,
             email=customer.email.value,
