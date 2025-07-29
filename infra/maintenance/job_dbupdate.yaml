@@ -8,13 +8,28 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      volumes:
+      - name: migrations-volume
+        persistentVolumeClaim:
+          claimName: pvc-migrations
       containers:
       - name: database-update
         image: jocosta96/soat-challenge
+        volumeMounts:
+          - name: migrations-volume
+            mountPath: /migrations
         command: ["sh", "-c"]
         args:
           - |
-            PYTHONPATH=/code python app/adapter/outbound/repositories/sql/migrations/database_update.py
+            # Create migrations directory if it doesn't exist
+            mkdir -p /migrations/versions
+            
+            # Set up Alembic environment
+            export ALEMBIC_CONFIG=/code/alembic.ini
+            
+            # Apply migrations
+            cd /code
+            python infra/scripts/database_migration.py migrate
         env:
           - name: POSTGRES_USER
             valueFrom:

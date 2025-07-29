@@ -12,14 +12,21 @@ spec:
       labels:
         app: dpm-app
     spec:
+      volumes:
+      - name: migrations-volume
+        persistentVolumeClaim:
+          claimName: pvc-migrations
       containers:
         - name: app
           image: jocosta96/soat-challenge
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: migrations-volume
+              mountPath: /migrations
           readinessProbe:
             httpGet:
-              path: /customer/anonymous
+              path: /health/db
               port: 8080
             initialDelaySeconds: 60
             failureThreshold: 3
@@ -71,21 +78,39 @@ spec:
                 configMapKeyRef:
                   name: cfm-database
                   key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: POSTGRES_PORT
             - name: DRIVER_NAME
               valueFrom:
                 configMapKeyRef:
                   name: cfm-database
                   key: DRIVER_NAME
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: DEBUG
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: LOG_LEVEL
+            - name: WEBHOOK_URL
+              value: "http://svc-webhook-nodeport:80"
           resources:
             requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
               memory: "256Mi"
               cpu: "500m"
-            limits:
-              memory: "512Mi"
-              cpu: "1500m"
           command: ["sh", "-c"]
           args:
             - |
-              PYTHONPATH=/code python app/adapter/outbound/repositories/sql/migrations/database_init.py
-              uvicorn app.adapter.inbound.webhook.payment:webhook --host 0.0.0.0 --port 8000 &
-              uvicorn app.main:app --host 0.0.0.0 --port 8080
+              # Start the application
+              echo "Starting FastAPI application..."
+              exec uvicorn src.main:app --host 0.0.0.0 --port 8080
+

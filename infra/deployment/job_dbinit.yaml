@@ -1,0 +1,81 @@
+#update the database tables according to the orm objects
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-dbinit
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+      - name: migrations-volume
+        persistentVolumeClaim:
+          claimName: pvc-migrations
+      containers:
+      - name: database-init
+        image: jocosta96/soat-challenge
+        volumeMounts:
+          - name: migrations-volume
+            mountPath: /migrations
+        command: ["sh", "-c"]
+        args:
+          - |
+              # Create migrations directory if it doesn't exist
+              mkdir -p /migrations/versions
+              
+              # Change to code directory
+              cd /code
+              
+              # Check if database is already initialized
+              if [ ! -f /migrations/versions/*.py ]; then
+                echo "Database not initialized. Running initial setup..."
+                python infra/scripts/database_migration.py init
+                python infra/scripts/init_db.py --sample-data
+                echo "Database initialization completed"
+              else
+                echo "Database already initialized. Applying any pending migrations..."
+                python infra/scripts/database_migration.py migrate
+              fi
+              
+              # Verify tables exist and re-initialize if needed
+              echo "Verifying database tables exist..."
+              python infra/scripts/verify_db.py
+              
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: POSTGRES_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: POSTGRES_PASSWORD
+          - name: POSTGRES_DB
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: POSTGRES_DB
+          - name: PGADMIN_MAIL
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: PGADMIN_MAIL
+          - name: PGADMIN_PW
+            valueFrom:
+              secretKeyRef:
+                name: sec-database
+                key: PGADMIN_PW
+          - name: POSTGRES_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: cfm-database
+                key: POSTGRES_HOST
+          - name: DRIVER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: cfm-database
+                key: DRIVER_NAME
+

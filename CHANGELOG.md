@@ -1,5 +1,129 @@
 # Changelog - Sistema de Autoatendimento de Fast Food
 
+## [2.1.0] - 2024-01-20
+
+### ✅ Melhorias e Atualizações Recentes
+
+#### 📚 **Documentação Aprimorada**
+
+1. **README.md Atualizado**
+   - Adicionada estrutura detalhada do projeto
+   - Melhoradas instruções de setup e desenvolvimento
+   - Incluídas seções de desenvolvimento local
+   - Adicionados comandos úteis para desenvolvedores
+   - Documentação completa de APIs de ingredientes
+
+2. **Guia de Desenvolvimento**
+   - Referência ao `CLEAN_ARCHITECTURE_CHECKLIST.md`
+   - Instruções para desenvolvimento local
+   - Comandos úteis para debugging e manutenção
+
+#### 🛠️ **Melhorias de Infraestrutura**
+
+1. **Scripts de Automação**
+   - Scripts de update para Windows e Linux
+   - Melhor tratamento de erros
+   - Logs mais informativos
+
+2. **Configuração de Ambiente**
+   - Suporte melhorado para desenvolvimento local
+   - Configuração de logging estruturado
+   - Variáveis de ambiente organizadas
+
+#### 🧪 **Testes e Qualidade**
+
+1. **Cobertura de Testes**: 79%
+   - 151 testes passando
+   - Testes unitários, integração e end-to-end
+   - Validação de todas as funcionalidades
+
+2. **Logs Estruturados**
+   - Implementação de logging com contexto
+   - Níveis configuráveis de log
+   - Melhor observabilidade
+
+#### 🔒 **Segurança e Performance**
+
+1. **Autenticação e Autorização**
+   - Basic Auth implementado para endpoints administrativos
+   - Validação robusta de entrada com Pydantic
+   - CORS configurado adequadamente
+
+2. **Rate Limiting**
+   - Proteção contra abuso de API
+   - Configuração flexível de limites
+
+#### 📊 **Monitoramento**
+
+1. **Health Checks**
+   - Endpoints `/health` e `/customer/anonymous`
+   - Readiness e Liveness probes para Kubernetes
+   - Métricas de aplicação
+
+2. **HPA (Horizontal Pod Autoscaler)**
+   - Auto-scaling baseado em CPU (30% - 5 réplicas)
+   - Scripts de stress test para demonstração
+   - Monitoramento em tempo real
+
+#### 🎯 **Funcionalidades do Negócio**
+
+1. **Para Clientes**
+   - ✅ Identificação via CPF ou anônimo
+   - ✅ Montagem de combos
+   - ✅ Pagamento via QR Code
+   - ✅ Acompanhamento em tempo real
+   - ✅ Histórico de pedidos
+
+2. **Para Administração**
+   - ✅ Gerenciamento completo de entidades
+   - ✅ Controle de estoque
+   - ✅ Relatórios de vendas
+   - ✅ Gestão de pagamentos
+
+#### 📈 **Melhorias de Performance**
+
+1. **Banco de Dados**
+   - Índices otimizados
+   - Queries eficientes
+   - Migrations organizadas
+
+2. **API**
+   - Respostas otimizadas
+   - Validação eficiente
+   - Tratamento de erros robusto
+
+#### 🔄 **Fluxo Completo Implementado**
+
+1. **Criação de Pedido**
+   ```
+   Cliente → Checkout → Pagamento → Confirmação → Preparação → Entrega
+   ```
+
+2. **Status do Pedido**
+   ```
+   RECEBIDO → EM_PREPARACAO → PRONTO → FINALIZADO
+   ```
+
+3. **Pagamento**
+   ```
+   Solicitação → QR Code → Webhook → Confirmação → Atualização Status
+   ```
+
+#### 📝 **Próximos Passos**
+
+1. **Vídeo Demonstrativo**
+   - Gravar vídeo seguindo o guia em `docs/VIDEO_GUIDE.md`
+   - Upload no YouTube (público ou não listado)
+   - Atualizar link no README
+
+2. **Melhorias Opcionais**
+   - Integração real com Mercado Pago
+   - Métricas avançadas com Prometheus/Grafana
+   - CI/CD pipeline
+   - Backup automatizado
+
+---
+
 ## [2.0.0] - 2024-01-15
 
 ### ✅ Ajustes Aplicados para Atender Requisitos FASE 02
@@ -170,4 +294,4 @@
 
 ---
 
-**Versão 2.0.0 - Tech Challenge FASE 02 - Arquitetura de Software** 
+**Versão 2.1.0 - Tech Challenge FASE 02 - Arquitetura de Software** 
