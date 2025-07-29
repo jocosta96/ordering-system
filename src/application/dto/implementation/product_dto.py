@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Any
 from src.application.dto.interfaces.request_interface import RequestInterface
 from src.application.dto.interfaces.response_interface import ResponseInterface
 from src.entities.product import Product, ProductReceiptItem
@@ -27,7 +27,7 @@ class ProductCreateRequest(RequestInterface):
 class ProductUpdateRequest(RequestInterface):
     """DTO for product update request"""
 
-    id: str
+    internal_id: int
     name: str
     price: float
     category: str
@@ -36,7 +36,7 @@ class ProductUpdateRequest(RequestInterface):
 
     def to_dict(self):
         return {
-            "id": self.id,
+            "internal_id": self.internal_id,
             "name": self.name,
             "price": self.price,
             "category": self.category,
@@ -48,7 +48,7 @@ class ProductUpdateRequest(RequestInterface):
 class ProductResponse(ResponseInterface):
     """DTO for product response"""
 
-    id: str
+    internal_id: int
     name: str
     price: float
     category: str
@@ -58,7 +58,7 @@ class ProductResponse(ResponseInterface):
 
     def to_dict(self):
         return {
-            "id": self.id,
+            "internal_id": self.internal_id,
             "name": self.name,
             "price": self.price,
             "category": self.category,
@@ -74,13 +74,13 @@ class ProductResponse(ResponseInterface):
         default_ingredients = []
         for item in entity.default_ingredient:
             default_ingredients.append({
-                "ingredient_id": item.ingredient.id,
+                "ingredient_internal_id": item.ingredient.internal_id,
                 "ingredient_name": item.ingredient.name.value,
                 "quantity": item.quantity
             })
         
         return cls(
-            id=str(entity.id),  # Convert UUID to string
+            internal_id=entity.internal_id,
             name=entity.name.value,
             price=float(entity.price.amount),
             category=entity.category.value,

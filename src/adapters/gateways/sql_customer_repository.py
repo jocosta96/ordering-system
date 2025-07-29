@@ -1,9 +1,9 @@
 from typing import List, Optional
-import uuid
-from sqlalchemy import Column, Integer, String, Boolean, Index, DateTime
-from sqlalchemy.ext.declarative import declarative_base
+
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from datetime import datetime
 
+from src.adapters.gateways.shared_base import Base
 from src.application.repositories.customer_repository import CustomerRepository
 from src.entities.customer import Customer
 from src.entities.value_objects.email import Email
@@ -12,17 +12,12 @@ from src.entities.value_objects.document import Document
 from src.adapters.gateways.interfaces.database_interface import DatabaseInterface
 
 
-# SQLAlchemy model
-Base = declarative_base()
-
-
 class CustomerModel(Base):
     """SQLAlchemy model for Customer table"""
 
     __tablename__ = "customers"
 
     internal_id = Column(Integer, primary_key=True, autoincrement=True)
-    id = Column(String(36), nullable=False, unique=True, index=True)  # UUID as string
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(255), nullable=True, unique=True)
@@ -30,10 +25,6 @@ class CustomerModel(Base):
     is_anonymous = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.now)
-
-    __table_args__ = (
-        Index('idx_customer_id', 'id'),
-    )
 
 
 class SQLCustomerRepository(CustomerRepository):
@@ -49,8 +40,6 @@ class SQLCustomerRepository(CustomerRepository):
 
     def __init__(self, database: DatabaseInterface):
         self.database = database
-        # Create tables
-        self.database.create_tables(Base)
 
     def _get_session(self):
         """Get database session"""
@@ -58,7 +47,6 @@ class SQLCustomerRepository(CustomerRepository):
 
     def _to_entity(self, model: CustomerModel) -> Customer:
         """Convert database model to domain entity"""
-        import uuid
         # Create customer without triggering validation since data comes from database
         customer = Customer.__new__(Customer)
         customer.first_name = Name.create(model.first_name)
@@ -67,7 +55,6 @@ class SQLCustomerRepository(CustomerRepository):
         customer.document = Document.create(model.document or "")
         customer.is_active = model.is_active
         customer.is_anonymous = model.is_anonymous
-        customer.id = uuid.UUID(model.id) if model.id else None
         customer.internal_id = model.internal_id
         customer.created_at = model.created_at
         return customer
@@ -75,7 +62,6 @@ class SQLCustomerRepository(CustomerRepository):
     def _to_model(self, customer: Customer) -> CustomerModel:
         """Convert domain entity to database model"""
         return CustomerModel(
-            id=str(customer.id) if customer.id else None,
             internal_id=customer.internal_id,
             first_name=customer.first_name.value,
             last_name=customer.last_name.value,
@@ -92,10 +78,10 @@ class SQLCustomerRepository(CustomerRepository):
         """Save a customer and return the saved customer with ID"""
         session = self._get_session()
         try:
-            if customer.id:
+            if customer.internal_id:
                 # Try to find existing customer for update
                 db_customer = self.database.find_by_field(
-                    session, CustomerModel, "id", str(customer.id)
+                    session, CustomerModel, "internal_id", customer.internal_id
                 )
                 if db_customer:
                     # Update existing customer
@@ -113,11 +99,11 @@ class SQLCustomerRepository(CustomerRepository):
 
                     self.database.update(session, db_customer)
                 else:
-                    # Customer has ID but doesn't exist in DB, treat as new customer
+                    # Customer has internal_id but doesn't exist in DB, treat as new customer
                     db_customer = self._to_model(customer)
                     self.database.add(session, db_customer)
             else:
-                # Create new customer without ID
+                # Create new customer without internal_id
                 db_customer = self._to_model(customer)
                 self.database.add(session, db_customer)
 
@@ -129,11 +115,11 @@ class SQLCustomerRepository(CustomerRepository):
         finally:
             self.database.close_session(session)
 
-    def find_by_id(self, customer_id: uuid.UUID, include_inactive: bool = False) -> Optional[Customer]:
+    def find_by_id(self, customer_internal_id: int, include_inactive: bool = False) -> Optional[Customer]:
         """Find a customer by ID"""
         session = self._get_session()
         try:
-            db_customer = self.database.find_by_field(session, CustomerModel, "id", str(customer_id))
+            db_customer = self.database.find_by_field(session, CustomerModel, "internal_id", customer_internal_id)
             if not db_customer:
                 return None
             
@@ -189,16 +175,16 @@ class SQLCustomerRepository(CustomerRepository):
                 db_customers = self.database.find_all(session, CustomerModel)
             else:
                 # Filter only active customers
-                db_customers = self.database.find_by_field(session, CustomerModel, "is_active", True)
+                db_customers = self.database.find_all_by_field(session, CustomerModel, "is_active", True)
             return [self._to_entity(customer) for customer in db_customers]
         finally:
             self.database.close_session(session)
 
-    def delete(self, customer_id: uuid.UUID) -> bool:
+    def delete(self, customer_internal_id: int) -> bool:
         """Soft delete a customer by ID using the entity's business rule, return True if deleted"""
         session = self._get_session()
         try:
-            db_customer = self.database.find_by_field(session, CustomerModel, "id", str(customer_id))
+            db_customer = self.database.find_by_field(session, CustomerModel, "internal_id", customer_internal_id)
             if not db_customer:
                 return False
 
@@ -234,7 +220,7 @@ class SQLCustomerRepository(CustomerRepository):
 
             if not db_customer:
                 # Create anonymous customer if it doesn't exist
-                anonymous_customer = Customer.create_anonymous()  # UUID will be auto-generated
+                anonymous_customer = Customer.create_anonymous()
                 db_customer = self._to_model(anonymous_customer)
                 self.database.add(session, db_customer)
                 self.database.commit(session)

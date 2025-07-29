@@ -16,7 +16,7 @@ def raise_not_authorized():
 
 def check_credentials(
     credentials: Annotated[HTTPBasicCredentials, Depends(security)]
-):
+) -> str:
     current_username_bytes = credentials.username.encode("utf8")
     correct_username_bytes = os.environ['API_USER'].encode("utf8")
     is_correct_username = secrets.compare_digest(
@@ -30,4 +30,23 @@ def check_credentials(
     if not (is_correct_username and is_correct_password):
         raise_not_authorized()
 
-    return True
+    return credentials.username
+
+def get_current_user(
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)]
+) -> str:
+    """Get current user from credentials after validation"""
+    current_username_bytes = credentials.username.encode("utf8")
+    correct_username_bytes = os.environ['API_USER'].encode("utf8")
+    is_correct_username = secrets.compare_digest(
+        current_username_bytes, correct_username_bytes
+    )
+    current_password_bytes = credentials.password.encode("utf8")
+    correct_password_bytes = os.environ['API_PWD'].encode("utf8")
+    is_correct_password = secrets.compare_digest(
+        current_password_bytes, correct_password_bytes
+    )
+    if not (is_correct_username and is_correct_password):
+        raise_not_authorized()
+
+    return credentials.username

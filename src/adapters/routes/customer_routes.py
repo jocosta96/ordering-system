@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from typing_extensions import Annotated
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 from typing import Optional
-import uuid
+
 
 from src.adapters.controllers.customer_controller import CustomerController
 from src.security.http_auth import check_credentials
@@ -17,7 +17,7 @@ class CustomerCreateModel(BaseModel):
 
 
 class CustomerUpdateModel(BaseModel):
-    id: int
+    internal_id: int
     first_name: str
     last_name: str
     email: str
@@ -25,7 +25,7 @@ class CustomerUpdateModel(BaseModel):
 
 
 class CustomerResponseModel(BaseModel):
-    id: Optional[str]
+    internal_id: Optional[int]
     first_name: str
     last_name: str
     email: str
@@ -43,23 +43,7 @@ class CustomerListResponseModel(BaseModel):
     timestamp: str
 
 
-# UUID validation function
-def validate_uuid(customer_id: str) -> str:
-    """Validate that customer_id is a valid UUID format"""
-    try:
-        uuid.UUID(customer_id)
-        return customer_id
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": {
-                    "message": f"Invalid customer ID format: '{customer_id}'. Customer ID must be a valid UUID (e.g., '550e8400-e29b-41d4-a716-446655440000').",
-                    "type": "CustomerValidationException",
-                    "status_code": 400
-                }
-            }
-        )
+
 
 
 # Dependency injection function
@@ -95,14 +79,12 @@ def list_customers(
 
 @customer_router.get("/by-id/{customer_id}", response_model=CustomerResponseModel)
 def get_customer(
-    customer_id: str,
+    customer_id: int,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[CustomerController, Depends(get_customer_controller)],
     include_inactive: bool = False,
 ):
     """Get customer by ID endpoint"""
-    # Validate UUID format before passing to controller
-    validate_uuid(customer_id)
     return controller.get_customer(customer_id, login, include_inactive=include_inactive)
 
 
@@ -128,11 +110,9 @@ def update_customer(
 
 @customer_router.delete("/delete/{customer_id}")
 def delete_customer(
-    customer_id: str,
+    customer_id: int,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[CustomerController, Depends(get_customer_controller)],
 ):
     """Delete customer endpoint"""
-    # Validate UUID format before passing to controller
-    validate_uuid(customer_id)
     return controller.delete_customer(customer_id, login)

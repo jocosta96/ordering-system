@@ -48,6 +48,9 @@ class AppConfig:
         self.max_name_length = int(os.getenv("MAX_NAME_LENGTH", "50"))
         self.min_name_length = int(os.getenv("MIN_NAME_LENGTH", "1"))
 
+        # Webhook Configuration
+        self.webhook_url = os.getenv("WEBHOOK_URL", "http://localhost:8000")
+
     @property
     def cors_config(self) -> dict:
         """Get CORS configuration dictionary"""

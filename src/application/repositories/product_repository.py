@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from src.entities.product import Product, ProductCategory
 from src.entities.value_objects.sku import SKU
-import uuid
 
 class ProductRepository(ABC):
     """
@@ -15,8 +14,8 @@ class ProductRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, product_id: uuid.UUID, include_inactive: bool = False) -> Optional[Product]:
-        """Find a product by ID"""
+    def find_by_id(self, product_internal_id: int, include_inactive: bool = False) -> Optional[Product]:
+        """Find a product by internal ID"""
         pass
 
     @abstractmethod
@@ -30,7 +29,7 @@ class ProductRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, product_id: uuid.UUID) -> bool:
+    def delete(self, product_internal_id: int) -> bool:
         """Soft delete a product by ID (set is_active to False), return True if deleted"""
         pass
 
@@ -40,8 +39,8 @@ class ProductRepository(ABC):
         pass
 
     @abstractmethod
-    def exists_by_id(self, product_id: uuid.UUID, include_inactive: bool = False) -> bool:
-        """Check if a product exists by ID"""
+    def exists_by_id(self, product_internal_id: int, include_inactive: bool = False) -> bool:
+        """Check if a product exists by internal ID"""
         pass
 
     @abstractmethod

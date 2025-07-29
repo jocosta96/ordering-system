@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-import uuid
 from src.entities.customer import Customer
 
 
@@ -21,8 +20,8 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, customer_id: uuid.UUID, include_inactive: bool = False) -> Optional[Customer]:
-        """Find a customer by ID"""
+    def find_by_id(self, customer_internal_id: int, include_inactive: bool = False) -> Optional[Customer]:
+        """Find a customer by internal ID"""
         pass
 
     @abstractmethod
@@ -41,8 +40,8 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, customer_id: uuid.UUID) -> bool:
-        """Soft delete a customer by ID (set is_active to False), return True if deleted"""
+    def delete(self, customer_internal_id: int) -> bool:
+        """Soft delete a customer by internal ID (set is_active to False), return True if deleted"""
         pass
 
     @abstractmethod

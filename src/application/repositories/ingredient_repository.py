@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-import uuid
+
 from src.entities.ingredient import Ingredient, IngredientType
 from src.entities.product import ProductCategory
 
@@ -22,7 +22,7 @@ class IngredientRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, ingredient_id: uuid.UUID, include_inactive: bool = False) -> Optional[Ingredient]:
+    def find_by_id(self, ingredient_internal_id: int, include_inactive: bool = False) -> Optional[Ingredient]:
         """Find a ingredient by ID"""
         pass
 
@@ -51,7 +51,7 @@ class IngredientRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, ingredient_id: uuid.UUID) -> bool:
+    def delete(self, ingredient_internal_id: int) -> bool:
         """Soft delete a ingredient by ID (set is_active to False), return True if deleted"""
         pass
 

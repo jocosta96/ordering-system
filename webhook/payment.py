@@ -15,7 +15,7 @@ class MercadoPagoNotification(BaseModel):
     transaction_id: Optional[str] = None
     approval_status: Optional[bool] = None
     message: Optional[str] = None
-    order_id: str
+    order_id: int
 
 
 @webhook.get("/health")
@@ -38,7 +38,9 @@ async def mercadopago_webhook(notification: MercadoPagoNotification):
 async def process_payment_async(notification: MercadoPagoNotification):
     """Process payment asynchronously"""
     
-    url = f"http://127.0.0.1:8080/order/pay/{notification.order_id}"
+    # Get API URL from environment variable or use default
+    api_url = os.getenv("API_URL", "http://127.0.0.1:8080")
+    url = f"{api_url}/order/payment_confirm/{notification.order_id}"
     username = os.environ["API_USER"]
     password = os.environ["API_PWD"]
     credentials = f"{username}:{password}"
@@ -58,16 +60,20 @@ async def process_payment_async(notification: MercadoPagoNotification):
                 payment_date = datetime.now()
         
         payment_data = {
-            "date": payment_date.isoformat() if payment_date else None,
-            "transaction_id": notification.transaction_id,
-            "approval_status": notification.approval_status,
-            "message": notification.message,
-            "order_id": notification.order_id
+            "date": payment_date.isoformat() if payment_date else datetime.now().isoformat(),
+            "transaction_id": notification.transaction_id or "TXN_" + str(notification.order_id),
+            "approval_status": notification.approval_status if notification.approval_status is not None else True,
+            "message": notification.message or "Payment processed"
         }
 
+        print(f"Sending payment data: {payment_data}")
+        print(f"Notification data: {notification.dict()}")
+
         async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.patch(url, json=payment_data, headers=headers)
+            response = await client.post(url, json=payment_data, headers=headers)
             print(f"Payment processing completed. Status: {response.status_code}")
+            if response.status_code != 200:
+                print(f"Response content: {response.text}")
             response.raise_for_status()
             
     except Exception as e:

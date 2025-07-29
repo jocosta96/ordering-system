@@ -24,7 +24,7 @@ from src.application.exceptions import (
     AuthenticationException,
 )
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
-import uuid
+
 
 
 class ProductController:
@@ -62,19 +62,13 @@ class ProductController:
                 status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
             )
 
-    def get_product(self, product_id: str, login: str, include_inactive: bool = False) -> dict:
+    def get_product(self, product_internal_id: int, login: str, include_inactive: bool = False) -> dict:
         """Get product by ID endpoint"""
         self._check_authentication(login)
 
         try:
-            product_uuid = uuid.UUID(product_id)
-            product = self.read_use_case.execute(product_uuid, include_inactive=include_inactive)
+            product = self.read_use_case.execute(product_internal_id, include_inactive=include_inactive)
             return self.presenter.present(product)
-        except ValueError:
-            error_response = self.presenter.present_error(
-                ProductValidationException("Invalid product ID format. Product ID must be a valid UUID.")
-            )
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
         except ProductNotFoundException as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
@@ -89,7 +83,7 @@ class ProductController:
             raw_ingredients = product_data.get("default_ingredient", [])
             
             for ingredient_data in raw_ingredients:
-                ingredient_id = ingredient_data.get("ingredient_id")
+                ingredient_id = ingredient_data.get("ingredient_internal_id")
                 quantity = ingredient_data.get("quantity", 1)
                 
                 if ingredient_id:
@@ -138,7 +132,7 @@ class ProductController:
             raw_ingredients = product_data.get("default_ingredient", [])
             
             for ingredient_data in raw_ingredients:
-                ingredient_id = ingredient_data.get("ingredient_id")
+                ingredient_id = ingredient_data.get("ingredient_internal_id")
                 quantity = ingredient_data.get("quantity", 1)
                 
                 if ingredient_id:
@@ -159,7 +153,7 @@ class ProductController:
                     raise ProductValidationException("Ingredient ID is required for each default ingredient")
             
             request = ProductUpdateRequest(
-                id=product_data.get("id"),
+                internal_id=product_data.get("internal_id"),
                 name=product_data.get("name", ""),
                 price=product_data.get("price", ""),
                 category=product_data.get("category", ""),
@@ -179,21 +173,15 @@ class ProductController:
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
 
-    def delete_product(self, product_id: str, login: str) -> dict:
+    def delete_product(self, product_internal_id: int, login: str) -> dict:
         """Delete product endpoint"""
         self._check_authentication(login)
 
         try:
-            product_uuid = uuid.UUID(product_id)
-            success = self.delete_use_case.execute(product_uuid)
+            success = self.delete_use_case.execute(product_internal_id)
             return self.presenter.present(
                 {"success": success, "message": "Product soft deleted successfully"}
             )
-        except ValueError:
-            error_response = self.presenter.present_error(
-                ProductValidationException("Invalid product ID format. Product ID must be a valid UUID.")
-            )
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
         except (ProductNotFoundException, ProductBusinessRuleException) as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)

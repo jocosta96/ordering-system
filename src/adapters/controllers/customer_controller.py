@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from http import HTTPStatus
-import uuid
+
 import logging
 
 from src.application.use_cases.customer_use_cases import (
@@ -64,7 +64,7 @@ class CustomerController:
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
 
-    def get_customer(self, customer_id: str, login: str, include_inactive: bool = False) -> dict:
+    def get_customer(self, customer_internal_id: int, login: str, include_inactive: bool = False) -> dict:
         """Get customer by ID endpoint"""
         if not login:
             error_response = self.presenter.present_error(
@@ -75,18 +75,16 @@ class CustomerController:
             )
 
         try:
-            self.logger.info(f"Attempting to get customer with ID: {customer_id}")
-            # UUID validation is now handled at the route level
-            customer_uuid = uuid.UUID(customer_id)
-            customer = self.read_use_case.execute(customer_uuid, include_inactive=include_inactive)
-            self.logger.info(f"Successfully retrieved customer: {customer.id}")
+            self.logger.info(f"Attempting to get customer with internal_id: {customer_internal_id}")
+            customer = self.read_use_case.execute(customer_internal_id, include_inactive=include_inactive)
+            self.logger.info(f"Successfully retrieved customer: {customer.internal_id}")
             return self.presenter.present(customer)
         except CustomerNotFoundException as e:
-            self.logger.warning(f"Customer not found with ID: {customer_id}")
+            self.logger.warning(f"Customer not found with internal_id: {customer_internal_id}")
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
         except Exception as e:
-            self.logger.error(f"Unexpected error getting customer {customer_id}: {e}")
+            self.logger.error(f"Unexpected error getting customer {customer_internal_id}: {e}")
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_response)
 
@@ -131,7 +129,7 @@ class CustomerController:
 
         try:
             request = CustomerUpdateRequest(
-                id=customer_data.get("id"),
+                internal_id=customer_data.get("internal_id"),
                 first_name=customer_data.get("first_name", ""),
                 last_name=customer_data.get("last_name", ""),
                 email=customer_data.get("email", ""),
@@ -169,7 +167,7 @@ class CustomerController:
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
 
-    def delete_customer(self, customer_id: str, login: str) -> dict:
+    def delete_customer(self, customer_internal_id: int, login: str) -> dict:
         """Delete customer endpoint"""
         if not login:
             error_response = self.presenter.present_error(
@@ -180,19 +178,17 @@ class CustomerController:
             )
 
         try:
-            self.logger.info(f"Attempting to delete customer with ID: {customer_id}")
-            # UUID validation is now handled at the route level
-            customer_uuid = uuid.UUID(customer_id)
-            success = self.delete_use_case.execute(customer_uuid)
-            self.logger.info(f"Successfully deleted customer: {customer_id}")
+            self.logger.info(f"Attempting to delete customer with internal_id: {customer_internal_id}")
+            success = self.delete_use_case.execute(customer_internal_id)
+            self.logger.info(f"Successfully deleted customer: {customer_internal_id}")
             return self.presenter.present(
                 {"success": success, "message": "Customer soft deleted successfully - data replaced with placeholder values"}
             )
         except (CustomerNotFoundException, CustomerBusinessRuleException) as e:
-            self.logger.warning(f"Customer deletion failed for ID: {customer_id}, error: {e}")
+            self.logger.warning(f"Customer deletion failed for internal_id: {customer_internal_id}, error: {e}")
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
         except Exception as e:
-            self.logger.error(f"Unexpected error deleting customer {customer_id}: {e}")
+            self.logger.error(f"Unexpected error deleting customer {customer_internal_id}: {e}")
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_response)

@@ -47,6 +47,8 @@ spec:
                 secretKeyRef:
                   name: sec-app
                   key: API_USER
+            - name: API_URL
+              value: "http://svc-app-nodeport:80"
           resources:
             requests:
               memory: "128Mi"

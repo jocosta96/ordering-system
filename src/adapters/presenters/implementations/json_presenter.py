@@ -3,6 +3,7 @@ from typing import Any
 from http import HTTPStatus
 
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
+from src.application.dto.interfaces.response_interface import ResponseInterface
 from src.application.exceptions import (
     CustomerValidationException,
     CustomerNotFoundException,
@@ -19,6 +20,7 @@ from src.application.exceptions import (
     AuthenticationException,
     AuthorizationException,
 )
+
 
 
 class JSONPresenter(PresenterInterface):
@@ -119,7 +121,11 @@ class JSONPresenter(PresenterInterface):
     def _present_generic(self, data: Any) -> dict:
         """Present generic data in JSON format"""
         if hasattr(data, "to_dict"):
-            return data.to_dict()
+            result = data.to_dict()
+            # Add timestamp to ResponseInterface DTOs
+            if isinstance(data, ResponseInterface):
+                result["timestamp"] = self._get_timestamp()
+            return result
         elif hasattr(data, "__dict__"):
             return data.__dict__
         else:
@@ -128,3 +134,5 @@ class JSONPresenter(PresenterInterface):
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format"""
         return datetime.utcnow().isoformat() + "Z"
+
+

@@ -72,7 +72,7 @@ class SQLAlchemyDatabase(DatabaseInterface):
         """Find an entity by ID"""
         try:
             return (
-                session.query(entity_class).filter(entity_class.id == entity_id).first()
+                session.query(entity_class).filter(entity_class.internal_id == entity_id).first()
             )
         except SQLAlchemyError as e:
             raise ValueError(f"Error finding entity by ID: {e}")
@@ -172,9 +172,4 @@ class SQLAlchemyDatabase(DatabaseInterface):
         except SQLAlchemyError as e:
             raise ValueError(f"Error closing session: {e}")
 
-    def create_tables(self, base_class) -> None:
-        """Create all tables for the given base class"""
-        try:
-            base_class.metadata.create_all(bind=self.engine)
-        except SQLAlchemyError as e:
-            raise ValueError(f"Error creating tables: {e}")
+

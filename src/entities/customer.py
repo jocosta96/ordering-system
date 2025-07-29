@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Optional
-import uuid
 from datetime import datetime
 from .value_objects.document import Document
 from .value_objects.email import Email
@@ -25,7 +24,6 @@ class Customer:
     document: Document
     is_active: bool
     is_anonymous: bool
-    id: Optional[uuid.UUID] = None
     internal_id: Optional[int] = None
     created_at: Optional[datetime] = None
 
@@ -59,7 +57,7 @@ class Customer:
             raise ValueError("Cannot soft delete inactive customer")
         
         # Business rule: Cannot soft delete customer without ID
-        if not self.id:
+        if not self.internal_id:
             raise ValueError("Cannot soft delete customer without ID")
             
         # Business rule: Cannot delete active anonymous customers
@@ -76,7 +74,7 @@ class Customer:
         self.document = Document.create("")
         
         # Business rule: Soft-deleted customers get unique email but remain registered
-        self.email = Email.create(f"deleted.{self.id}@fastfood.local")
+        self.email = Email.create(f"deleted.{self.internal_id}@fastfood.local")
         # Keep is_anonymous as False - soft-deleted customers remain registered
 
     @property
@@ -109,13 +107,13 @@ class Customer:
         return self.full_name
 
     def __str__(self) -> str:
-        return f"Customer(id={self.id}, name='{self.full_name}', email='{self.email}', is_active={self.is_active})"
+        return f"Customer(internal_id={self.internal_id}, name='{self.full_name}', email='{self.email}', is_active={self.is_active})"
 
     def __repr__(self) -> str:
-        return f"Customer(id={self.id}, first_name={self.first_name}, last_name={self.last_name}, email={self.email}, document={self.document}, is_active={self.is_active})"
+        return f"Customer(internal_id={self.internal_id}, first_name={self.first_name}, last_name={self.last_name}, email={self.email}, document={self.document}, is_active={self.is_active})"
 
     @classmethod
-    def create_anonymous(cls, customer_id: Optional[uuid.UUID] = None, internal_id: Optional[int] = None) -> "Customer":
+    def create_anonymous(cls, internal_id: Optional[int] = None) -> "Customer":
         """Factory method to create an anonymous customer"""
         from src.config.app_config import app_config
 
@@ -126,7 +124,6 @@ class Customer:
             document=Document.create(""),
             is_active=True,
             is_anonymous=True,
-            id=customer_id if customer_id else uuid.uuid4(),
             internal_id=internal_id,
         )
 
@@ -137,7 +134,7 @@ class Customer:
         last_name: str,
         email: str,
         document: str,
-        customer_id: Optional[uuid.UUID] = None,
+
         internal_id: Optional[int] = None,
         is_active: bool = True,
         created_at: Optional[datetime] = None,
@@ -150,7 +147,6 @@ class Customer:
             document=Document.create(document),
             is_active=is_active,
             is_anonymous=False,
-            id=customer_id if customer_id else uuid.uuid4(),
             internal_id=internal_id,
             created_at=created_at,
         )

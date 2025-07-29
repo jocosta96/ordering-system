@@ -102,7 +102,7 @@ def sample_customer() -> Customer:
         last_name="Doe",
         email="john.doe@example.com",
         document="52998224725",  # Valid Brazilian CPF
-        customer_id=None,  # UUID will be auto-generated
+        internal_id=None,  # internal_id will be auto-generated
     )
 
 
@@ -121,14 +121,14 @@ def sample_customers() -> list[Customer]:
             last_name="Doe",
             email="john.doe@example.com",
             document="52998224725",  # Valid Brazilian CPF
-            customer_id=None,  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         ),
         Customer.create_registered(
             first_name="Jane",
             last_name="Smith",
             email="jane.smith@example.com",
             document="12345678909",  # Valid Brazilian CPF
-            customer_id=None,  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         ),
         Customer.create_anonymous(),
     ]
@@ -146,7 +146,7 @@ def sample_ingredient() -> Ingredient:
         applies_to_side=False,
         applies_to_drink=False,
         applies_to_dessert=False,
-        ingredient_id=None,  # UUID will be auto-generated
+        internal_id=None,  # internal_id will be auto-generated
     )
 
 
@@ -163,7 +163,7 @@ def sample_ingredients() -> list[Ingredient]:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=None,  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         ),
         Ingredient.create(
             name="Lettuce",
@@ -174,7 +174,7 @@ def sample_ingredients() -> list[Ingredient]:
             applies_to_side=True,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=None,  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         ),
         Ingredient.create(
             name="Cheese",
@@ -185,7 +185,7 @@ def sample_ingredients() -> list[Ingredient]:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=None,  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         ),
     ]
 
@@ -232,7 +232,7 @@ def sample_product() -> Product:
         applies_to_side=False,
         applies_to_drink=False,
         applies_to_dessert=False,
-        ingredient_id=None  # UUID will be auto-generated
+        internal_id=1  # Set for testing purposes
     )
     
     return Product.create(
@@ -242,7 +242,7 @@ def sample_product() -> Product:
         sku=SKU.create("TEST-2024-ABC"),
         default_ingredient=[ProductReceiptItem(ingredient, 1)],
         is_active=True,
-        product_id=None  # UUID will be auto-generated
+        internal_id=None  # internal_id will be auto-generated
     )
 
 
@@ -259,7 +259,7 @@ def sample_products() -> list[Product]:
         applies_to_side=False,
         applies_to_drink=False,
         applies_to_dessert=False,
-        ingredient_id=None  # UUID will be auto-generated
+        internal_id=None  # internal_id will be auto-generated
     )
     
     side_ingredient = Ingredient.create(
@@ -271,7 +271,7 @@ def sample_products() -> list[Product]:
         applies_to_side=True,
         applies_to_drink=False,
         applies_to_dessert=False,
-        ingredient_id=None  # UUID will be auto-generated
+        internal_id=None  # internal_id will be auto-generated
     )
     
     drink_ingredient = Ingredient.create(
@@ -283,7 +283,7 @@ def sample_products() -> list[Product]:
         applies_to_side=False,
         applies_to_drink=True,
         applies_to_dessert=False,
-        ingredient_id=None  # UUID will be auto-generated
+        internal_id=None  # internal_id will be auto-generated
     )
     
     dessert_ingredient = Ingredient.create(
@@ -295,7 +295,7 @@ def sample_products() -> list[Product]:
         applies_to_side=False,
         applies_to_drink=False,
         applies_to_dessert=True,
-        ingredient_id=None  # UUID will be auto-generated
+        internal_id=None  # internal_id will be auto-generated
     )
     
     return [
@@ -306,7 +306,7 @@ def sample_products() -> list[Product]:
             sku=SKU.create("BURG-2024-CLS"),
             default_ingredient=[ProductReceiptItem(burger_ingredient, 1)],
             is_active=True,
-            product_id=None  # UUID will be auto-generated
+            internal_id=None  # internal_id will be auto-generated
         ),
         Product.create(
             name="Fresh Salad",
@@ -315,7 +315,7 @@ def sample_products() -> list[Product]:
             sku=SKU.create("SIDE-2024-SAL"),
             default_ingredient=[ProductReceiptItem(side_ingredient, 1)],
             is_active=True,
-            product_id=None  # UUID will be auto-generated
+            internal_id=None  # internal_id will be auto-generated
         ),
         Product.create(
             name="Milk Shake",
@@ -324,7 +324,7 @@ def sample_products() -> list[Product]:
             sku=SKU.create("DRNK-2024-MLK"),
             default_ingredient=[ProductReceiptItem(drink_ingredient, 1)],
             is_active=True,
-            product_id=None  # UUID will be auto-generated
+            internal_id=None  # internal_id will be auto-generated
         ),
         Product.create(
             name="Ice Cream Sundae",
@@ -333,7 +333,7 @@ def sample_products() -> list[Product]:
             sku=SKU.create("DSSR-2024-ICE"),
             default_ingredient=[ProductReceiptItem(dessert_ingredient, 1)],
             is_active=True,
-            product_id=None  # UUID will be auto-generated
+            internal_id=None  # internal_id will be auto-generated
         )
     ]
 

@@ -4,19 +4,13 @@ from src.entities.product import Product, ProductCategory, ProductReceiptItem
 from src.entities.value_objects.sku import SKU
 from src.entities.value_objects.name import Name
 from src.entities.value_objects.money import Money
-from src.entities.ingredient import Ingredient, IngredientType
-import uuid
-from sqlalchemy.orm import declarative_base
+
+from src.adapters.gateways.shared_base import Base
 from src.adapters.gateways.interfaces.database_interface import DatabaseInterface
 from sqlalchemy import Column, String, Float, Boolean, DateTime, Integer, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-import json
-
-
-# SQLAlchemy model
-Base = declarative_base()
+from typing import List, Optional
 
 class ProductModel(Base):
     """SQLAlchemy model for Product table"""
@@ -24,7 +18,6 @@ class ProductModel(Base):
     __tablename__ = "products"
 
     internal_id = Column(Integer, primary_key=True, autoincrement=True)
-    id = Column(String(36), nullable=False, unique=True, index=True)  # UUID as string
     name = Column(String(255), nullable=False)
     price = Column(Float, nullable=False)
     category = Column(String(255), nullable=False)
@@ -34,7 +27,6 @@ class ProductModel(Base):
     created_at = Column(DateTime, default=datetime.now)
 
     __table_args__ = (
-        Index('idx_product_id', 'id'),
         Index('idx_product_sku', 'sku'),
     )
 
@@ -53,8 +45,6 @@ class SQLProductRepository(ProductRepository):
     def __init__(self, database: DatabaseInterface, ingredient_repository: Optional[IngredientRepository] = None):
         self.database = database
         self.ingredient_repository = ingredient_repository
-        # Create tables
-        self.database.create_tables(Base)
 
     def _get_session(self):
         """Get a SQLAlchemy session"""
@@ -79,24 +69,29 @@ class SQLProductRepository(ProductRepository):
             if model.default_ingredient:
                 for item_data in model.default_ingredient:
                     if isinstance(item_data, dict):
-                        ingredient_id = item_data.get('ingredient_id')
+                        # Handle both old format (ingredient_id) and new format (ingredient_internal_id)
+                        ingredient_internal_id = item_data.get('ingredient_internal_id')
+                        ingredient_id = item_data.get('ingredient_id')  # Backward compatibility
                         quantity = item_data.get('quantity', 1)
                         
-                        if ingredient_id and self.ingredient_repository:
-                            # Convert string ingredient_id back to UUID for repository lookup
-                            try:
-                                ingredient_uuid = uuid.UUID(ingredient_id)
-                                ingredient = self.ingredient_repository.find_by_id(ingredient_uuid)
-                            except ValueError:
-                                print(f"Warning: Invalid ingredient ID format: {ingredient_id}")
-                                ingredient = None
-                            if ingredient:
-                                default_ingredients.append(ProductReceiptItem(ingredient, quantity))
-                            else:
-                                # Log warning about missing ingredient but continue
-                                print(f"Warning: Ingredient with ID {ingredient_id} not found")
+                        ingredient = None
+                        if self.ingredient_repository:
+                            if ingredient_internal_id:
+                                # New format: use internal_id to find ingredient directly
+                                # Include inactive ingredients when loading products to preserve historical data
+                                try:
+                                    ingredient = self.ingredient_repository.find_by_id(ingredient_internal_id, include_inactive=True)
+                                except ValueError:
+                                    print(f"Warning: Ingredient with internal_id {ingredient_internal_id} not found")
+                            elif ingredient_id:
+                                # Skip old UUID format - no longer supported
+                                print(f"Warning: Skipping old UUID format ingredient: {ingredient_id}")
+                                continue
+                                    
+                        if ingredient:
+                            default_ingredients.append(ProductReceiptItem(ingredient, quantity))
                         else:
-                            # If no ingredient repository or no ingredient_id, skip this item
+                            # Log warning about missing ingredient but continue
                             print(f"Warning: Cannot fetch ingredient for item {item_data}")
             
             # Check if we have any valid ingredients
@@ -104,7 +99,6 @@ class SQLProductRepository(ProductRepository):
                 raise ValueError("Product must have a default ingredient")
 
             return Product(
-                id=uuid.UUID(model.id) if model.id else None,
                 internal_id=model.internal_id,
                 name=Name.create(model.name),
                 price=Money(amount=model.price),
@@ -130,17 +124,19 @@ class SQLProductRepository(ProductRepository):
             ValueError: If conversion fails
         """
         try:
-            # Convert default_ingredient to JSONB format with only ingredient IDs
+            # Convert default_ingredient to JSONB format with ingredient internal_ids
             default_ingredients_json = []
             for item in product.default_ingredient:
-                if item.ingredient and item.ingredient.id:
+                if item.ingredient and item.ingredient.internal_id:
+                    # Use ingredient internal_id directly
                     default_ingredients_json.append({
-                        'ingredient_id': str(item.ingredient.id),  # Convert UUID to string for JSON serialization
+                        'ingredient_internal_id': item.ingredient.internal_id,
                         'quantity': item.quantity
                     })
+                else:
+                    print("Warning: Ingredient missing internal_id during serialization")
 
             return ProductModel(
-                id=str(product.id) if product.id else None,
                 internal_id=product.internal_id,
                 name=product.name.value,
                 price=product.price.amount,
@@ -167,10 +163,10 @@ class SQLProductRepository(ProductRepository):
         """
         session = self._get_session()
         try:
-            if product.id:
+            if product.internal_id:
                 # Check if product exists in database
                 db_product = self.database.find_by_field(
-                    session, ProductModel, "id", str(product.id)
+                    session, ProductModel, "internal_id", product.internal_id
                 )
                 if db_product:
                     # Update existing product
@@ -199,7 +195,7 @@ class SQLProductRepository(ProductRepository):
         finally:
             self.database.close_session(session)
 
-    def find_by_id(self, product_id: uuid.UUID, include_inactive: bool = False) -> Optional[Product]:
+    def find_by_id(self, product_internal_id: int, include_inactive: bool = False) -> Optional[Product]:
         """
         Find a product by ID.
         
@@ -212,7 +208,7 @@ class SQLProductRepository(ProductRepository):
         """
         session = self._get_session()
         try:
-            db_product = self.database.find_by_field(session, ProductModel, "id", str(product_id))
+            db_product = self.database.find_by_field(session, ProductModel, "internal_id", product_internal_id)
             if not db_product:
                 return None
                 
@@ -223,7 +219,7 @@ class SQLProductRepository(ProductRepository):
             try:
                 return self._to_entity(db_product)
             except ValueError as e:
-                print(f"Warning: Product {product_id} cannot be converted - {str(e)}")
+                print(f"Warning: Product {product_internal_id} cannot be converted - {str(e)}")
                 return None
         finally:
             self.database.close_session(session)
@@ -282,13 +278,13 @@ class SQLProductRepository(ProductRepository):
                     products.append(product)
                 except ValueError as e:
                     # Log the error and skip products that can't be converted
-                    print(f"Warning: Skipping product {db_product.id} - {str(e)}")
+                    print(f"Warning: Skipping product {db_product.internal_id} - {str(e)}")
                     continue
             return products
         finally:
             self.database.close_session(session)
 
-    def delete(self, product_id: uuid.UUID) -> bool:
+    def delete(self, product_internal_id: int) -> bool:
         """
         Soft delete a product by ID (set is_active to False).
         
@@ -300,7 +296,7 @@ class SQLProductRepository(ProductRepository):
         """
         session = self._get_session()
         try:
-            db_product = self.database.find_by_field(session, ProductModel, "id", str(product_id))
+            db_product = self.database.find_by_field(session, ProductModel, "internal_id", product_internal_id)
             if not db_product:
                 return False
                 
@@ -340,7 +336,7 @@ class SQLProductRepository(ProductRepository):
         finally:
             self.database.close_session(session)
 
-    def exists_by_id(self, product_id: uuid.UUID, include_inactive: bool = False) -> bool:
+    def exists_by_id(self, product_internal_id: int, include_inactive: bool = False) -> bool:
         """
         Check if a product exists by ID.
         
@@ -353,7 +349,7 @@ class SQLProductRepository(ProductRepository):
         """
         session = self._get_session()
         try:
-            db_product = self.database.find_by_field(session, ProductModel, "id", str(product_id))
+            db_product = self.database.find_by_field(session, ProductModel, "internal_id", product_internal_id)
             if not db_product:
                 return False
                 
@@ -460,7 +456,7 @@ class SQLProductRepository(ProductRepository):
                     products.append(product)
                 except ValueError as e:
                     # Log the error and skip products that can't be converted
-                    print(f"Warning: Skipping product {db_product.id} in category {category.value} - {str(e)}")
+                    print(f"Warning: Skipping product {db_product.internal_id} in category {category.value} - {str(e)}")
                     continue
             return products
         finally:

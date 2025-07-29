@@ -25,7 +25,7 @@ class CustomerCreateRequest(RequestInterface):
 class CustomerUpdateRequest(RequestInterface):
     """DTO for customer update request"""
 
-    id: int
+    internal_id: int
     first_name: str
     last_name: str
     email: str
@@ -34,7 +34,7 @@ class CustomerUpdateRequest(RequestInterface):
     def to_dict(self):
 
         return {
-            "id": self.id,
+            "internal_id": self.internal_id,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
@@ -46,7 +46,7 @@ class CustomerUpdateRequest(RequestInterface):
 class CustomerResponse(ResponseInterface):
     """DTO for customer response"""
 
-    id: Optional[int]
+    internal_id: Optional[int]
     first_name: str
     last_name: str
     email: str
@@ -61,7 +61,7 @@ class CustomerResponse(ResponseInterface):
     def from_entity(cls, customer):
         """Create DTO from Customer entity"""
         return cls(
-            id=str(customer.id) if customer.id else None,
+            internal_id=customer.internal_id,
             first_name=customer.first_name.value,
             last_name=customer.last_name.value,
             email=customer.email.value,
@@ -75,7 +75,7 @@ class CustomerResponse(ResponseInterface):
 
     def to_dict(self):
         return {
-            "id": self.id,
+            "internal_id": self.internal_id,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
@@ -103,6 +103,7 @@ class CustomerListResponse(ResponseInterface):
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
+    @classmethod
     def from_entity(cls, entity: Any) -> "CustomerListResponse":
         """Create DTO from entity"""
         return cls(

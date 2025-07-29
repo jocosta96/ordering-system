@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing_extensions import Annotated
 from pydantic import BaseModel
+from typing import Optional
 
 from src.adapters.controllers.ingredient_controller import IngredientController
 from src.adapters.di.container import Container
@@ -22,7 +23,7 @@ class IngredientCreateModel(BaseModel):
 
 
 class IngredientUpdateModel(BaseModel):
-    id: int
+    internal_id: int
     name: str
     price: float
     is_active: bool
@@ -34,6 +35,7 @@ class IngredientUpdateModel(BaseModel):
 
 
 class IngredientResponseModel(BaseModel):
+    internal_id: Optional[int]
     name: str
     price: float
     is_active: bool
@@ -42,6 +44,16 @@ class IngredientResponseModel(BaseModel):
 
 class IngredientListResponseModel(BaseModel):
     ingredients: list[IngredientResponseModel]
+    total_count: int
+
+
+class IngredientTypeResponseModel(BaseModel):
+    value: str
+    name: str
+
+
+class IngredientTypeListResponseModel(BaseModel):
+    ingredient_types: list[IngredientTypeResponseModel]
     total_count: int
 
 
@@ -105,7 +117,7 @@ def list_ingredients_by_applies_to(
 
 @ingredient_router.get("/by-id/{ingredient_id}", response_model=IngredientResponseModel)
 def get_ingredient(
-    ingredient_id: str,
+    ingredient_id: int,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
     include_inactive: bool = False,
@@ -126,9 +138,18 @@ def update_ingredient(
 
 @ingredient_router.delete("/delete/{ingredient_id}")
 def delete_ingredient(
-    ingredient_id: str,
+    ingredient_id: int,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
 ) -> dict:
     """Delete an ingredient"""
     return controller.delete_ingredient(ingredient_id, login)
+
+
+@ingredient_router.get("/types", response_model=IngredientTypeListResponseModel)
+def list_ingredient_types(
+    login: Annotated[str, Depends(check_credentials)],
+    controller: Annotated[IngredientController, Depends(get_ingredient_controller)],
+) -> dict:
+    """List all ingredient types"""
+    return controller.list_ingredient_types(login)

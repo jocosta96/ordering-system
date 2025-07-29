@@ -33,7 +33,7 @@ class IngredientCreateRequest(RequestInterface):
 class IngredientUpdateRequest(RequestInterface):
     """DTO for ingredient update request"""
 
-    id: int
+    internal_id: int
     name: str
     price: float
     is_active: bool
@@ -45,7 +45,7 @@ class IngredientUpdateRequest(RequestInterface):
 
     def to_dict(self):
         return {
-            "id": self.id,
+            "internal_id": self.internal_id,
             "name": self.name,
             "price": self.price,
             "is_active": self.is_active,
@@ -60,7 +60,7 @@ class IngredientUpdateRequest(RequestInterface):
 class IngredientResponse(ResponseInterface):
     """DTO for ingredient response"""
 
-    id: Optional[int]
+    internal_id: Optional[int]
     name: str
     price: float
     is_active: bool
@@ -74,7 +74,7 @@ class IngredientResponse(ResponseInterface):
     def from_entity(cls, ingredient):
         """Create DTO from Ingredient entity"""
         return cls(
-            id=str(ingredient.id) if ingredient.id else None,
+            internal_id=ingredient.internal_id,
             name=ingredient.name.value,
             price=float(ingredient.price.amount),
             is_active=ingredient.is_active,
@@ -87,6 +87,7 @@ class IngredientResponse(ResponseInterface):
 
     def to_dict(self):
         return {
+            "internal_id": self.internal_id,
             "name": self.name,
             "price": self.price,
             "is_active": self.is_active,
@@ -110,6 +111,7 @@ class IngredientListResponse(ResponseInterface):
             "total_count": self.total_count,
         }
 
+    @classmethod
     def from_entity(cls, entity: Any) -> "IngredientListResponse":
         """Create DTO from entity"""
         return cls(

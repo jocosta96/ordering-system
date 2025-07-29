@@ -69,21 +69,15 @@ from src.application.dto import (
 from src.application.exceptions import (
     CustomerNotFoundException,
     CustomerAlreadyExistsException,
-    CustomerBusinessRuleException,
     IngredientNotFoundException,
     IngredientAlreadyExistsException,
     ProductNotFoundException,
     ProductAlreadyExistsException,
-    ProductBusinessRuleException,
     ProductValidationException,
 )
 from src.entities.customer import Customer
 from src.entities.ingredient import IngredientType
 from src.entities.product import ProductCategory, ProductReceiptItem
-from src.entities.value_objects.sku import SKU
-from src.entities.value_objects.money import Money
-from decimal import Decimal
-import uuid
 
 
 class TestCustomerCreateUseCase:
@@ -159,22 +153,20 @@ class TestCustomerReadUseCase:
         use_case = CustomerReadUseCase(mock_customer_repository)
 
         # Act
-        result = use_case.execute(sample_customer.id)
+        result = use_case.execute(sample_customer.internal_id)
 
         # Assert
         assert isinstance(result, CustomerResponse)
-        assert isinstance(result.id, str)
-        uuid.UUID(result.id)
-        assert result.id == str(sample_customer.id)
+        assert result.internal_id == sample_customer.internal_id
         assert result.first_name == "John"
-        mock_customer_repository.find_by_id.assert_called_once_with(sample_customer.id, include_inactive=False)
+        mock_customer_repository.find_by_id.assert_called_once_with(sample_customer.internal_id, include_inactive=False)
 
     def test_read_customer_not_found(self, mock_customer_repository):
         """Test customer retrieval fails when customer not found"""
         # Arrange
         mock_customer_repository.find_by_id.return_value = None
         use_case = CustomerReadUseCase(mock_customer_repository)
-        customer_id = uuid.uuid4()
+        customer_id = 1
 
         # Act & Assert
         with pytest.raises(CustomerNotFoundException, match="not found"):
@@ -191,7 +183,7 @@ class TestCustomerUpdateUseCase:
         mock_customer_repository.save.return_value = sample_customer
         use_case = CustomerUpdateUseCase(mock_customer_repository)
         request = CustomerUpdateRequest(
-            id=sample_customer.id,
+            internal_id=sample_customer.internal_id,
             first_name="John",
             last_name="Doe",
             email="john.doe@example.com",
@@ -203,9 +195,7 @@ class TestCustomerUpdateUseCase:
 
         # Assert
         assert isinstance(result, CustomerResponse)
-        assert isinstance(result.id, str)
-        uuid.UUID(result.id)
-        assert result.id == str(sample_customer.id)
+        assert result.internal_id == sample_customer.internal_id
         mock_customer_repository.save.assert_called_once()
 
     def test_update_customer_not_found(self, mock_customer_repository):
@@ -214,7 +204,7 @@ class TestCustomerUpdateUseCase:
         mock_customer_repository.find_by_id.return_value = None
         use_case = CustomerUpdateUseCase(mock_customer_repository)
         request = CustomerUpdateRequest(
-            id=1,
+            internal_id=1,
             first_name="John",
             last_name="Doe",
             email="john.doe@example.com",
@@ -237,12 +227,12 @@ class TestCustomerUpdateUseCase:
             last_name="Smith",
             email="jane.smith@example.com",
             document="12345678909",
-            customer_id=None  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         )
         mock_customer_repository.find_by_document.return_value = conflicting_customer
         use_case = CustomerUpdateUseCase(mock_customer_repository)
         request = CustomerUpdateRequest(
-            id=1,
+            internal_id=1,
             first_name="John",
             last_name="Doe",
             email="john.doe@example.com",
@@ -266,18 +256,18 @@ class TestCustomerDeleteUseCase:
         use_case = CustomerDeleteUseCase(mock_customer_repository)
 
         # Act
-        result = use_case.execute(sample_customer.id)
+        result = use_case.execute(sample_customer.internal_id)
 
         # Assert
         assert result is True
-        mock_customer_repository.delete.assert_called_once_with(sample_customer.id)
+        mock_customer_repository.delete.assert_called_once_with(sample_customer.internal_id)
 
     def test_delete_customer_not_found(self, mock_customer_repository):
         """Test customer deletion fails when customer not found"""
         # Arrange
         mock_customer_repository.delete.return_value = False
         use_case = CustomerDeleteUseCase(mock_customer_repository)
-        customer_id = uuid.uuid4()
+        customer_id = 1
 
         # Act & Assert
         with pytest.raises(CustomerNotFoundException, match="not found"):
@@ -291,7 +281,7 @@ class TestCustomerDeleteUseCase:
         # The delete method will raise ValueError when trying to delete anonymous customer
         mock_customer_repository.delete.side_effect = ValueError("Cannot delete anonymous customer")
         use_case = CustomerDeleteUseCase(mock_customer_repository)
-        customer_id = uuid.uuid4()
+        customer_id = 1
 
         # Act & Assert
         with pytest.raises(ValueError, match="Cannot delete anonymous customer"):
@@ -414,14 +404,13 @@ class TestIngredientReadUseCase:
         use_case = IngredientReadUseCase(mock_ingredient_repository)
 
         # Act
-        result = use_case.execute(sample_ingredient.id)
+        result = use_case.execute(sample_ingredient.internal_id)
 
         # Assert
         assert isinstance(result, IngredientResponse)
-        assert isinstance(result.id, str)
-        uuid.UUID(result.id)
+        assert result.internal_id == sample_ingredient.internal_id
         assert result.name == "Tomato"
-        mock_ingredient_repository.find_by_id.assert_called_once_with(sample_ingredient.id, include_inactive=False)
+        mock_ingredient_repository.find_by_id.assert_called_once_with(sample_ingredient.internal_id, include_inactive=False)
 
     def test_read_ingredient_not_found(self, mock_ingredient_repository):
         """Test ingredient retrieval fails when ingredient not found"""
@@ -444,7 +433,7 @@ class TestIngredientUpdateUseCase:
         mock_ingredient_repository.save.return_value = sample_ingredient
         use_case = IngredientUpdateUseCase(mock_ingredient_repository)
         request = IngredientUpdateRequest(
-            id=sample_ingredient.id,
+            internal_id=sample_ingredient.internal_id,
             name="Tomato",
             price=2.50,
             is_active=True,
@@ -460,9 +449,7 @@ class TestIngredientUpdateUseCase:
 
         # Assert
         assert isinstance(result, IngredientResponse)
-        assert isinstance(result.id, str)
-        uuid.UUID(result.id)
-        assert result.id == str(sample_ingredient.id)
+        assert result.internal_id == sample_ingredient.internal_id
         mock_ingredient_repository.save.assert_called_once()
 
     def test_update_ingredient_not_found(self, mock_ingredient_repository):
@@ -471,7 +458,7 @@ class TestIngredientUpdateUseCase:
         mock_ingredient_repository.find_by_id.return_value = None
         use_case = IngredientUpdateUseCase(mock_ingredient_repository)
         request = IngredientUpdateRequest(
-            id=1,
+            internal_id=1,
             name="Tomato",
             price=2.50,
             is_active=True,
@@ -495,7 +482,7 @@ class TestIngredientUpdateUseCase:
         mock_ingredient_repository.exists_by_name.return_value = True
         use_case = IngredientUpdateUseCase(mock_ingredient_repository)
         request = IngredientUpdateRequest(
-            id=1,
+            internal_id=1,
             name="Lettuce",  # Different name
             price=2.50,
             is_active=True,
@@ -524,11 +511,11 @@ class TestIngredientDeleteUseCase:
         use_case = IngredientDeleteUseCase(mock_ingredient_repository)
 
         # Act
-        result = use_case.execute(sample_ingredient.id)
+        result = use_case.execute(sample_ingredient.internal_id)
 
         # Assert
         assert result is True
-        mock_ingredient_repository.delete.assert_called_once_with(sample_ingredient.id)
+        mock_ingredient_repository.delete.assert_called_once_with(sample_ingredient.internal_id)
 
     def test_delete_ingredient_not_found(self, mock_ingredient_repository):
         """Test ingredient deletion fails when ingredient not found"""
@@ -703,24 +690,22 @@ class TestProductReadUseCase:
         # Arrange
         mock_product_repository.find_by_id.return_value = sample_product
         use_case = ProductReadUseCase(mock_product_repository)
-        result = use_case.execute(sample_product.id)
-        assert isinstance(result.id, str)
-        uuid.UUID(result.id)
+        result = use_case.execute(sample_product.internal_id)
+        assert result.internal_id == sample_product.internal_id
         assert result.name == sample_product.name.value
-        mock_product_repository.find_by_id.assert_called_once_with(sample_product.id, include_inactive=False)
+        mock_product_repository.find_by_id.assert_called_once_with(sample_product.internal_id, include_inactive=False)
 
     def test_read_product_not_found(self, mock_product_repository):
         """Test product retrieval fails when product not found"""
         # Arrange
         mock_product_repository.find_by_id.return_value = None
         use_case = ProductReadUseCase(mock_product_repository)
-        product_id = uuid.uuid4()
 
         # Act & Assert
         with pytest.raises(
-            ProductNotFoundException, match="Product with ID.*not found"
+            ProductNotFoundException, match="Product with internal_id.*not found"
         ):
-            use_case.execute(product_id)
+            use_case.execute(1)
 
 
 class TestProductUpdateUseCase:
@@ -737,7 +722,7 @@ class TestProductUpdateUseCase:
         ingredient = sample_product.default_ingredient[0].ingredient
         
         request = ProductUpdateRequest(
-            id=str(sample_product.id),
+            internal_id=sample_product.internal_id,
             name="Updated Burger",
             price=15.99,
             category="burger",
@@ -750,9 +735,10 @@ class TestProductUpdateUseCase:
 
         # Assert
         assert isinstance(result, ProductResponse)
+        assert result.internal_id == sample_product.internal_id
         assert result.name == "Updated Burger"
         assert result.price == 15.99
-        mock_product_repository.find_by_id.assert_called_once_with(sample_product.id, include_inactive=True)
+        mock_product_repository.find_by_id.assert_called_once_with(sample_product.internal_id, include_inactive=True)
         mock_product_repository.save.assert_called_once()
 
     def test_update_product_not_found(self, mock_product_repository):
@@ -761,11 +747,11 @@ class TestProductUpdateUseCase:
         mock_product_repository.find_by_id.return_value = None
         use_case = ProductUpdateUseCase(mock_product_repository)
         
-        # Use a valid UUID string
-        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+        # Use a valid internal ID
+        valid_id = 1
         
         request = ProductUpdateRequest(
-            id=valid_uuid,
+            internal_id=valid_id,
             name="Updated Burger",
             price=15.99,
             category="burger",
@@ -775,7 +761,7 @@ class TestProductUpdateUseCase:
 
         # Act & Assert
         with pytest.raises(
-            ProductNotFoundException, match="Product with ID.*not found"
+            ProductNotFoundException, match="Product with internal_id.*not found"
         ):
             use_case.execute(request)
 
@@ -783,14 +769,19 @@ class TestProductUpdateUseCase:
         """Test product update fails when SKU conflicts with existing product"""
         # Arrange
         mock_product_repository.find_by_id.return_value = sample_product
-        mock_product_repository.exists_by_sku.return_value = True
+        
+        # Create a conflicting product with different internal_id
+        conflicting_product = sample_product
+        conflicting_product.internal_id = 999  # Different ID to simulate conflict
+        
+        mock_product_repository.find_by_sku.return_value = conflicting_product
         use_case = ProductUpdateUseCase(mock_product_repository)
         
         # Create test ingredient
         ingredient = sample_product.default_ingredient[0].ingredient
         
         request = ProductUpdateRequest(
-            id=str(sample_product.id),
+            internal_id=str(sample_product.internal_id),
             name="Updated Burger",
             price=15.99,
             category="burger",
@@ -814,28 +805,26 @@ class TestProductDeleteUseCase:
         mock_product_repository.find_by_id.return_value = sample_product
         mock_product_repository.delete.return_value = True
         use_case = ProductDeleteUseCase(mock_product_repository)
-        product_id = uuid.uuid4()
 
         # Act
-        result = use_case.execute(product_id)
+        result = use_case.execute(1)
 
         # Assert
         assert result is True
-        mock_product_repository.find_by_id.assert_called_once_with(product_id, include_inactive=True)
-        mock_product_repository.delete.assert_called_once_with(product_id)
+        mock_product_repository.find_by_id.assert_called_once_with(1, include_inactive=True)
+        mock_product_repository.delete.assert_called_once_with(1)
 
     def test_delete_product_not_found(self, mock_product_repository):
         """Test product deletion fails when product not found"""
         # Arrange
         mock_product_repository.find_by_id.return_value = None
         use_case = ProductDeleteUseCase(mock_product_repository)
-        product_id = uuid.uuid4()
 
         # Act & Assert
         with pytest.raises(
-            ProductNotFoundException, match="Product with ID.*not found"
+            ProductNotFoundException, match="Product with internal_id.*not found"
         ):
-            use_case.execute(product_id)
+            use_case.execute(1)
 
 
 class TestProductListUseCase:
@@ -884,8 +873,7 @@ class TestProductReadBySkuUseCase:
         mock_product_repository.find_by_sku.return_value = sample_product
         use_case = ProductReadBySkuUseCase(mock_product_repository)
         result = use_case.execute(sample_product.sku.value)
-        assert isinstance(result.id, str)
-        uuid.UUID(result.id)
+        assert result.internal_id == sample_product.internal_id
         assert result.sku == sample_product.sku.value
         mock_product_repository.find_by_sku.assert_called_once_with(sample_product.sku, include_inactive=False)
 

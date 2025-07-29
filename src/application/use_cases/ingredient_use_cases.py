@@ -14,7 +14,7 @@ from src.app_logs import get_logger
 from src.entities.value_objects.money import Money
 from decimal import Decimal
 from src.entities.product import ProductCategory
-import uuid
+
 
 
 class IngredientCreateUseCase:
@@ -54,7 +54,7 @@ class IngredientCreateUseCase:
 
         self.logger.info(
             "Ingredient created successfully",
-            ingredient_id=saved_ingredient.id,
+            ingredient_id=saved_ingredient.internal_id,
             name=saved_ingredient.name.value,
         )
 
@@ -68,12 +68,12 @@ class IngredientReadUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientReadUseCase")
 
-    def execute(self, ingredient_id: uuid.UUID, include_inactive: bool = False) -> IngredientResponse:
+    def execute(self, ingredient_internal_id: int, include_inactive: bool = False) -> IngredientResponse:
         """Execute the read ingredient use case"""
-        ingredient = self.ingredient_repository.find_by_id(ingredient_id, include_inactive=include_inactive)
+        ingredient = self.ingredient_repository.find_by_id(ingredient_internal_id, include_inactive=include_inactive)
         if not ingredient:
             raise IngredientNotFoundException(
-                f"Ingredient with ID {ingredient_id} not found"
+                f"Ingredient with internal_id {ingredient_internal_id} not found"
             )
         return IngredientResponse.from_entity(ingredient)
 
@@ -89,7 +89,7 @@ class IngredientUpdateUseCase:
         """Execute the update ingredient use case"""
         self.logger.info(
             "Updating ingredient",
-            ingredient_id=request.id,
+            ingredient_id=request.internal_id,
             name=request.name,
             type=request.type,
         )
@@ -103,13 +103,13 @@ class IngredientUpdateUseCase:
             applies_to_side=request.applies_to_side,
             applies_to_drink=request.applies_to_drink,
             applies_to_dessert=request.applies_to_dessert,
-            ingredient_id=request.id,
+            internal_id=request.internal_id,
         )
 
-        existing_ingredient = self.ingredient_repository.find_by_id(ingredient.id, include_inactive=True)
+        existing_ingredient = self.ingredient_repository.find_by_id(ingredient.internal_id, include_inactive=True)
         if not existing_ingredient:
             raise IngredientNotFoundException(
-                f"Ingredient with ID {ingredient.id} not found"
+                f"Ingredient with internal_id {ingredient.internal_id} not found"
             )
 
         if existing_ingredient.name.value != ingredient.name.value:
@@ -122,7 +122,7 @@ class IngredientUpdateUseCase:
 
         self.logger.info(
             "Ingredient updated successfully",
-            ingredient_id=saved_ingredient.id,
+            ingredient_id=saved_ingredient.internal_id,
             name=saved_ingredient.name.value,
         )
         return IngredientResponse.from_entity(saved_ingredient)
@@ -135,17 +135,17 @@ class IngredientDeleteUseCase:
         self.ingredient_repository = ingredient_repository
         self.logger = get_logger("IngredientDeleteUseCase")
 
-    def execute(self, ingredient_id: uuid.UUID) -> bool:
+    def execute(self, ingredient_internal_id: int) -> bool:
         """Execute the delete ingredient use case"""
 
-        existing_ingredient = self.ingredient_repository.find_by_id(ingredient_id, include_inactive=True)
+        existing_ingredient = self.ingredient_repository.find_by_id(ingredient_internal_id, include_inactive=True)
         if not existing_ingredient:
             raise IngredientNotFoundException(
-                f"Ingredient with ID {ingredient_id} not found"
+                f"Ingredient with internal_id {ingredient_internal_id} not found"
             )
 
         # Soft delete the ingredient
-        return self.ingredient_repository.delete(ingredient_id)
+        return self.ingredient_repository.delete(ingredient_internal_id)
 
 
 class IngredientListUseCase:

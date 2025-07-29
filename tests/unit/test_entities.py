@@ -10,7 +10,7 @@ Tests cover:
 """
 
 import pytest
-import uuid
+
 from decimal import Decimal
 from src.entities.customer import Customer
 from src.entities.ingredient import Ingredient, IngredientType
@@ -33,11 +33,11 @@ class TestCustomerEntity:
             last_name="Doe",
             email="john.doe@example.com",
             document="52998224725",  # Valid Brazilian CPF
-            customer_id=None,  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         )
 
-        assert customer.id is not None  # UUID should be generated
-        assert isinstance(customer.id, uuid.UUID)
+        assert customer.internal_id is None  # internal_id is set by database
+        # Test other properties
         assert customer.first_name.value == "John"
         assert customer.last_name.value == "Doe"
         assert customer.email.value == "john.doe@example.com"
@@ -50,8 +50,7 @@ class TestCustomerEntity:
         """Test creating an anonymous customer"""
         customer = Customer.create_anonymous()
 
-        assert customer.id is not None  # UUID should be generated
-        assert isinstance(customer.id, uuid.UUID)
+        assert customer.internal_id is None  # internal_id is set by database
         assert customer.first_name.value == "Anonymous"
         assert customer.last_name.value == "Customer"
         assert (
@@ -137,9 +136,8 @@ class TestCustomerEntity:
             last_name="Doe",
             email="john.doe@example.com",
             document="52998224725",  # Valid Brazilian CPF
-            customer_id=1,
-        )
-        expected = "Customer(id=1, name='John Doe', email='john.doe@example.com', is_active=True)"
+            )
+        expected = "Customer(internal_id=None, name='John Doe', email='john.doe@example.com', is_active=True)"
         assert str(customer) == expected
 
     def test_customer_repr_representation(self):
@@ -149,8 +147,7 @@ class TestCustomerEntity:
             last_name="Doe",
             email="john.doe@example.com",
             document="52998224725",  # Valid Brazilian CPF
-            customer_id=1,
-        )
+            )
         # The repr should contain all the internal representation details
         repr_str = repr(customer)
         assert "Customer(" in repr_str
@@ -158,7 +155,7 @@ class TestCustomerEntity:
         assert "last_name=" in repr_str
         assert "email=" in repr_str
         assert "document=" in repr_str
-        assert "id=1" in repr_str
+        assert "internal_id=None" in repr_str
 
     def test_customer_dto_conversion(self):
         """Test customer to DTO conversion"""
@@ -167,13 +164,12 @@ class TestCustomerEntity:
             last_name="Doe",
             email="john.doe@example.com",
             document="52998224725",  # Valid Brazilian CPF
-            customer_id=None,  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         )
         
         dto = CustomerResponse.from_entity(customer)
         
-        assert isinstance(dto.id, str)
-        uuid.UUID(dto.id)
+        assert dto.internal_id is None  # New customer has no internal_id yet
         assert dto.first_name == "John"
         assert dto.last_name == "Doe"
         assert dto.email == "john.doe@example.com"
@@ -197,11 +193,10 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=None  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         )
 
-        assert ingredient.id is not None  # UUID should be generated
-        assert isinstance(ingredient.id, uuid.UUID)
+        assert ingredient.internal_id is None  # New ingredient
         assert ingredient.name.value == "Tomato"
         assert ingredient.price.amount == Decimal("2.50")
         assert ingredient.is_active is True
@@ -224,8 +219,7 @@ class TestIngredientEntity:
             applies_to_dessert=False
         )
 
-        assert ingredient.id is not None  # UUID should be auto-generated
-        assert isinstance(ingredient.id, uuid.UUID)
+        assert ingredient.internal_id is None  # New ingredient
         assert ingredient.name.value == "Lettuce"
         assert ingredient.price.amount == Decimal("1.00")
         assert ingredient.is_active is True
@@ -618,9 +612,8 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
-        )
-        expected = "Ingredient(id=1, name=Tomato, price=2.50, is_active=True)"
+            )
+        expected = "Ingredient(internal_id=None, name=Tomato, price=2.50, is_active=True)"
         assert str(ingredient) == expected
 
     def test_ingredient_repr_representation(self):
@@ -634,12 +627,11 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
-        )
+            )
         # The repr should contain all the internal representation details
         repr_str = repr(ingredient)
         assert "Ingredient(" in repr_str
-        assert "id=1" in repr_str
+        assert "internal_id=None" in repr_str
         assert "name=Tomato" in repr_str
         assert "price=2.50" in repr_str
         assert "is_active=True" in repr_str
@@ -698,8 +690,7 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
-        )
+            )
         
         ingredient2 = Ingredient.create(
             name="Tomato",
@@ -710,8 +701,7 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
-        )
+            )
         
         assert ingredient1 == ingredient2
 
@@ -726,8 +716,7 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
-        )
+            )
         
         ingredient2 = Ingredient.create(
             name="Lettuce",
@@ -738,8 +727,7 @@ class TestIngredientEntity:
             applies_to_side=True,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=2
-        )
+            )
         
         assert ingredient1 != ingredient2
 
@@ -794,8 +782,7 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=1
-        )
+            )
         
         # The ingredient should be immutable, so we can't modify its attributes directly
         # This is enforced by the dataclass and value objects being immutable
@@ -818,13 +805,12 @@ class TestIngredientEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=None  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         )
         
         dto = IngredientResponse.from_entity(ingredient)
         
-        assert isinstance(dto.id, str)
-        uuid.UUID(dto.id)
+        assert dto.internal_id is None  # New ingredient has no internal_id yet
         assert dto.name == "Tomato"
         assert dto.price == 2.50
         assert dto.is_active is True
@@ -849,8 +835,7 @@ class TestIngredientEntity:
         
         dto = IngredientResponse.from_entity(ingredient)
         
-        assert isinstance(dto.id, str)
-        uuid.UUID(dto.id)
+        assert dto.internal_id is None  # New ingredient has no internal_id yet
         assert dto.name == "Lettuce"
         assert dto.price == 1.00
         assert dto.is_active is True
@@ -876,7 +861,7 @@ class TestProductEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=None  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         )
         
         meat = Ingredient.create(
@@ -888,7 +873,7 @@ class TestProductEntity:
             applies_to_side=False,
             applies_to_drink=False,
             applies_to_dessert=False,
-            ingredient_id=None  # UUID will be auto-generated
+            internal_id=None,  # internal_id will be auto-generated
         )
         
         default_ingredients = [
@@ -903,11 +888,10 @@ class TestProductEntity:
             sku=SKU.create("BURG-2024-CLS"),
             default_ingredient=default_ingredients,
             is_active=True,
-            product_id=None  # UUID will be auto-generated
+            internal_id=None  # internal_id will be auto-generated
         )
         
-        assert product.id is not None  # UUID should be generated
-        assert isinstance(product.id, uuid.UUID)
+        assert product.internal_id is None  # New product
         assert product.name.value == "Classic Burger"
         assert product.price.amount == Decimal("12.99")
         assert product.category == ProductCategory.BURGER
@@ -941,7 +925,7 @@ class TestProductEntity:
             is_active=True
         )
         
-        assert product.id is not None
+        assert product.internal_id is None  # New product
         assert product.name.value == "Cheese Burger"
         assert product.price.amount == Decimal("14.49")
         assert product.category == ProductCategory.BURGER
@@ -1461,11 +1445,10 @@ class TestProductEntity:
             category=ProductCategory.BURGER,
             sku=SKU.create("TEST-2024-ABC"),
             default_ingredient=[ProductReceiptItem(ingredient, 1)],
-            is_active=True,
-            product_id="test-id"
+            is_active=True
         )
         
-        expected_str = f"Product(id=test-id, name={product.name}, price={product.price}, category={product.category}, sku={product.sku}, default_ingredient={product.default_ingredient})"
+        expected_str = f"Product(internal_id=None, name={product.name}, price={product.price}, category={product.category}, sku={product.sku}, default_ingredient={product.default_ingredient})"
         assert str(product) == expected_str
 
     def test_product_repr_representation(self):
@@ -1487,11 +1470,10 @@ class TestProductEntity:
             category=ProductCategory.BURGER,
             sku=SKU.create("TEST-2024-ABC"),
             default_ingredient=[ProductReceiptItem(ingredient, 1)],
-            is_active=True,
-            product_id="test-id"
+            is_active=True
         )
         
-        expected_repr = f"Product(id=test-id, name={product.name}, price={product.price}, category={product.category}, sku={product.sku}, default_ingredient={product.default_ingredient})"
+        expected_repr = f"Product(internal_id=None, name={product.name}, price={product.price}, category={product.category}, sku={product.sku}, default_ingredient={product.default_ingredient})"
         assert repr(product) == expected_repr
 
     def test_product_with_whitespace_name(self):
@@ -1579,16 +1561,16 @@ class TestProductEntity:
             applies_to_dessert=False
         )
         
-        ingredient2 = Ingredient.create(
-            name="Test Ingredient Two",
-            price=Money(amount=Decimal("2.00")),
-            is_active=True,
-            type=IngredientType.SAUCE,
-            applies_to_burger=True,
-            applies_to_side=False,
-            applies_to_drink=False,
-            applies_to_dessert=False
-        )
+        # ingredient2 = Ingredient.create(
+        #     name="Test Ingredient Two",
+        #     price=Money(amount=Decimal("2.00")),
+        #     is_active=True,
+        #     type=IngredientType.SAUCE,
+        #     applies_to_burger=True,
+        #     applies_to_side=False,
+        #     applies_to_drink=False,
+        #     applies_to_dessert=False
+        # )
         
         receipt_item = ProductReceiptItem(ingredient1, 1)
         
@@ -1599,7 +1581,7 @@ class TestProductEntity:
             sku=SKU.create("TEST-2024-ABC"),
             default_ingredient=[receipt_item],
             is_active=True,
-            product_id="test-id"
+            internal_id=1
         )
         
         product2 = Product.create(
@@ -1609,7 +1591,7 @@ class TestProductEntity:
             sku=SKU.create("TEST-2024-ABC"),
             default_ingredient=[receipt_item],
             is_active=True,
-            product_id="test-id"
+            internal_id=1
         )
         
         # Products with same ID should be equal
@@ -1646,7 +1628,7 @@ class TestProductEntity:
             sku=SKU.create("TEST-2024-ABC"),
             default_ingredient=[ProductReceiptItem(ingredient1, 1)],
             is_active=True,
-            product_id="test-id-1"
+            internal_id=1
         )
         
         product2 = Product.create(
@@ -1656,7 +1638,7 @@ class TestProductEntity:
             sku=SKU.create("TEST-2024-DEF"),
             default_ingredient=[ProductReceiptItem(ingredient2, 1)],
             is_active=True,
-            product_id="test-id-2"
+            internal_id=2
         )
         
         # Products with different IDs should not be equal
@@ -1741,7 +1723,7 @@ class TestProductEntity:
             sku=SKU.create("TEST-2024-ABC"),
             default_ingredient=[ProductReceiptItem(ingredient, 1)],
             is_active=True,
-            product_id="test-id"
+            internal_id=1
         )
         
         # The product should be immutable, so we can't modify its attributes directly

@@ -25,6 +25,9 @@ COPY ./src /code/src
 # Copy the webhook directory
 COPY ./webhook /code/webhook
 
+# Copy the infra scripts directory
+COPY ./infra/scripts /code/infra/scripts
+
 # Set environment variables for Clean Architecture
 ENV PYTHONPATH=/code
 ENV PYTHONUNBUFFERED=1

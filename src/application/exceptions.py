@@ -101,3 +101,39 @@ class ProductBusinessRuleException(ApplicationException):
     """Raised when a product business rule is violated"""
 
     pass
+
+
+class OrderNotFoundException(ApplicationException):
+    """Raised when an order is not found"""
+
+    pass
+
+
+class OrderAlreadyExistsException(ApplicationException):
+    """Raised when an order already exists"""
+
+    pass
+
+
+class OrderValidationException(ApplicationException):
+    """Raised when an order validation fails"""
+
+    pass
+
+
+class OrderBusinessRuleException(ApplicationException):
+    """Raised when an order business rule is violated"""
+
+    pass
+
+
+class PaymentException(ApplicationException):
+    """Raised when payment operations fail"""
+
+    pass
+
+
+class PaymentNotFoundException(ApplicationException):
+    """Raised when a payment is not found"""
+
+    pass

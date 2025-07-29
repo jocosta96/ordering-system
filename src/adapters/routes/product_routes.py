@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing_extensions import Annotated
 from pydantic import BaseModel
-import uuid
+
 
 from src.adapters.controllers.product_controller import ProductController
 from src.adapters.di.container import Container
@@ -11,7 +11,7 @@ from src.adapters.presenters.implementations.json_presenter import JSONPresenter
 
 
 class ProductReceiptItemModel(BaseModel):
-    ingredient_id: str
+    ingredient_internal_id: int
     quantity: int
 
 
@@ -25,7 +25,7 @@ class ProductCreateModel(BaseModel):
 
 
 class ProductUpdateModel(BaseModel):
-    id: str
+    internal_id: int
     name: str
     price: float
     category: ProductCategory
@@ -35,7 +35,7 @@ class ProductUpdateModel(BaseModel):
 
 
 class ProductResponseModel(BaseModel):
-    id: str
+    internal_id: int
     name: str
     price: float
     category: ProductCategory
@@ -95,7 +95,7 @@ def list_products_by_category(
 
 @product_router.get("/by-id/{product_id}", response_model=ProductResponseModel)
 def get_product(
-    product_id: str,
+    product_id: int,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[ProductController, Depends(get_product_controller)],
     include_inactive: bool = False,
@@ -127,7 +127,7 @@ def update_product(
 
 @product_router.delete("/delete/{product_id}")
 def delete_product(
-    product_id: str,
+    product_id: int,
     login: Annotated[str, Depends(check_credentials)],
     controller: Annotated[ProductController, Depends(get_product_controller)],
 ) -> dict:

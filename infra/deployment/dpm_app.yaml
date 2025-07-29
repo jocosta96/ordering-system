@@ -12,11 +12,18 @@ spec:
       labels:
         app: dpm-app
     spec:
+      volumes:
+      - name: migrations-volume
+        persistentVolumeClaim:
+          claimName: pvc-migrations
       containers:
         - name: app
           image: jocosta96/soat-challenge
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: migrations-volume
+              mountPath: /migrations
           readinessProbe:
             httpGet:
               path: /health/db
@@ -91,6 +98,8 @@ spec:
                 configMapKeyRef:
                   name: cfm-database
                   key: LOG_LEVEL
+            - name: WEBHOOK_URL
+              value: "http://svc-webhook-nodeport:80"
           resources:
             requests:
               memory: "128Mi"
@@ -101,5 +110,7 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              uvicorn src.main:app --host 0.0.0.0 --port 8080
+              # Start the application
+              echo "Starting FastAPI application..."
+              exec uvicorn src.main:app --host 0.0.0.0 --port 8080
 

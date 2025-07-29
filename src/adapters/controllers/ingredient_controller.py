@@ -24,7 +24,7 @@ from src.application.exceptions import (
 from src.adapters.presenters.interfaces.presenter_interface import PresenterInterface
 from src.entities.ingredient import IngredientType
 from src.entities.product import ProductCategory
-import uuid
+
 
 
 class IngredientController:
@@ -82,7 +82,7 @@ class IngredientController:
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
 
-    def get_ingredient(self, ingredient_id: str, login: str, include_inactive: bool = False) -> dict:
+    def get_ingredient(self, ingredient_internal_id: int, login: str, include_inactive: bool = False) -> dict:
         """Get an ingredient by ID"""
         if not login:
             error_response = self.presenter.present_error(
@@ -93,14 +93,8 @@ class IngredientController:
             )
 
         try:
-            ingredient_uuid = uuid.UUID(ingredient_id)
-            response = self.read_use_case.execute(ingredient_uuid, include_inactive=include_inactive)
+            response = self.read_use_case.execute(ingredient_internal_id, include_inactive=include_inactive)
             return self.presenter.present(response)
-        except ValueError:
-            error_response = self.presenter.present_error(
-                IngredientValidationException("Invalid ingredient ID format. Ingredient ID must be a valid UUID.")
-            )
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
         except IngredientNotFoundException as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
@@ -117,7 +111,7 @@ class IngredientController:
 
         try:
             request = IngredientUpdateRequest(
-                id=ingredient_data.get("id"),
+                internal_id=ingredient_data.get("internal_id"),
                 name=ingredient_data.get("name", ""),
                 price=ingredient_data.get("price", 0.0),
                 is_active=ingredient_data.get("is_active", True),
@@ -142,7 +136,7 @@ class IngredientController:
                 status_code=HTTPStatus.BAD_REQUEST, detail=error_response
             )
 
-    def delete_ingredient(self, ingredient_id: str, login: str) -> dict:
+    def delete_ingredient(self, ingredient_internal_id: int, login: str) -> dict:
         """Delete an ingredient"""
         if not login:
             error_response = self.presenter.present_error(
@@ -153,16 +147,10 @@ class IngredientController:
             )
 
         try:
-            ingredient_uuid = uuid.UUID(ingredient_id)
-            success = self.delete_use_case.execute(ingredient_uuid)
+            success = self.delete_use_case.execute(ingredient_internal_id)
             return self.presenter.present(
                 {"success": success, "message": "Ingredient soft deleted successfully"}
             )
-        except ValueError:
-            error_response = self.presenter.present_error(
-                IngredientValidationException("Invalid ingredient ID format. Ingredient ID must be a valid UUID.")
-            )
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=error_response)
         except IngredientNotFoundException as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
@@ -226,3 +214,24 @@ class IngredientController:
         except IngredientNotFoundException as e:
             error_response = self.presenter.present_error(e)
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=error_response)
+
+    def list_ingredient_types(self, login: str) -> dict:
+        """List all ingredient types"""
+        if not login:
+            error_response = self.presenter.present_error(
+                AuthenticationException("Authentication required")
+            )
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED, detail=error_response
+            )
+
+        try:
+            # Get all ingredient types from the enum
+            ingredient_types = [{"value": ingredient_type.value, "name": ingredient_type.name} 
+                              for ingredient_type in IngredientType]
+            return {"ingredient_types": ingredient_types, "total_count": len(ingredient_types)}
+        except Exception as e:
+            error_response = self.presenter.present_error(e)
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_response
+            )

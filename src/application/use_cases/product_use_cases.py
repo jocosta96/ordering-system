@@ -1,10 +1,10 @@
 from src.application.repositories.product_repository import ProductRepository
 from src.application.dto.implementation.product_dto import ProductCreateRequest, ProductUpdateRequest, ProductListResponse, ProductResponse
-from src.application.exceptions import ProductNotFoundException, ProductAlreadyExistsException, ProductValidationException, ProductBusinessRuleException
+from src.application.exceptions import ProductNotFoundException, ProductAlreadyExistsException, ProductValidationException
 from src.entities.product import Product, ProductCategory
 from src.entities.value_objects.sku import SKU
 from src.app_logs import get_logger
-import uuid
+
 
 class ProductCreateUseCase:
     """
@@ -58,17 +58,17 @@ class ProductReadUseCase:
         self.product_repository = product_repository
         self.logger = get_logger("ProductReadUseCase")
 
-    def execute(self, product_id: uuid.UUID, include_inactive: bool = False) -> ProductResponse:
+    def execute(self, product_internal_id: int, include_inactive: bool = False) -> ProductResponse:
         """Execute the read product use case"""
-        self.logger.info("Reading product", product_id=product_id)
+        self.logger.info("Reading product", product_internal_id=product_internal_id)
 
         # Find product by ID
-        product = self.product_repository.find_by_id(product_id, include_inactive=include_inactive)
+        product = self.product_repository.find_by_id(product_internal_id, include_inactive=include_inactive)
 
         if not product:
-            self.logger.warning("Product not found", product_id=product_id)
+            self.logger.warning("Product not found", product_internal_id=product_internal_id)
             raise ProductNotFoundException(
-                f"Product with ID {product_id} not found")
+                f"Product with internal_id {product_internal_id} not found")
 
         # Return product response
         return ProductResponse.from_entity(product)
@@ -84,21 +84,15 @@ class ProductUpdateUseCase:
 
     def execute(self, request: ProductUpdateRequest) -> ProductResponse:
         """Execute the update product use case"""
-        self.logger.info("Updating product", product_id=request.id)
-
-        # Convert string ID to UUID
-        try:
-            product_uuid = uuid.UUID(request.id)
-        except ValueError:
-            raise ProductValidationException("Invalid product ID format. Product ID must be a valid UUID.")
+        self.logger.info("Updating product", product_internal_id=request.internal_id)
 
         # Find product by ID (include inactive for updates)
-        product = self.product_repository.find_by_id(product_uuid, include_inactive=True)
+        product = self.product_repository.find_by_id(request.internal_id, include_inactive=True)
 
         if not product:
-            self.logger.warning("Product not found", product_id=request.id)
+            self.logger.warning("Product not found", product_internal_id=request.internal_id)
             raise ProductNotFoundException(
-                f"Product with ID {request.id} not found")
+                f"Product with internal_id {request.internal_id} not found")
 
         # Update product entity from DTO
         product.update(
@@ -109,8 +103,9 @@ class ProductUpdateUseCase:
             default_ingredient=request.default_ingredient,
         )
 
-        # Business rule: Check if product with same SKU already exists (include inactive for conflict checking)
-        if self.product_repository.exists_by_sku(product.sku, include_inactive=True):
+        # Business rule: Check if product with same SKU already exists (exclude current product)
+        existing_product_with_sku = self.product_repository.find_by_sku(product.sku, include_inactive=True)
+        if existing_product_with_sku and existing_product_with_sku.internal_id != request.internal_id:
             self.logger.warning(
                 "Product update failed - SKU already exists", sku=product.sku)
             raise ProductAlreadyExistsException(
@@ -131,20 +126,20 @@ class ProductDeleteUseCase:
         self.product_repository = product_repository
         self.logger = get_logger("ProductDeleteUseCase")
 
-    def execute(self, product_id: uuid.UUID) -> bool:
+    def execute(self, product_internal_id: int) -> bool:
         """Execute the delete product use case"""
-        self.logger.info("Deleting product", product_id=product_id)
+        self.logger.info("Deleting product", product_internal_id=product_internal_id)
 
         # Find product by ID (include inactive for deletion)
-        product = self.product_repository.find_by_id(product_id, include_inactive=True)
+        product = self.product_repository.find_by_id(product_internal_id, include_inactive=True)
 
         if not product:
-            self.logger.warning("Product not found", product_id=product_id)
+            self.logger.warning("Product not found", product_internal_id=product_internal_id)
             raise ProductNotFoundException(
-                f"Product with ID {product_id} not found")
+                f"Product with internal_id {product_internal_id} not found")
 
         # Soft delete product from repository
-        self.product_repository.delete(product_id)
+        self.product_repository.delete(product_internal_id)
 
         return True
 

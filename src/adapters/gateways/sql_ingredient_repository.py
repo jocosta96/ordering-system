@@ -1,7 +1,7 @@
 from typing import List, Optional
-import uuid
-from sqlalchemy import Column, Integer, String, DECIMAL, Boolean, DateTime, Index
-from sqlalchemy.orm import declarative_base
+
+from sqlalchemy import Column, Integer, String, DECIMAL, Boolean, DateTime
+from src.adapters.gateways.shared_base import Base
 from src.application.repositories.ingredient_repository import IngredientRepository
 from src.entities.ingredient import Ingredient, IngredientType
 from src.adapters.gateways.interfaces.database_interface import DatabaseInterface
@@ -11,17 +11,12 @@ from datetime import datetime
 from src.entities.product import ProductCategory
 
 
-# SQLAlchemy model
-Base = declarative_base()
-
-
 class IngredientModel(Base):
     """SQLAlchemy model for Ingredient table"""
 
     __tablename__ = "ingredients"
 
     internal_id = Column(Integer, primary_key=True, autoincrement=True)
-    id = Column(String(36), nullable=False, unique=True, index=True)  # UUID as string
     name = Column(String(100), nullable=False)
     price = Column(DECIMAL(10, 2), nullable=False)
     is_active = Column(Boolean, default=True)
@@ -31,10 +26,6 @@ class IngredientModel(Base):
     applies_to_drink = Column(Boolean, default=False)
     applies_to_dessert = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now)
-
-    __table_args__ = (
-        Index('idx_ingredient_id', 'id'),
-    )
 
 
 class SQLIngredientRepository(IngredientRepository):
@@ -50,8 +41,6 @@ class SQLIngredientRepository(IngredientRepository):
 
     def __init__(self, database: DatabaseInterface):
         self.database = database
-        # Create tables
-        self.database.create_tables(Base)
 
     def _get_session(self):
         """Get a SQLAlchemy session"""
@@ -59,9 +48,7 @@ class SQLIngredientRepository(IngredientRepository):
 
     def _to_entity(self, model: IngredientModel) -> Ingredient:
         """Convert a database model to an entity"""
-        import uuid
         return Ingredient(
-            id=uuid.UUID(model.id) if model.id else None,
             internal_id=model.internal_id,
             name=Name.create(model.name),
             price=Money(amount=model.price),
@@ -76,7 +63,6 @@ class SQLIngredientRepository(IngredientRepository):
     def _to_model(self, ingredient: Ingredient) -> IngredientModel:
         """Convert an entity to a database model"""
         return IngredientModel(
-            id=str(ingredient.id) if ingredient.id else None,
             internal_id=ingredient.internal_id,
             name=ingredient.name.value,
             price=ingredient.price.amount,
@@ -92,10 +78,10 @@ class SQLIngredientRepository(IngredientRepository):
         """Save an ingredient and return the saved ingredient with ID"""
         session = self._get_session()
         try:
-            if ingredient.id:
+            if ingredient.internal_id:
                 # Try to find existing ingredient for update
                 db_ingredient = self.database.find_by_field(
-                    session, IngredientModel, "id", str(ingredient.id)
+                    session, IngredientModel, "internal_id", ingredient.internal_id
                 )
                 if db_ingredient:
                     # Update existing ingredient
@@ -110,11 +96,11 @@ class SQLIngredientRepository(IngredientRepository):
 
                     self.database.update(session, db_ingredient)
                 else:
-                    # Ingredient has ID but doesn't exist in DB, treat as new ingredient
+                    # Ingredient has internal_id but doesn't exist in DB, treat as new ingredient
                     db_ingredient = self._to_model(ingredient)
                     self.database.add(session, db_ingredient)
             else:
-                # Create new ingredient without ID
+                # Create new ingredient without internal_id
                 db_ingredient = self._to_model(ingredient)
                 self.database.add(session, db_ingredient)
 
@@ -126,11 +112,11 @@ class SQLIngredientRepository(IngredientRepository):
         finally:
             self.database.close_session(session)
 
-    def find_by_id(self, ingredient_id: uuid.UUID, include_inactive: bool = False) -> Optional[Ingredient]:
+    def find_by_id(self, ingredient_internal_id: int, include_inactive: bool = False) -> Optional[Ingredient]:
         """Find an ingredient by ID"""
         session = self._get_session()
         try:
-            db_ingredient = self.database.find_by_field(session, IngredientModel, "id", str(ingredient_id))
+            db_ingredient = self.database.find_by_field(session, IngredientModel, "internal_id", ingredient_internal_id)
             if not db_ingredient:
                 return None
                 
@@ -227,11 +213,11 @@ class SQLIngredientRepository(IngredientRepository):
         finally:
             self.database.close_session(session)
 
-    def delete(self, ingredient_id: uuid.UUID) -> bool:
+    def delete(self, ingredient_internal_id: int) -> bool:
         """Soft delete an ingredient by ID (set is_active to False), return True if deleted"""
         session = self._get_session()
         try:
-            db_ingredient = self.database.find_by_field(session, IngredientModel, "id", str(ingredient_id))
+            db_ingredient = self.database.find_by_field(session, IngredientModel, "internal_id", ingredient_internal_id)
             if not db_ingredient:
                 return False
 

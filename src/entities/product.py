@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
 from enum import Enum
-import uuid
 
 from src.entities.value_objects.name import Name
 from src.entities.value_objects.money import Money
@@ -42,7 +41,6 @@ class Product:
     sku: SKU
     default_ingredient: list[ProductReceiptItem]
     is_active: bool
-    id: Optional[uuid.UUID] = None
     internal_id: Optional[int] = None
 
 
@@ -86,10 +84,10 @@ class Product:
                     raise ValueError("Ingredient must apply to dessert")
 
     def __str__(self) -> str:
-        return f"Product(id={self.id}, name={self.name}, price={self.price}, category={self.category}, sku={self.sku}, default_ingredient={self.default_ingredient})"
+        return f"Product(internal_id={self.internal_id}, name={self.name}, price={self.price}, category={self.category}, sku={self.sku}, default_ingredient={self.default_ingredient})"
 
     def __repr__(self) -> str:
-        return f"Product(id={self.id}, name={self.name}, price={self.price}, category={self.category}, sku={self.sku}, default_ingredient={self.default_ingredient})" 
+        return f"Product(internal_id={self.internal_id}, name={self.name}, price={self.price}, category={self.category}, sku={self.sku}, default_ingredient={self.default_ingredient})" 
 
     @classmethod
     def create(
@@ -100,7 +98,7 @@ class Product:
         sku: SKU,
         default_ingredient: list[ProductReceiptItem],
         is_active: bool,
-        product_id: Optional[uuid.UUID] = None,
+
         internal_id: Optional[int] = None
     ) -> "Product":
 
@@ -112,7 +110,6 @@ class Product:
             sku=sku,
             default_ingredient=default_ingredient,
             is_active=is_active,
-            id=product_id if product_id else uuid.uuid4(),
             internal_id=internal_id
         )
 
@@ -124,7 +121,7 @@ class Product:
         category: str,
         sku: str,
         default_ingredient: list[ProductReceiptItem],
-        product_id: Optional[uuid.UUID] = None
+
     ) -> "Product":
         """Factory method to create a registered product from DTO data"""
         return cls.create(
@@ -133,8 +130,7 @@ class Product:
             category=ProductCategory(category),
             sku=SKU.create(sku),
             default_ingredient=default_ingredient,
-            is_active=True,
-            product_id=product_id
+            is_active=True
         )
 
     def update(

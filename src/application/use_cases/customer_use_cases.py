@@ -1,9 +1,9 @@
 from src.application.repositories.customer_repository import CustomerRepository
 from src.application.dto.implementation.customer_dto import CustomerCreateRequest, CustomerUpdateRequest, CustomerListResponse, CustomerResponse
-from src.application.exceptions import CustomerNotFoundException, CustomerAlreadyExistsException, CustomerBusinessRuleException, CustomerValidationException
+from src.application.exceptions import CustomerNotFoundException, CustomerAlreadyExistsException, CustomerBusinessRuleException
 from src.entities.customer import Customer
 from src.app_logs import get_logger
-import uuid
+
 
 
 class CustomerCreateUseCase:
@@ -69,7 +69,7 @@ class CustomerCreateUseCase:
 
         self.logger.info(
             "Customer created successfully",
-            customer_id=saved_customer.id,
+            customer_id=saved_customer.internal_id,
             full_name=saved_customer.full_name,
         )
 
@@ -83,11 +83,11 @@ class CustomerReadUseCase:
     def __init__(self, customer_repository: CustomerRepository):
         self.customer_repository = customer_repository
 
-    def execute(self, customer_id: uuid.UUID, include_inactive: bool = False) -> CustomerResponse:
+    def execute(self, customer_internal_id: int, include_inactive: bool = False) -> CustomerResponse:
         """Execute the read customer use case"""
-        customer = self.customer_repository.find_by_id(customer_id, include_inactive=include_inactive)
+        customer = self.customer_repository.find_by_id(customer_internal_id, include_inactive=include_inactive)
         if not customer:
-            raise CustomerNotFoundException(f"Customer with ID {customer_id} not found")
+            raise CustomerNotFoundException(f"Customer with internal_id {customer_internal_id} not found")
         return CustomerResponse.from_entity(customer)
 
 
@@ -105,20 +105,20 @@ class CustomerUpdateUseCase:
             last_name=request.last_name,
             email=request.email,
             document=request.document,
-            customer_id=request.id,
+            internal_id=request.internal_id,
         )
 
         # Business rule: Customer must exist
-        existing_customer = self.customer_repository.find_by_id(customer.id, include_inactive=True)
+        existing_customer = self.customer_repository.find_by_id(customer.internal_id, include_inactive=True)
         if not existing_customer:
-            raise CustomerNotFoundException(f"Customer with ID {customer.id} not found")
+            raise CustomerNotFoundException(f"Customer with internal_id {customer.internal_id} not found")
 
         # Business rule: Check if new document conflicts with existing customer
         if not customer.document.is_empty:
             existing_by_doc = self.customer_repository.find_by_document(
                 customer.document.value, include_inactive=True
             )
-            if existing_by_doc and existing_by_doc.id != customer.id:
+            if existing_by_doc and existing_by_doc.internal_id != customer.internal_id:
                 raise CustomerAlreadyExistsException(
                     f"Document {customer.document.value} is already used by another customer"
                 )
@@ -128,7 +128,7 @@ class CustomerUpdateUseCase:
             existing_by_email = self.customer_repository.find_by_email(
                 customer.email.value, include_inactive=True
             )
-            if existing_by_email and existing_by_email.id != customer.id:
+            if existing_by_email and existing_by_email.internal_id != customer.internal_id:
                 raise CustomerAlreadyExistsException(
                     f"Email {customer.email.value} is already used by another customer"
                 )
@@ -152,14 +152,14 @@ class CustomerDeleteUseCase:
     def __init__(self, customer_repository: CustomerRepository):
         self.customer_repository = customer_repository
 
-    def execute(self, customer_id: uuid.UUID) -> bool:
+    def execute(self, customer_internal_id: int) -> bool:
         """Execute the delete customer use case"""
         # Use the repository's dedicated delete method which handles soft deletion properly
         # This method avoids validation issues by updating the database directly
-        success = self.customer_repository.delete(customer_id)
+        success = self.customer_repository.delete(customer_internal_id)
         
         if not success:
-            raise CustomerNotFoundException(f"Customer with ID {customer_id} not found")
+            raise CustomerNotFoundException(f"Customer with internal_id {customer_internal_id} not found")
         
         return True
 

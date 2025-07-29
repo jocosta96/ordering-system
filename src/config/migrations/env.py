@@ -2,14 +2,17 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-import os
 import sys
 
 # Add the src directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+# Optimized for Kubernetes deployment
+sys.path.append("/code")
 
-from adapters.gateways.sql_customer_repository import Base
-from config.database import db_config
+# Import the shared Base class and all models
+from src.adapters.gateways.shared_base import Base
+from src.config.database import db_config
+
+# Import all models to ensure they are registered with the shared Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,8 +23,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
+# Use the shared Base.metadata for all models
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
