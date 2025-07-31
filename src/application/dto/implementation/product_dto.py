@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 from src.application.dto.interfaces.request_interface import RequestInterface
 from src.application.dto.interfaces.response_interface import ResponseInterface
 from src.entities.product import Product, ProductReceiptItem
@@ -48,7 +48,7 @@ class ProductUpdateRequest(RequestInterface):
 class ProductResponse(ResponseInterface):
     """DTO for product response"""
 
-    internal_id: int
+    internal_id: Optional[int]
     name: str
     price: float
     category: str
