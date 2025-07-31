@@ -699,7 +699,7 @@ O sistema inclui:
 
 ## 🎥 Vídeo Demonstrativo
 
-[Assistir vídeo demonstrativo no YouTube](https://youtu.be/SEU_VIDEO_ID)
+[Assistir vídeo demonstrativo no YouTube](https://www.youtube.com/watch?v=m7bB2DgLaSQ)
 
 ## 📝 Status dos Requisitos
 
@@ -714,7 +714,7 @@ O sistema inclui:
 | Stress Test HPA | ✅ | Scripts Python + documentação |
 | Testes Automatizados | ✅ | 79% de cobertura |
 | Logs Estruturados | ✅ | Implementado |
-| Vídeo Demonstrativo | ⚠️ | Link para YouTube |
+| Vídeo Demonstrativo | ✅ | Link para YouTube |
 
 ## 🛠️ Desenvolvimento
 
