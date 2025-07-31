@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing_extensions import Annotated
 from pydantic import BaseModel
+from typing import Optional
 
 
 from src.adapters.controllers.product_controller import ProductController
@@ -35,7 +36,7 @@ class ProductUpdateModel(BaseModel):
 
 
 class ProductResponseModel(BaseModel):
-    internal_id: int
+    internal_id: Optional[int]
     name: str
     price: float
     category: ProductCategory
