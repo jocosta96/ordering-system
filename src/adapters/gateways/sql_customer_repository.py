@@ -106,6 +106,9 @@ class SQLCustomerRepository(CustomerRepository):
                 # Create new customer without internal_id
                 db_customer = self._to_model(customer)
                 self.database.add(session, db_customer)
+                # Flush to get the auto-generated internal_id
+                session.flush()
+                session.refresh(db_customer)
 
             self.database.commit(session)
             return self._to_entity(db_customer)

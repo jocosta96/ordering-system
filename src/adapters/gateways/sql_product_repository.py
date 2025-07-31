@@ -186,8 +186,14 @@ class SQLProductRepository(ProductRepository):
                 # Create new product
                 db_product = self._to_model(product)
                 self.database.add(session, db_product)
+                # Flush to get the auto-generated internal_id
+                session.flush()
+                session.refresh(db_product)
 
             self.database.commit(session)
+            # Refresh again after commit to ensure we have the latest data
+            session.refresh(db_product)
+            
             return self._to_entity(db_product)
         except Exception as e:
             self.database.rollback(session)

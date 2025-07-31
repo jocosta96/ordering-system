@@ -103,6 +103,9 @@ class SQLIngredientRepository(IngredientRepository):
                 # Create new ingredient without internal_id
                 db_ingredient = self._to_model(ingredient)
                 self.database.add(session, db_ingredient)
+                # Flush to get the auto-generated internal_id
+                session.flush()
+                session.refresh(db_ingredient)
 
             self.database.commit(session)
             return self._to_entity(db_ingredient)

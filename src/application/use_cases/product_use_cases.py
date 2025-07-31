@@ -43,10 +43,10 @@ class ProductCreateUseCase:
                 f"Product with SKU {product.sku} already exists")
 
         # Save product to repository
-        self.product_repository.save(product)
+        saved_product = self.product_repository.save(product)
 
         # Return product response
-        return ProductResponse.from_entity(product)
+        return ProductResponse.from_entity(saved_product)
 
 
 class ProductReadUseCase:
