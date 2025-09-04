@@ -3,7 +3,6 @@ import boto3
 import logging
 from typing import Dict, Optional
 from botocore.exceptions import ClientError, NoCredentialsError, EndpointConnectionError
-from botocore.credentials import Credentials
 
 logger = logging.getLogger(__name__)
 
