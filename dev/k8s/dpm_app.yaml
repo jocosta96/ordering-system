@@ -18,7 +18,7 @@ spec:
           claimName: pvc-migrations
       containers:
         - name: app
-          image: jocosta96/soat-challenge
+          image: jocosta96/soat-challenge:dev
           ports:
             - containerPort: 8080
           volumeMounts:

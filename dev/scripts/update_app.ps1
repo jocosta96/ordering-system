@@ -1,8 +1,8 @@
 # This code uploads the app source code at dockerhub
 
-$IMAGE_NAME="jocosta96/soat-challenge:latest"
-$APP_YAML="infra/deployment/dpm_app.yaml"
-$WEBHOOK_YAML="infra/deployment/dpm_webhook.yaml"
+$IMAGE_NAME="jocosta96/soat-challenge:dev"
+$APP_YAML="dev/k8s/dpm_app.yaml"
+$WEBHOOK_YAML="dev/k8s/dpm_webhook.yaml"
 
 Write-Output "atualizando imagem..."
 docker build . -t "$IMAGE_NAME"

@@ -14,7 +14,7 @@ spec:
           claimName: pvc-migrations
       containers:
       - name: database-update
-        image: jocosta96/soat-challenge
+        image: jocosta96/soat-challenge:dev
         volumeMounts:
           - name: migrations-volume
             mountPath: /migrations
