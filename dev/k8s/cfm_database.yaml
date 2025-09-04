@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cfm-database
+data:
+  # Database connection settings (fallback values when SSM is not available)
+  POSTGRES_HOST: svc-database-clusterip
+  POSTGRES_PORT: "5432"
+  DRIVER_NAME: postgresql
+  
+  # Application settings
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  
+  # AWS SSM Parameter Store configuration
+  USE_SSM_PARAMETERS: "true"
+  AWS_DEFAULT_REGION: "us-east-1"
+
+  SSM_PARAMETER_PREFIX: "/fastfood/database/"

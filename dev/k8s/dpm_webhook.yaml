@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: webhook
-          image: jocosta96/soat-challenge
+          image: jocosta96/soat-challenge:dev
           ports:
             - containerPort: 8000
           readinessProbe:

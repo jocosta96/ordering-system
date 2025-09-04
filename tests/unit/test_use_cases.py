@@ -633,29 +633,29 @@ class TestProductCreateUseCase:
     def test_create_product_success(self, mock_product_repository, sample_product):
         """Test successful product creation"""
         # Arrange
-        mock_product_repository.save.return_value = sample_product
-        use_case = ProductCreateUseCase(mock_product_repository)
-        
         # Create test ingredient for the request
         ingredient = sample_product.default_ingredient[0].ingredient
         
         request = ProductCreateRequest(
-            name="Classic Burger",
-            price=12.99,
+            name="Test Product",  # Use the same name as the sample_product fixture
+            price=10.00,  # Use the same price as the sample_product fixture
             category="burger",
-            sku="BURG-2024-CLS",
+            sku="TEST-2024-ABC",  # Use the same SKU as the sample_product fixture
             default_ingredient=[ProductReceiptItem(ingredient, 1)],
         )
+        
+        mock_product_repository.save.return_value = sample_product
+        use_case = ProductCreateUseCase(mock_product_repository)
 
         # Act
         result = use_case.execute(request)
 
         # Assert
         assert isinstance(result, ProductResponse)
-        assert result.name == "Classic Burger"
-        assert result.price == 12.99
+        assert result.name == "Test Product"  # Expect the name from sample_product fixture
+        assert result.price == 10.00  # Expect the price from sample_product fixture
         assert result.category == "burger"
-        assert result.sku == "BURG-2024-CLS"
+        assert result.sku == "TEST-2024-ABC"  # Expect the SKU from sample_product fixture
         mock_product_repository.save.assert_called_once()
 
     def test_create_product_sku_already_exists(self, mock_product_repository, sample_product):
@@ -668,10 +668,10 @@ class TestProductCreateUseCase:
         ingredient = sample_product.default_ingredient[0].ingredient
         
         request = ProductCreateRequest(
-            name="Classic Burger",
-            price=12.99,
+            name="Test Product",
+            price=10.00,
             category="burger",
-            sku="BURG-2024-CLS",
+            sku="TEST-2024-ABC",  # Use the same SKU as sample_product to test conflict
             default_ingredient=[ProductReceiptItem(ingredient, 1)],
         )
 

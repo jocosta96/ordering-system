@@ -2,7 +2,7 @@
 # This code uploads the app source code at dockerhub
 set -e
 
-IMAGE_NAME="jocosta96/soat-challenge:latest"
+IMAGE_NAME="jocosta96/soat-challenge:dev"
 APP_YAML="infra/deployment/dpm_app.yaml"
 WEBHOOK_YAML="infra/deployment/dpm_webhook.yaml"
 
