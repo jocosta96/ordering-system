@@ -13,6 +13,10 @@ from src.adapters.gateways.shared_base import Base
 from src.config.database import db_config
 
 # Import all models to ensure they are registered with the shared Base.metadata
+from src.adapters.gateways.sql_customer_repository import CustomerModel
+from src.adapters.gateways.sql_ingredient_repository import IngredientModel
+from src.adapters.gateways.sql_order_repository import OrderModel, OrderItemModel
+from src.adapters.gateways.sql_product_repository import ProductModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -1,0 +1,175 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  create:
+    tags:
+      - '*'
+
+permissions:
+  contents: read
+
+env:
+  DOCKER_REGISTRY: docker.io
+  DOCKER_IMAGE: jocosta96/soat-challenge
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.set-tag.outputs.tag }}
+      image-full: ${{ steps.set-tag.outputs.full-image }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PAT }}
+    
+    - name: Determine image tag
+      id: set-tag
+      run: |
+        if [[ "${{ github.event_name }}" == "create" && "${{ github.ref_type }}" == "tag" ]]; then
+          # Extract tag name from ref
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "full-image=${{ env.DOCKER_IMAGE }}:${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "Building and pushing with tag: ${TAG_NAME}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "tag=latest" >> $GITHUB_OUTPUT
+          echo "full-image=${{ env.DOCKER_IMAGE }}:latest" >> $GITHUB_OUTPUT
+          echo "Building and pushing with tag: latest"
+        else
+          echo "No deployment needed for this event"
+          exit 1
+        fi
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.set-tag.outputs.full-image }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure kubeconfig
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > ~/.kube/config
+        chmod 600 ~/.kube/config
+    
+    - name: Update Kubernetes manifests
+      run: |
+        # Update main application deployment
+        sed -i "s|image: jocosta96/soat-challenge:.*|image: ${{ needs.build-and-push.outputs.image-full }}|g" dev/k8s/dpm_app.yaml
+        
+        # Update webhook deployment  
+        sed -i "s|image: jocosta96/soat-challenge:.*|image: ${{ needs.build-and-push.outputs.image-full }}|g" dev/k8s/dpm_webhook.yaml
+        
+        echo "Updated manifests with image: ${{ needs.build-and-push.outputs.image-full }}"
+    
+    - name: Deploy to Kubernetes
+      run: |
+        # Apply all Kubernetes manifests
+        echo "Deploying application to Kubernetes cluster..."
+        
+        # Apply ConfigMaps and Secrets first
+        kubectl apply -f dev/k8s/cfm_database.yaml || true
+        kubectl apply -f dev/k8s/sec_app.yaml || true
+        kubectl apply -f dev/k8s/sec_database.yaml || true
+        
+        # Apply PV and PVC
+        kubectl apply -f dev/k8s/pv_database.yaml || true
+        kubectl apply -f dev/k8s/pv_migrations.yaml || true
+        kubectl apply -f dev/k8s/pvc_database.yaml || true
+        kubectl apply -f dev/k8s/pvc_migrations.yaml || true
+        
+        # Apply Database first
+        kubectl apply -f dev/k8s/dpm_database.yaml || true
+        kubectl apply -f dev/k8s/svc_database.yaml || true
+        kubectl apply -f dev/k8s/svc_database_nodeport.yaml || true
+        
+        # Wait for database to be ready
+        echo "Waiting for database to be ready..."
+        kubectl wait --for=condition=ready pod -l app=dmp-database --timeout=300s || true
+        
+        # Initialize database if needed
+        kubectl apply -f dev/k8s/job_dbinit.yaml || true
+        
+        # Deploy main application
+        kubectl apply -f dev/k8s/dpm_app.yaml
+        kubectl apply -f dev/k8s/svc_app.yaml
+        
+        # Deploy webhook
+        kubectl apply -f dev/k8s/dpm_webhook.yaml
+        
+        # Apply HPA and monitoring
+        kubectl apply -f dev/k8s/hpa_app.yaml || true
+        kubectl apply -f dev/k8s/metrics.yaml || true
+    
+    - name: Wait for deployment rollout
+      run: |
+        echo "Waiting for application deployment to complete..."
+        kubectl rollout status deployment/dpm-app --timeout=300s
+        
+        echo "Waiting for webhook deployment to complete..."
+        kubectl rollout status deployment/dpm-webhook --timeout=300s
+    
+    - name: Verify deployment
+      run: |
+        echo "Verifying deployment..."
+        kubectl get pods -l app=dpm-app
+        kubectl get pods -l app=dpm-webhook
+        kubectl get services
+        kubectl get hpa || true
+        
+        # Check if pods are running
+        kubectl wait --for=condition=ready pod -l app=dpm-app --timeout=300s
+        kubectl wait --for=condition=ready pod -l app=dpm-webhook --timeout=300s
+        
+        echo "Deployment completed successfully!"
+        echo "Image deployed: ${{ needs.build-and-push.outputs.image-full }}"
+
+  notification:
+    needs: [build-and-push, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Deployment Status
+      run: |
+        if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "✅ Deployment successful!"
+          echo "🐳 Image: ${{ needs.build-and-push.outputs.image-full }}"
+          echo "📋 Tag: ${{ needs.build-and-push.outputs.image-tag }}"
+          echo "🚀 Branch/Tag: ${{ github.ref }}"
+        else
+          echo "❌ Deployment failed!"
+          echo "Please check the logs for more details."
+          exit 1
+        fi
