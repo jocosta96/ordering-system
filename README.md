@@ -335,6 +335,108 @@ terraform apply
 #### 3. Application Deployment (Automatic)
 The application is automatically deployed when the infrastructure is provisioned.
 
+## 🔧 Configuration Management
+
+The application supports multiple configuration sources with priority:
+1. **AWS SSM Parameter Store** (production recommended)
+2. **Environment Variables** (fallback/development)
+3. **Default Values** (development only)
+
+### AWS SSM Parameter Store Configuration
+
+For production deployments, database configuration is managed via AWS SSM Parameter Store, allowing runtime configuration updates without application restarts.
+
+#### Required SSM Parameters:
+```
+/fastfood/database/host       # Database hostname
+/fastfood/database/port       # Database port (5432)
+/fastfood/database/database   # Database name (fastfood)
+/fastfood/database/username   # Database username
+/fastfood/database/password   # Database password (SecureString)
+/fastfood/database/driver     # Database driver (postgresql)
+```
+
+#### Setup SSM Parameters:
+```bash
+# Export your database configuration
+export DB_HOST=your-rds-endpoint.amazonaws.com
+export DB_PASSWORD=your-secure-password
+export DB_USERNAME=postgres
+export DB_NAME=fastfood
+
+# Run the setup script
+./scripts/setup-ssm-parameters.sh --region us-east-1
+```
+
+#### AWS Credentials Setup:
+
+**For AWS Labs Environment** (with temporary credentials):
+
+1. Set AWS credentials via API (credentials change frequently in labs):
+```bash
+curl -X POST http://your-app/health/aws-credentials \
+  -H "Content-Type: application/json" \
+  -u admin:admin123 \
+  -d '{
+    "aws_access_key_id": "AKIA...",
+    "aws_secret_access_key": "your-secret-key",
+    "aws_session_token": "your-session-token"
+  }'
+```
+
+2. Verify credentials are set:
+```bash
+curl http://your-app/health/aws-credentials -u admin:admin123
+```
+
+3. Deploy manifests (no IAM roles needed):
+```bash
+kubectl apply -f dev/k8s/cfm_database.yaml
+kubectl apply -f dev/k8s/dpm_app.yaml
+kubectl apply -f dev/k8s/dpm_webhook.yaml
+```
+
+**For Production Environment** (with IAM roles):
+- Create IAM role with SSM permissions
+- Use IRSA (IAM Roles for Service Accounts) instead of direct credentials
+- See AWS documentation for production setup
+
+#### Configuration Health & Monitoring:
+```bash
+# Check configuration status
+curl http://your-app/health/config
+
+# Reload configuration without restart
+curl -X POST http://your-app/health/config/reload
+```
+
+### Environment Variables (Fallback)
+
+For local development or when SSM is unavailable:
+
+```bash
+# Database Configuration
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=fastfood
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=password123
+DRIVER_NAME=postgresql
+
+# API Authentication
+API_USER=admin
+API_PWD=admin123
+
+# Application Settings
+LOG_LEVEL=INFO
+DEBUG=false
+
+# AWS SSM Configuration
+USE_SSM_PARAMETERS=true
+AWS_DEFAULT_REGION=us-east-1
+SSM_PARAMETER_PREFIX=/fastfood/database/
+```
+
 ### Local Development
 ```bash
 # Setup environment
@@ -346,13 +448,14 @@ source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 
-# Configure environment variables
+# Configure environment variables (for local development)
 export POSTGRES_HOST="localhost"
 export POSTGRES_USER="postgres"  
 export POSTGRES_PASSWORD="password123"
 export POSTGRES_DB="fastfood"
 export API_USER="admin"
 export API_PWD="admin123"
+export USE_SSM_PARAMETERS="false"  # Disable SSM for local development
 
 # Run application
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
@@ -407,13 +510,15 @@ kubectl get pods -l app=dpm-app
 
 ## ⚡ Quick Reference
 
-### Essential Environment Variables
+### Essential Configuration
 ```bash
-# Database Configuration
-POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+# Production (SSM Parameter Store)
+/fastfood/database/host, /fastfood/database/username, /fastfood/database/password, etc.
 
-# API Authentication
+# Development (Environment Variables)
+POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
 API_USER, API_PWD
+USE_SSM_PARAMETERS, AWS_DEFAULT_REGION, SSM_PARAMETER_PREFIX
 
 # Application Settings  
 LOG_LEVEL, DEBUG
@@ -421,43 +526,42 @@ LOG_LEVEL, DEBUG
 
 ### Health Check Endpoints
 ```bash
-# Executar teste completo com monitoramento
-python infra/scripts/stress_test.py --scenario full
+# Basic health check
+curl http://localhost:8080/health
 
-# Output esperado:
-# [14:30:00] Stress Test - Sistema de Autoatendimento de Fast Food
-# ====================================================
-# API URL: http://192.168.49.2:30080
-# 
-# [14:30:05] Executando Cenário: Carga Baixa
-# ----------------------------------------
-# [14:30:05] Status Atual do Sistema
-# ===================================================
-# HPA: hpa-app
-#   Min Replicas: 1
-#   Max Replicas: 5
-#   Current Replicas: 1
-#   Target CPU: 30%
-# 
-# [14:30:15] Iniciando Stress Test
-#   Duração: 60s
-#   Concorrência: 50
-#   Endpoint: /health
-# 
-# [14:31:15] Resultados do Stress Test
-# ===================================================
-# Total de Requisições: 50
-# Requisições Bem-sucedidas: 50
-# Requisições Falharam: 0
-# Taxa de Sucesso: 100.00%
-# Duração Média: 0.234s
-# Requisições por Segundo: 0.83
+# Database connectivity
+curl http://localhost:8080/health/db
+
+# Configuration status (SSM + Environment + AWS Credentials)
+curl http://localhost:8080/health/config
+
+# AWS Credentials management (for labs environment) - Requires Admin Auth
+# Set AWS credentials
+curl -X POST http://localhost:8080/health/aws-credentials \
+  -H "Content-Type: application/json" \
+  -u admin:admin123 \
+  -d '{"aws_access_key_id":"AKIA...","aws_secret_access_key":"secret","aws_session_token":"token"}'
+
+# Check AWS credentials status  
+curl http://localhost:8080/health/aws-credentials -u admin:admin123
+
+# Clear AWS credentials
+curl -X DELETE http://localhost:8080/health/aws-credentials -u admin:admin123
+
+# Reload SSM configuration without restart
+curl -X POST http://localhost:8080/health/config/reload
+
+# Stress testing for auto-scaling
+python infra/scripts/stress_test.py --scenario full
 ```
 
 ## 📊 Monitoramento e Métricas
 
 O sistema inclui:
-- **Health Checks**: `/health` e `/customer/anonymous`
+- **Health Checks**: `/health`, `/health/db`, `/health/config`
+- **Configuration Management**: Runtime reload via `/health/config/reload`
+- **AWS Credentials Management**: Set/check/clear credentials via `/health/aws-credentials`
+- **SSM Parameter Store**: Monitoramento de conectividade e status
 - **HPA**: Auto-scaling baseado em CPU (30% - 5 réplicas)
 - **Métricas**: Prometheus/Grafana (configuração opcional)
 - **Logs Estruturados**: Com contexto e níveis configuráveis
@@ -466,8 +570,11 @@ O sistema inclui:
 ## 🔒 Segurança
 
 - **Autenticação**: Basic Auth para endpoints administrativos
-- **Secrets**: Credenciais sensíveis em Kubernetes Secrets
+- **Secrets Management**: 
+  - **Produção**: AWS SSM Parameter Store com SecureString (encrypted)
+  - **Desenvolvimento**: Kubernetes Secrets / Environment Variables
 - **ConfigMaps**: Configurações não-sensíveis
+- **IAM Integration**: Service accounts com roles específicos para SSM
 - **Validação**: Pydantic para validação de entrada
 - **CORS**: Configurado para permitir origens específicas
 - **Rate Limiting**: Proteção contra abuso de API

@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # Script to update Kubernetes manifests with new Docker image tag
+# NOTE: This script is not used by the GitHub Actions workflow in this repository.
+# The workflow only builds and pushes Docker images.
+# Deployment is handled by the infrastructure repository.
+# This script is kept for manual manifest updates if needed.
 # Usage: ./update-manifests.sh <image-tag>
 
 set -e

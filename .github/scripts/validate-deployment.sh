@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Deployment validation script
-# This script validates that the deployment was successful
+# NOTE: This script is not used by the GitHub Actions workflow in this repository.
+# The workflow only builds and pushes Docker images. 
+# Deployment is handled by the infrastructure repository.
+# This script is kept for manual validation if needed.
 
 set -e
 

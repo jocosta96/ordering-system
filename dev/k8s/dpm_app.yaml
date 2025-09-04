@@ -100,6 +100,22 @@ spec:
                   key: LOG_LEVEL
             - name: WEBHOOK_URL
               value: "http://svc-webhook-nodeport:80"
+            # AWS SSM Parameter Store configuration
+            - name: USE_SSM_PARAMETERS
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: USE_SSM_PARAMETERS
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: AWS_DEFAULT_REGION
+            - name: SSM_PARAMETER_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: cfm-database
+                  key: SSM_PARAMETER_PREFIX
           resources:
             requests:
               memory: "128Mi"
