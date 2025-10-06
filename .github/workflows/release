@@ -1,0 +1,299 @@
+name: Build and Deploy on Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on tags like v1.0.0, v2.1.3, etc.
+  release:
+    types: [published]  # Triggers when a release is published on GitHub
+
+permissions:
+  contents: read
+
+env:
+  DOCKER_REGISTRY: docker.io
+  DOCKER_IMAGE: jocosta96/soat-challenge
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.set-tag.outputs.tag }}
+      image-full: ${{ steps.set-tag.outputs.full-image }}
+      is-prerelease: ${{ steps.set-tag.outputs.is-prerelease }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PAT }}
+    
+    - name: Determine image tag
+      id: set-tag
+      run: |
+        # Extract tag name from ref (e.g., refs/tags/v1.0.0 -> v1.0.0)
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          IS_PRERELEASE="${{ github.event.release.prerelease }}"
+        else
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          # Check if tag contains pre-release indicators
+          if [[ "$TAG_NAME" =~ (alpha|beta|rc|pre) ]]; then
+            IS_PRERELEASE="true"
+          else
+            IS_PRERELEASE="false"
+          fi
+        fi
+        
+        echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+        echo "full-image=${{ env.DOCKER_IMAGE }}:${TAG_NAME}" >> $GITHUB_OUTPUT
+        echo "is-prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+        
+        echo "📌 Building and pushing release tag: ${TAG_NAME}"
+        echo "🔖 Pre-release: ${IS_PRERELEASE}"
+    
+    - name: Build and push Docker image with release tag
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.set-tag.outputs.full-image }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+    
+    - name: Tag as latest (production releases only)
+      if: steps.set-tag.outputs.is-prerelease == 'false'
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ env.DOCKER_IMAGE }}:latest
+        cache-from: type=gha
+        platforms: linux/amd64,linux/arm64
+    
+    - name: Build Summary
+      run: |
+        echo "✅ Docker image build completed successfully!"
+        echo "🐳 Image: ${{ steps.set-tag.outputs.full-image }}"
+        echo "📋 Tag: ${{ steps.set-tag.outputs.tag }}"
+        echo "🔖 Pre-release: ${{ steps.set-tag.outputs.is-prerelease }}"
+        echo "🚀 Trigger: ${{ github.event_name }}"
+        echo "🌿 Ref: ${{ github.ref }}"
+        echo ""
+        
+        if [[ "${{ steps.set-tag.outputs.is-prerelease }}" == "false" ]]; then
+          echo "🎯 Production Release:"
+          echo "   - Release tag: ${{ steps.set-tag.outputs.tag }}"
+          echo "   - Also tagged as: latest"
+          echo "   - Image pushed to Docker Hub"
+          echo "   - Ready for production deployment"
+        else
+          echo "🧪 Pre-release Build:"
+          echo "   - Pre-release tag: ${{ steps.set-tag.outputs.tag }}"
+          echo "   - NOT tagged as latest"
+          echo "   - Image pushed to Docker Hub"
+          echo "   - Use for testing before production"
+        fi
+        
+        echo ""
+        echo "📦 Available Images:"
+        echo "   - docker pull ${{ steps.set-tag.outputs.full-image }}"
+        if [[ "${{ steps.set-tag.outputs.is-prerelease }}" == "false" ]]; then
+          echo "   - docker pull ${{ env.DOCKER_IMAGE }}:latest"
+        fi
+        echo ""
+        echo "🏗️  Next Steps:"
+        echo "   - Update Kubernetes manifests with the new tag"
+        echo "   - Deploy using: kubectl set image deployment/dpm-app app=${{ steps.set-tag.outputs.full-image }}"
+        echo "   - Or use your infrastructure automation pipeline"
+
+  deploy-to-kubernetes:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: needs.build-and-push.outputs.is-prerelease == 'false'  # Only deploy production releases
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure Kubernetes access
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+    
+    - name: Verify cluster connection
+      run: |
+        echo "🔗 Connecting to Kubernetes cluster..."
+        kubectl cluster-info
+        kubectl get nodes
+    
+    - name: Update manifest with new image tag
+      run: |
+        echo "🔄 Updating Kubernetes manifests with tag: ${{ needs.build-and-push.outputs.image-tag }}"
+        
+        # Update application deployment
+        if [ -f "dev/k8s/dpm_app.yaml" ]; then
+          sed -i "s|image: jocosta96/soat-challenge:.*|image: ${{ needs.build-and-push.outputs.image-full }}|g" dev/k8s/dpm_app.yaml
+          echo "✅ Updated dpm_app.yaml"
+        fi
+        
+        # Update webhook deployment if exists
+        if [ -f "dev/k8s/dpm_webhook.yaml" ]; then
+          sed -i "s|image: jocosta96/soat-challenge:.*|image: ${{ needs.build-and-push.outputs.image-full }}|g" dev/k8s/dpm_webhook.yaml
+          echo "✅ Updated dpm_webhook.yaml"
+        fi
+        
+        echo ""
+        echo "📋 Updated manifests:"
+        grep "image: jocosta96/soat-challenge" dev/k8s/*.yaml || true
+    
+    - name: Deploy to Kubernetes
+      run: |
+        echo "🚀 Deploying to Kubernetes cluster..."
+        
+        # Deploy in order: ConfigMaps, Secrets, Database, App, Webhook, HPA
+        
+        echo "📦 Deploying ConfigMaps and Secrets..."
+        kubectl apply -f dev/k8s/cfm_database.yaml || true
+        kubectl apply -f dev/k8s/sec_database.yaml || true
+        kubectl apply -f dev/k8s/sec_app.yaml || true
+        
+        echo "🗄️  Deploying Database..."
+        kubectl apply -f dev/k8s/dpm_database.yaml || true
+        kubectl apply -f dev/k8s/svc_database.yaml || true
+        
+        # Wait for database to be ready
+        echo "⏳ Waiting for database to be ready..."
+        kubectl wait --for=condition=ready pod -l app=dpm-database --timeout=300s || true
+        
+        echo "🚀 Deploying Application..."
+        kubectl apply -f dev/k8s/dpm_app.yaml
+        kubectl apply -f dev/k8s/svc_app.yaml
+        
+        echo "🔗 Deploying Webhook..."
+        kubectl apply -f dev/k8s/dpm_webhook.yaml || true
+        
+        echo "📊 Deploying HPA and Metrics..."
+        kubectl apply -f dev/k8s/hpa_app.yaml || true
+        kubectl apply -f dev/k8s/metrics.yaml || true
+        
+        echo "✅ All manifests applied"
+    
+    - name: Wait for deployment
+      run: |
+        echo "⏳ Waiting for application deployment to complete..."
+        kubectl rollout status deployment/dpm-app --timeout=300s
+        
+        if kubectl get deployment dpm-webhook &> /dev/null; then
+          echo "⏳ Waiting for webhook deployment to complete..."
+          kubectl rollout status deployment/dpm-webhook --timeout=300s
+        fi
+    
+    - name: Verify deployment
+      run: |
+        echo "🔍 Verifying deployment..."
+        echo ""
+        echo "📋 Pods:"
+        kubectl get pods -l app=dpm-app
+        kubectl get pods -l app=dpm-webhook || true
+        echo ""
+        echo "📋 Services:"
+        kubectl get services
+        echo ""
+        echo "📋 HPA Status:"
+        kubectl get hpa || true
+        echo ""
+        echo "🎯 Deployment Details:"
+        kubectl describe deployment dpm-app | grep -A 3 "Image:"
+    
+    - name: Health check
+      run: |
+        echo "🏥 Performing health checks..."
+        
+        # Get service endpoint
+        SERVICE_TYPE=$(kubectl get service svc-app-nodeport -o jsonpath='{.spec.type}' 2>/dev/null || echo "ClusterIP")
+        
+        if [[ "$SERVICE_TYPE" == "LoadBalancer" ]]; then
+          echo "⏳ Waiting for LoadBalancer IP..."
+          kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' service/svc-app-nodeport --timeout=300s || true
+          EXTERNAL_IP=$(kubectl get service svc-app-nodeport -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          if [ -n "$EXTERNAL_IP" ]; then
+            echo "✅ Service available at: http://${EXTERNAL_IP}"
+            echo "🏥 Testing health endpoint..."
+            curl -f "http://${EXTERNAL_IP}/health" || echo "⚠️  Health check failed"
+          fi
+        else
+          echo "ℹ️  Service type: $SERVICE_TYPE"
+          echo "ℹ️  Use port-forward for local testing: kubectl port-forward service/svc-app-nodeport 8080:80"
+        fi
+    
+    - name: Deployment Summary
+      run: |
+        echo "============================================"
+        echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY"
+        echo "============================================"
+        echo ""
+        echo "📦 Deployed Image: ${{ needs.build-and-push.outputs.image-full }}"
+        echo "🏷️  Release Tag: ${{ needs.build-and-push.outputs.image-tag }}"
+        echo ""
+        echo "📊 Quick Status:"
+        echo "   - Application Pods: $(kubectl get pods -l app=dpm-app --no-headers 2>/dev/null | wc -l)"
+        echo "   - Webhook Pods: $(kubectl get pods -l app=dpm-webhook --no-headers 2>/dev/null | wc -l)"
+        echo "   - Services: $(kubectl get services --no-headers 2>/dev/null | wc -l)"
+        echo ""
+        echo "🔍 Useful Commands:"
+        echo "   - View logs: kubectl logs -f deployment/dpm-app"
+        echo "   - Check status: kubectl get pods -l app=dpm-app"
+        echo "   - Port forward: kubectl port-forward service/svc-app-nodeport 8080:80"
+        echo "   - Scale manually: kubectl scale deployment dpm-app --replicas=3"
+        echo ""
+        echo "🚀 Deployment Complete!"
+
+  notification:
+    needs: [build-and-push, deploy-to-kubernetes]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Deployment Status
+      run: |
+        echo "============================================"
+        echo "📊 RELEASE PIPELINE STATUS"
+        echo "============================================"
+        echo ""
+        echo "🏷️  Release: ${{ needs.build-and-push.outputs.image-tag }}"
+        echo "🐳 Image: ${{ needs.build-and-push.outputs.image-full }}"
+        echo "🔖 Pre-release: ${{ needs.build-and-push.outputs.is-prerelease }}"
+        echo ""
+        echo "📦 Build Status: ${{ needs.build-and-push.result }}"
+        echo "🚀 Deploy Status: ${{ needs.deploy-to-kubernetes.result }}"
+        echo ""
+        
+        if [[ "${{ needs.build-and-push.result }}" == "success" ]] && [[ "${{ needs.deploy-to-kubernetes.result }}" == "success" || "${{ needs.build-and-push.outputs.is-prerelease }}" == "true" ]]; then
+          echo "✅ Pipeline completed successfully!"
+          
+          if [[ "${{ needs.build-and-push.outputs.is-prerelease }}" == "true" ]]; then
+            echo ""
+            echo "ℹ️  Pre-release - Deployment skipped"
+            echo "   Image is available for testing"
+            echo "   Deploy manually when ready for production"
+          fi
+        else
+          echo "❌ Pipeline failed - check logs above"
+          exit 1
+        fi
